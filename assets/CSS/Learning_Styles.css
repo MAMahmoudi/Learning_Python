@@ -1,0 +1,62 @@
+@import url("https://fonts.cdnfonts.com/css/century-schoolbook");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Source Sans Pro";
+  background-color: #e5e1de;
+  margin: 0;
+  padding: 0;
+}
+
+main {
+  margin: 0 auto;
+  padding: 10vw;
+  position: relative;
+}
+
+.Definitions {
+  font-size: 1.5em;
+  text-align: justify;
+}
+
+.Code {
+  font-size: 1rem;
+  font-weight: bold;
+  width: 50vw;
+  //transform: translateX(-50%);
+  //position: relative;
+}
+
+.Chapter_Title {
+  color: #53af32;
+  font-size: 4rem;
+  font-weight: bold;
+  margin-top: 10vh;
+  margin-bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  position: absolute;
+  top: 0;
+}
+
+.Section_Title {
+  color: #53af32;
+  font-size: 3rem;
+  font-weight: bold;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.Subsection_Title {
+  color: #53af32;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 20px;
+}

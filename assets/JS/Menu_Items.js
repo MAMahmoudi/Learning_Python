@@ -1,25 +1,25 @@
 export const Menu_Items = [
   {
     title: "Home",
-    url: "index.html",
+    url: "../index.html",
     cName: "Nav_Bar_Menu_Item",
     icon: "fa-solid fa-user-plus",
   },
   {
     title: "Basics",
-    url: "Basics/Basics.html",
+    url: "../Basics/Basics.html",
     cName: "Nav_Bar_Menu_Item",
     icon: "fa-solid fa-user-plus",
   },
   {
-    title: "Teachers",
-    url: "Teachers.html",
+    title: "Intermediate",
+    url: "../Intermediate/Intermediate.html",
     cName: "Nav_Bar_Menu_Item",
     icon: "fa-solid fa-user-plus",
   },
   {
-    title: "Basics",
-    url: "Basics/Basics.html",
+    title: "Django",
+    url: "../Advanced/Django.html",
     cName: "Nav_Bar_Menu_Item",
     icon: "fa-solid fa-user-plus",
   },

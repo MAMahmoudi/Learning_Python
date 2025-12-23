@@ -1,6 +1,6 @@
 .Nav_Bar_Items {
   font-family: "Source Sans Pro";
-  background-color: #8c1515;
+  background-color: #53af32;
   color: #2e2d29;
   display: flex;
   flex-direction: row;
@@ -31,7 +31,7 @@
 }
 
 .Nav_Bar_Menu {
-  background-color: #8c1515;
+  background-color: #53af32;
   display: grid;
   grid-template-columns: repeat(6, auto);
   grid-gap: 20px;
@@ -43,7 +43,7 @@
 .Nav_Bar_Menu_Item {
   text-decoration: none;
   color: #fff;
-  background-color: #8c1515;
+  background-color: #53af32;
   font-size: 1.5rem;
   font-weight: 600;
   padding: 0.7rem 1rem;
@@ -112,7 +112,7 @@
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    background-color: #8c1515;
+    background-color: #53af32;
     width: 80%;
     height: auto;
     position: absolute;

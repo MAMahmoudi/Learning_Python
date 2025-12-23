@@ -36,7 +36,7 @@ function Build_Nav_Bar() {
   var Nav_Bar_Logo = document.createElement("h1");
   Nav_Bar_Logo.setAttribute("class", "Nav_Bar_Logo");
   Nav_Bar_Logo.setAttribute("id", "Nav_Bar_Logo_ID");
-  Nav_Bar_Logo.innerHTML = "Web Development";
+  Nav_Bar_Logo.innerHTML = "Learning Python";
   var Menu_Icon = document.createElement("div");
   Menu_Icon.setAttribute("class", "Menu_Icon");
   Menu_Icon.setAttribute("id", "Menu_Icon_ID");
