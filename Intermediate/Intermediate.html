@@ -16,10 +16,11 @@
             <h2 class="Section_Title">How to Slice Sequences</h2>
             <div class="Definitions">
                 In Python, slicing is a technique used to extract a portion of a sequence, such as a list, tuple, or
-                string. The syntax for slicing is as follows:
-                <pre class="prettyprint python Code">
+                string. The syntax for slicing is as follows:</div>
+            <pre class="prettyprint python Code">
 sequence[start:stop:step]
 </pre>
+            <div class="Definitions">
                 Where:
                 <ul>
                     <li><strong>sequence</strong> is the sequence you want to slice.</li>
@@ -38,7 +39,7 @@ my_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 slice1 = my_list[2:7]      # [2, 3, 4, 5, 6]
 slice2 = my_list[:5]       # [0, 1, 2, 3, 4] the same as my_list[0:5]
 slice3 = my_list[5:]       # [5, 6, 7, 8, 9] the same as my_list[5:10] or my_list[5:len(my_list)]
-slice4 = my_list[::2]      # [0, 2, 4, 6, 8]
+slice4 = my_list[::2]      # [0, 2, 4, 6, 8] select only even indexed elements
 # Slicing with a step
 step_slice = my_list[1:8:3]  # [1, 4, 7]
 # Slicing a string
@@ -108,27 +109,6 @@ print(my_list)  # Output: [0, 99, 4, 5]
                 </ul>
             </div>
         </section>
-        <section id="Striding_and_Slicing">
-            <h2 class="Section_Title">Avoid Striding and Slicing in a Single Expression</h2>
-            <div class="Definitions">
-                In Python, it's generally recommended to avoid combining striding and slicing in a single expression,
-                as it can lead to confusion and unexpected results. Instead, it's better to perform slicing and
-                striding in separate steps for clarity.
-                For example, instead of doing this:
-                <pre class="prettyprint python Code">
-my_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-result = my_list[2:8:2]  # Combining slicing and striding
-</pre>
-                You can do this:
-                <pre class="prettyprint python Code">
-my_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-sliced = my_list[2:8]    # First, slice the list
-result = sliced[::2]      # Then, apply striding
-</pre>
-                This approach makes it clearer what each step is doing and reduces the likelihood of errors or
-                misunderstandings.
-            </div>
-        </section>
         <section id="Catch_All_Unpacking">
             <h2 class="Section_Title">Prefer Catch-All Unpacking Over Slicing</h2>
             <div class="Definitions">
@@ -136,19 +116,42 @@ result = sliced[::2]      # Then, apply striding
                 slicing. Catch-all unpacking allows you to unpack elements from a sequence into variables, while
                 capturing any remaining elements in a list.
                 For example, instead of slicing a list like this:
-                <pre class="prettyprint python Code">
+            </div>
+            <pre class="prettyprint python Code">
 my_list = [1, 2, 3, 4, 5]
 first = my_list[0]
 rest = my_list[1:]
 </pre>
+            <div class="Definitions">
                 You can use catch-all unpacking like this:
-                <pre class="prettyprint python Code">
+            </div>
+            <pre class="prettyprint python Code">
 my_list = [1, 2, 3, 4, 5]
 first, *rest = my_list
+print(first)  # Output: 1
+print(rest)   # Output: [2, 3, 4, 5]
+# A starred expression may appear in any position:
+first, *middle, last = my_list
+print(first)  # Output: 1
+print(middle) # Output: [2, 3, 4]
+print(last)   # Output: 5
 </pre>
+            <div class="Definitions">
                 This approach is more concise and makes it clear that you're separating the first element from the
-                rest of the list. It also works well with tuples and other iterable types.
+                rest of the list. It also works well with tuples and other iterable types. <br>
+                However, to unpack assignments that contain a starred expression,
+                you must have at least one required part, or else you'll get a
+                SyntaxError. You can't use a catch-all expression on its own. <br>
+                Similarly, you can't have more than one
+                starred expression in the same assignment. <br>
+                Starred expressions become list instances in all cases.
             </div>
+            <pre class="prettyprint python Code">
+# This will raise a SyntaxError
+*rest = my_list
+# This will also raise a SyntaxError
+first, *middle, *last = my_list
+</pre>
         </section>
         <section id="Sort_by_Complex_Criteria">
             <h2 class="Section_Title">Sort by Complex Criteria Using the key Parameter</h2>

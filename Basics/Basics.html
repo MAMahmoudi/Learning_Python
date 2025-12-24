@@ -189,6 +189,17 @@ elif x == 0:
 else:
     print("x is negative")
             </pre>
+            <div class="Definitions">
+                The pass statement is used as a placeholder when no action is required. <br>
+                We can also use ... to indicate an incomplete block of code.
+            </div>
+            <pre class="prettyprint python Code">
+# Using pass and ...
+if True:
+    pass  # Placeholder for future code
+else:
+    ...  # Placeholder for future code
+            </pre>
         </section>
         <section id="Lists">
             <h2 class="Section_Title">VII. Lists</h2>
@@ -205,12 +216,42 @@ print(my_list)
 my_list.remove(3)  # Remove an item from the list
 print(my_list)
             </pre>
+            <div class="Definitions">
+                The elements of a list can be of different data types, including other lists.
+                There are various methods available for list manipulation, such as insert(), pop(), sort(), and
+                reverse().
+            </div>
+            <pre class="prettyprint python Code">
+# Example of a list with different data types
+mixed_list = [1, "Hello", 3.14, [2, 4, 6]]
+print(mixed_list)
+# Accessing elements in a nested list
+print(mixed_list[3])      # Output: [2, 4, 6]
+print(mixed_list[3][1])   # Output: 4
+# Slicing a list
+sub_list = my_list[1:4]  # Get elements from index 1 to 3
+print(sub_list)
+# More list methods
+my_list.insert(2, 10)  # Insert 10 at index 2
+print(my_list)
+popped_item = my_list.pop()  # Remove and return the last item
+print(popped_item)
+print(my_list)
+my_list.sort()  # Sort the list
+print(my_list)
+my_list.reverse()  # Reverse the list
+print(my_list)
+            </pre>
         </section>
         <section id="Dictionaries">
             <h2 class="Section_Title">VIII. Dictionaries</h2>
             <div class="Definitions">
                 Dictionaries in Python are collections of key-value pairs. They are mutable and allow you to access
-                values by their keys.
+                values by their keys. <br>
+                Keys must be unique and immutable (e.g., strings, numbers, or tuples), while values can be of any data
+                type. They must be hashable. Meaning, they must have a hash value that remains constant during their
+                lifetime.
+                Data types like lists and dictionaries are not hashable and cannot be used as keys.
             </div>
             <pre class="prettyprint python Code">
 # Creating and manipulating dictionaries
@@ -220,6 +261,26 @@ my_dict["city"] = "New York"  # Add a new key-value pair
 print(my_dict)
 del my_dict["age"]  # Remove a key-value pair
 print(my_dict)
+# Accessing values by keys
+print(my_dict["name"])
+# Getting all keys and values
+print(my_dict.keys())
+print(my_dict.values())
+# Pop method to remove a key and return its value
+age = my_dict.pop("age", "Not Found")  # Returns "Not Found" if key doesn't exist
+print(age)
+print(my_dict)
+            </pre>
+            <div class="Definitions">
+                Iterating through a dictionary can be done using a for loop to access keys, values, or key-value pairs.
+            </div>
+            <pre class="prettyprint python Code">
+# Iterating through a dictionary
+for key in my_dict:
+    print(f"Key: {key}, Value: {my_dict[key]}")
+# Or using items() to get key-value pairs
+for key, value in my_dict.items():
+    print(f"Key: {key}, Value: {value}")
             </pre>
         </section>
         <section id="Sets">

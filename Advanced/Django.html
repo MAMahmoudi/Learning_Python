@@ -11,7 +11,275 @@
 
 <body>
     <main>
+        <h1 class="Chapter_Title">Introduction to Django</h1>
+        <section id="Virtual_Environment">
+            <h2 class="Section_Title">Creating a Virtual Environment</h2>
+            <div class="Definitions">
+                A virtual environment is a self-contained directory that contains a Python installation and a set of
+                packages.
+                It allows you to manage dependencies for different projects separately.
+                Create a new directory for your project called learning_log, switch to that directory in a terminal, and
+                create a virtual environment.
+            </div>
+            <pre class="prettyprint python Code">
+# Create a virtual environment
+python -m venv myenv
 
+# Activate the virtual environment
+# On Windows:
+myenv\Scripts\activate
+# On macOS/Linux:
+source myenv/bin/activate
+            </pre>
+        </section>
+        <section id="Install_Django">
+            <h2 class="Section_Title">Installing Django</h2>
+            <div class="Definitions">
+                With your virtual environment activated, install Django using pip, the Python package manager.
+            </div>
+            <pre class="prettyprint python Code">
+pip install django
+            </pre>
+        </section>
+        <section id="Create_Django_Project">
+            <h2 class="Section_Title">Creating a Django Project</h2>
+            <div class="Definitions">
+                Use the django-admin command-line tool to create a new Django project called ESST.
+            </div>
+            <pre class="prettyprint python Code">
+django-admin startproject ESST .
+            </pre>
+            <div class="Definitions">
+                The dot (.) at the end of the command tells Django to create the project in the current directory.
+                If you look in your project directory, using `ls` (on macOS/Linux) or `dir` (on Windows), you should see
+                a new folder called ESST containing several files.
+                <ul>
+                    <li><strong>manage.py:</strong> A command-line utility that lets you interact with this Django
+                        project
+                        in various ways.</li>
+                    <li><strong>ESST/</strong> directory contains four files, the most important
+                        of which are settings.py, urls.py, and wsgi.py.
+                        <ul>
+                            <li><strong>settings.py:</strong> Controls how Django interacts with your system and manages
+                                your project.</li>
+                            <li><strong>urls.py:</strong> Tells Django which pages to build in response to browser
+                                requests.</li>
+                            <li><strong>wsgi.py:</strong> Helps Django serve the files it creates. The filename is an
+                                acronym for web server gateway interface.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </section>
+        <section id="Creating_the_Database">
+            <h2 class="Section_Title">Creating the Database</h2>
+            <div class="Definitions">
+                Django uses a database to store information for your project. By default, Django is configured to use
+                SQLite, a lightweight database that is easy to set up and requires no additional configuration.
+                To create the database, run the following command:
+            </div>
+            <pre class="prettyprint python Code">
+python manage.py migrate
+            </pre>
+            <div class="Definitions">
+                Any time we modify a database, we say we are migrating the database.
+                Issuing the migrate command for the first time tells Django to make sure the
+                database matches the current state of the project. The first time we run this
+                command in a new project using SQLite, Django will create a new database for us. <br>
+                Running the ls command (dir on Windows) shows that Django created another file called
+                db.sqlite3.
+            </div>
+        </section>
+        <section id="Run_Development_Server">
+            <h2 class="Section_Title">Running the Development Server</h2>
+            <div class="Definitions">
+                Django includes a lightweight web server for development purposes. To start the server, run the
+                following command:
+            </div>
+            <pre class="prettyprint python Code">
+python manage.py runserver
+            </pre>
+            <div class="Definitions">
+                After starting the server, open a web browser and navigate to http://localhost:8000. You should see the
+                default Django welcome page, indicating that your project is set up correctly. <br>
+                To stop the server, return to the terminal and press Ctrl+C. <br>
+                If you receive the error message That port is already in use, tell Django to use a
+                different port by entering python manage.py runserver 8001 and cycle through higher
+                numbers until you find an open port. For example:
+            </div>
+            <pre class="prettyprint python Code">
+python manage.py runserver 8001
+            </pre>
+        </section>
+        <section id="Starting_an_App">
+            <h2 class="Section_Title">Starting a Django App</h2>
+            <div class="Definitions">
+                In Django, a project is a collection of settings and configurations for an entire website, while an app
+                is a
+                web application that does something specific, such as a blog or a forum. A project can contain multiple
+                apps. <br>
+                You should still be running runserver in the terminal window you
+                opened earlier. Open a new terminal window (or tab) and navigate to the
+                directory that contains manage.py. Activate the virtual environment, and
+                then run the startapp command:
+            </div>
+            <pre class="prettyprint python Code">
+python manage.py startapp TimeTable
+            </pre>
+            <div class="Definitions">
+                The command startapp appname tells Django to create the infrastructure
+                needed to build an app. If you look in the project directory now, you'll see
+                a new folder called learning_logs u. Open that folder to see what Django has
+                created v. The most important files are models.py, admin.py, and views.py.
+            </div>
+        </section>
+        <section id="Defining_Models">
+            <h2 class="Section_Title">Defining Models</h2>
+            <div class="Definitions">
+                In Django, a model is a Python class that represents a database table. Each attribute of the class
+                corresponds to a column in the table. Models are defined in the models.py file of your app. <br>
+                Here's an example of how to define a simple model for a Course in the TimeTable app:
+            </div>
+            <pre class="prettyprint python Code">
+from django.db import models
+
+# Create your models here.
+from django.db import models
+
+
+class Teacher(models.Model):
+    teacher_id = models.AutoField(primary_key=True)
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
+    email = models.EmailField(unique=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+
+
+class Room(models.Model):
+    room_id = models.AutoField(primary_key=True)
+    building = models.CharField(max_length=100)
+    room_number = models.CharField(max_length=20)
+    capacity = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.building} {self.room_number}"
+
+
+class Course(models.Model):
+    course_id = models.AutoField(primary_key=True)
+    course_name = models.CharField(max_length=100)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    day_of_week = models.CharField(
+        max_length=10,
+        choices=[
+            ("Monday", "Monday"),
+            ("Tuesday", "Tuesday"),
+            ("Wednesday", "Wednesday"),
+            ("Thursday", "Thursday"),
+            ("Friday", "Friday"),
+            ("Saturday", "Saturday"),
+            ("Sunday", "Sunday"),
+        ]
+    )
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    def __str__(self):
+        return f"{self.course_name} ({self.day_of_week})"
+
+            </pre>
+            <div class="Definitions">
+                In this example, we define a Course model with three fields: title, description, and created_at.
+                Each field is represented by a specific field type provided by Django, such as CharField for short
+                text and TextField for longer text. <br>
+                To see the different kinds of fields you can use in a model, see the Django Model
+                Field Reference at <a
+                    href="https://docs.djangoproject.com/en/1.8/ref/models/fields/">https://docs.djangoproject.com/en/1.8/ref/models/fields/</a>.
+                <br>
+                We need to tell Django which attribute to use by default when it displays
+                information about a topic. Django calls a __str__() method to display
+                a simple representation of a model. <br>
+            </div>
+            <section id="Activating_Models">
+                <h2 class="Section_Title">Activating Models</h2>
+                <div class="Definitions">
+                    To use our models, we have to tell Django to include our app in the overall
+                    project. Open settings.py (in the ESST/ESST directory), and
+                    you'll see a section that tells Django which apps are installed in the project:
+                </div>
+                <pre class="prettyprint python Code">
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',  
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    # My apps
+    'TimeTable',  # Add this line to include the TimeTable app
+]
+                </pre>
+                <div class="Definitions">
+                    Add the name of your app (TimeTable) to the list of installed apps. This
+                    tells Django to include the models defined in the TimeTable app when it
+                    creates the database schema.
+                </div>
+            </section>
+
+            <div class="Definitions">
+                After defining your models, you need to create and apply migrations to update the database schema.
+                Migrations are a way to propagate changes made to your models into the database. To create and apply
+                migrations, run the following commands:
+            </div>
+            <pre class="prettyprint python Code">
+python manage.py makemigrations TimeTable
+python manage.py migrate
+            </pre>
+            <div class="Definitions">
+                Whenever we want to modify the data that TimeTable manages, we'll follow these three steps: modify
+                models.py, call makemigrations on TimeTable, and tell Django to migrate the project.
+            </div>
+        </section>
+        <section id="Admin_Site">
+            <h2 class="Section_Title">Using the Admin Site</h2>
+            <div class="Definitions">
+                Django includes a built-in admin site that allows you to manage your models through a web interface.
+                To use the admin site, you need to create a superuser account. Run the following command:
+            </div>
+            <pre class="prettyprint python Code">
+python manage.py createsuperuser
+            </pre>
+            <div class="Definitions">
+                Follow the prompts to create a username, email address, and password for the superuser account.
+                Once the superuser account is created, you can access the admin site by navigating to
+                http://localhost:8000/admin in your web browser. Log in using the superuser credentials you just
+                created. <br>
+                For our example we created a superuser with the username ESST_Admin, ESST_Admin@esst-sup.com as an email
+                and a simple password "123456789". <br>
+                After logging in, you'll see the admin dashboard, where you can manage your models.<br>
+            </div>
+        </section>
+        <section id="Registering_Model_with_Admin_Site">
+            <h2 class="Section_Title">Registering Models with the Admin Site</h2>
+            <div class="Definitions">
+                To manage your models through the admin site, you need to register them in the admin.py file of your
+                app. Open admin.py in the TimeTable app and add the following code:
+            </div>
+            <pre class="prettyprint python Code">
+from django.contrib import admin
+from .models import Course, Teacher, Room
+
+# Register your models here.
+
+admin.site.register(Course)
+admin.site.register(Teacher)
+admin.site.register(Room)
+            </pre>
+        </section>
     </main>
 
 </body>
