@@ -16,86 +16,95 @@ export const Menu_Items = [
     url: "../Intermediate/Intermediate.html",
     cName: "Nav_Bar_Menu_Item",
     icon: "fa-solid fa-user-plus",
+    subMenu: [
+      {
+        title: "Lists and Dictionaries",
+        url: "../Intermediate/Lists_and_Dictionaries.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Functions",
+        url: "../Intermediate/Functions.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Comprehensions and Generators",
+        url: "../Intermediate/Comprehensions_and_Generators.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Classes and Interfaces",
+        url: "../Intermediate/Classes_and_Interfaces.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Metaclasses and Attributes",
+        url: "../Intermediate/Metaclasses_and_Attributes.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+    ],
   },
   {
     title: "Django",
     url: "../Advanced/Django.html",
     cName: "Nav_Bar_Menu_Item",
     icon: "fa-solid fa-user-plus",
+    subMenu: [
+      {
+        title: "Getting Started with Django",
+        url: "../Django/Getting_Started_with_Django.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "User Accounts",
+        url: "../Django/User_Accounts.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Styling and Deploying an App",
+        url: "../Django/Styling_and_Deploying_an_App.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+    ],
   },
   {
-    title: "Settings",
-    url: "https://www.ensia.edu.dz/",
+    title: "Advanced",
+    url: "../Advanced/Advanced.html",
     cName: "Nav_Bar_Menu_Item",
     icon: "fa-solid fa-user-plus",
-  },
-];
-
-export const Labs_Items = [
-  {
-    title: "Lab 0: Team, project and GitHub account",
-    url: "Lab_0.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
-  },
-  {
-    title: "Lab 1: Installations",
-    url: "Lab_1.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
-  },
-  {
-    title: "Lab 2: Project structure",
-    url: "Lab_2.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
-  },
-  {
-    title: "Lab 3: CSS part 2",
-    url: "Lab_3.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
-  },
-  {
-    title: "Lab 4: Javascript form validation",
-    url: "Lab_4.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
-  },
-  {
-    title: "Lab 5: MySQL",
-    url: "Lab_5.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
-  },
-  {
-    title: "Lab 6: PDO",
-    url: "Lab_6.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
-  },
-  {
-    title: "Lab 7: ",
-    url: "Lab_7.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
-  },
-  {
-    title: "Lab 8: ",
-    url: "Lab_8.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
-  },
-  {
-    title: "Lab 9: ",
-    url: "Lab_9.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
-  },
-  {
-    title: "Lab 10: PHP part 3",
-    url: "Lab_10.html",
-    cName: "Labs_Menu_Item",
-    icon: "fa-solid fa-user-plus",
+    subMenu: [
+      {
+        title: "Concurrency and Parallelism",
+        url: "../Advanced/Concurrency_and_Parallelism.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Robustness and Performance",
+        url: "../Advanced/Robustness_and_Performance.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Testing and Debugging",
+        url: "../Advanced/Testing_and_Debugging.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Collaboration",
+        url: "../Advanced/Collaboration.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+    ],
   },
 ];

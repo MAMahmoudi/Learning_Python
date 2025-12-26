@@ -1,4 +1,4 @@
-import { Menu_Items, Labs_Items } from "./Menu_Items.js";
+import { Menu_Items } from "./Menu_Items.js";
 
 var Open_Dialog_Btn = document.getElementById("Open_Dialog_Btn_ID"),
   Close_Dialog_Btn = document.getElementById("Close_Btn_ID"),
@@ -9,7 +9,6 @@ var Open_Dialog_Btn = document.getElementById("Open_Dialog_Btn_ID"),
 var clicked = false;
 
 if (Open_Dialog_Btn != null) {
-  console.log("Open_Dialog_Btn");
   Open_Dialog_Btn.addEventListener("click", function (event) {
     event.preventDefault();
     Dialog.style.display = "block";
@@ -25,7 +24,6 @@ if (Close_Dialog_Btn != null) {
 
 function Build_Nav_Bar() {
   var body = document.getElementsByTagName("body")[0];
-  console.log(body.children[0]);
   var Header = document.createElement("header");
   var Nav_Bar_Items = document.createElement("nav");
   Nav_Bar_Items.setAttribute("class", "Nav_Bar_Items");
@@ -53,21 +51,25 @@ function Build_Nav_Bar() {
     Nav_Bar_Item_Link.setAttribute("href", item.url);
     Nav_Bar_Item_Link.setAttribute("class", item.cName);
     Nav_Bar_Item_Link.innerHTML = item.title;
-    if (item.title == "Labs") {
-      Nav_Bar_Item.setAttribute("id", "Nav_Bar_Item_Labs_ID");
-      var Labs = document.createElement("ul");
-      Labs.setAttribute("class", "Labs_Menu");
-      Labs.setAttribute("id", "Labs_Menu_ID");
-      Labs_Items.map((item2, index2) => {
-        var Labs_Menu_Item = document.createElement("li");
-        var Labs_Menu_Item_Link = document.createElement("a");
-        Labs_Menu_Item_Link.setAttribute("href", item2.url);
-        Labs_Menu_Item_Link.setAttribute("class", item2.cName);
-        Labs_Menu_Item_Link.innerHTML = item2.title;
-        Labs_Menu_Item.innerHTML = Labs_Menu_Item_Link.outerHTML;
-        Labs.appendChild(Labs_Menu_Item);
+    if (
+      item.title == "Intermediate" ||
+      item.title == "Advanced" ||
+      item.title == "Django"
+    ) {
+      Nav_Bar_Item.setAttribute("id", "Nav_Bar_Item_Sub_Menus_ID");
+      var Sub_Menus = document.createElement("ul");
+      Sub_Menus.setAttribute("class", "Sub_Menu");
+      Sub_Menus.setAttribute("id", "Sub_Menu_ID");
+      item.subMenu.map((item2, index2) => {
+        var Sub_Menu_Item = document.createElement("li");
+        var Sub_Menu_Item_Link = document.createElement("a");
+        Sub_Menu_Item_Link.setAttribute("href", item2.url);
+        Sub_Menu_Item_Link.setAttribute("class", item2.cName);
+        Sub_Menu_Item_Link.innerHTML = item2.title;
+        Sub_Menu_Item.innerHTML = Sub_Menu_Item_Link.outerHTML;
+        Sub_Menus.appendChild(Sub_Menu_Item);
         Nav_Bar_Item.innerHTML = Nav_Bar_Item_Link.outerHTML;
-        Nav_Bar_Item.appendChild(Labs);
+        Nav_Bar_Item.appendChild(Sub_Menus);
       });
     } else {
       Nav_Bar_Item.innerHTML = Nav_Bar_Item_Link.outerHTML;
@@ -94,7 +96,6 @@ Build_Nav_Bar();
 
 function handle_click() {
   clicked = !clicked;
-  console.log(clicked);
   if (!clicked) {
     document.getElementById("Nav_Bar_Menu_ID").className = "Nav_Bar_Menu";
     document.getElementById("Menu_Icon_I_ID").className = "fas fa-bars";

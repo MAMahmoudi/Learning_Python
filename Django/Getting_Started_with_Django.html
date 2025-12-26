@@ -280,6 +280,264 @@ admin.site.register(Teacher)
 admin.site.register(Room)
             </pre>
         </section>
+        <section id="Making_Pages">
+            <h2 class="Section_Title">Making Pages</h2>
+            <div class="Definitions">
+                making web pages with Django consists of three stages: defining
+                URLs, writing views, and writing templates. <br>
+                First, you must define patterns
+                for URLs. A URL pattern describes the way the URL is laid out and tells
+                Django what to look for when matching a browser request with a site URL
+                so it knows which page to return. <br>
+                Each URL then maps to a particular view—the view function retrieves
+                and processes the data needed for that page. The view function often calls a
+                template, which builds a page that a browser can read. <br>
+                In Django, views are Python functions that handle requests and return responses. Views are defined in
+                the views.py file of your app.
+            </div>
+            <h2 class="Subsection_Title">Mapping a URL</h2>
+            <div class="Definitions">
+                To map a URL to a view, you need to define a URL pattern in the urls.py file of your app.
+                We need to include the URLs for the TimeTable app in the project's main urls.py file located in the
+                ESST/ESST directory. Open that file and modify it as follows:
+            </div>
+            <pre class="prettyprint python Code">
+from django.contrib import admin
+from django.urls import path, include
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('timetable/', include('TimeTable.urls')),  # Include TimeTable app URLs
+]
+        </pre>
+            <div class="Definitions">
+                Next, create a new file called urls.py in the TimeTable app directory and add the following code to
+                define the URL patterns for the app:
+            </div>
+            <pre class="prettyprint python Code">
+"""Defines URL patterns for TimeTable app."""
+from django.urls import path
+from . import views
+urlpatterns = [
+    path('courses/', views.course_list, name='course_list'),
+    path('teachers/', views.teacher_list, name='teacher_list'),
+    path('rooms/', views.room_list, name='room_list'),
+]
+            </pre>
+            <div class="Definitions">
+                In this example, we define three URL patterns: /courses/, /teachers/, and /rooms/. Each pattern maps to
+                a corresponding view function in views.py.
+            </div>
+            <h2 class="Subsection_Title">Writing Views</h2>
+            <div class="Definitions">
+                A view function takes in information from a request, prepares the data
+                needed to generate a page, and then sends the data back to the browser,
+                often by using a template that defines what the page will look like. <br>
+                The file views.py in TimeTable was generated automatically when
+                we ran the command python manage.py startapp. <br>
+                Here's an example of how to create a simple view that displays a list of courses in the TimeTable app:
+            </div>
+            <pre class="prettyprint python Code">
+from django.shortcuts import render
+from .models import Course
+# Create your views here.
+def course_list(request):
+    courses = Course.objects.all()
+    return render(request, 'TimeTable/course_list.html', {'courses': courses})
+
+def teacher_list(request):
+    teachers = Teacher.objects.all()
+    return render(request, 'TimeTable/teacher_list.html', {'teachers': teachers})
+
+def room_list(request):
+    rooms = Room.objects.all()
+    return render(request, 'TimeTable/room_list.html', {'rooms': rooms})
+            </pre>
+            <div class="Definitions">
+                In this example, we define a view function called course_list that retrieves all Course objects from
+                the database and renders them using a template called course_list.html. The context dictionary
+                {'courses':
+                courses} is passed to the template, allowing it to access the list of courses.
+                The same pattern is followed for teacher_list and room_list functions.
+            </div>
+            <h2 class="Subsection_Title">Writing Templates</h2>
+            <div class="Definitions">
+                Templates define the structure and layout of the HTML pages that are sent to the browser.
+                In Django, templates are stored in a templates directory within your app. <br>
+                Create a new directory called templates inside the TimeTable app directory, and then create another
+                directory called TimeTable inside the templates directory. This structure helps Django locate the
+                templates for the TimeTable app. <br>
+                Now, create a new file called course_list.html inside the TimeTable/templates/TimeTable directory and
+                add the following code:
+            </div>
+            <pre class="prettyprint html Code">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Course List&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Course List&lt;/h1&gt;
+    &lt;ul&gt;
+        {% for course in courses %}
+            &lt;li&gt;&lt;b&gt;{{ course.name }}&lt;/b&gt;, taught by {{ course.teacher }}, in {{ course.room }}, on {{ course.day_of_week }} at {{ course.time }}&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+            </pre>
+            <div class="Definitions">
+                In this template, we use Django's template language to loop through the list of courses passed from
+                the view and display each course's name, teacher, room, day of the week, and time. <br>
+                You can create similar templates for teacher_list.html and room_list.html to display lists of teachers
+                and rooms, respectively.</div>
+            <pre class="prettyprint html Code">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Teacher List&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Teacher List&lt;/h1&gt;
+    &lt;ul&gt;
+        {% for teacher in teachers %}
+            &lt;li&gt;&lt;b&gt;{{ teacher.name }}&lt;/b&gt;, teaches {{ teacher.courses.all|join:", " }}&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+            </pre>
+            <div class="Definitions">
+                In this template, we use Django's template language to loop through the list of teachers passed from
+                the view and display each teacher's name and the courses they teach. <br>
+                You can create similar templates for room_list.html and teacher_list.html to display lists of rooms and
+                teachers respectively.</div>
+            <pre class="prettyprint html Code">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Room List&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Room List&lt;/h1&gt;
+    &lt;ul&gt;
+        {% for room in rooms %}
+            &lt;li&gt;&lt;b&gt;{{ room.name }}&lt;/b&gt;, capacity: {{ room.capacity }}&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+            </pre>
+            <pre class="prettyprint html Code">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Teacher List&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Teacher List&lt;/h1&gt;
+    &lt;ul&gt;
+        {% for teacher in teachers %}
+            &lt;li&gt;&lt;b&gt;{{ teacher.name }}&lt;/b&gt;, teaches {{ teacher.courses.all|join:", " }}&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+            <div class="Definitions">
+                With the URL patterns, views, and templates in place, you can now navigate to the following URLs in
+                your web browser to see the lists of courses, teachers, and rooms:
+                <ul>
+                    <li>http://localhost:8000/timetable/courses/</li>
+                    <li>http://localhost:8000/timetable/teachers/</li>
+                    <li>http://localhost:8000/timetable/rooms/</li>
+                </ul>
+            </div>
+        </section>
+        <section id="Template_Inheritance">
+            <h2 class="Section_Title">Template Inheritance</h2>
+            <div class="Definitions">
+                Template inheritance allows you to create a base template that defines the overall structure of your
+                web pages, and then extend that base template in other templates to add specific content. This helps
+                maintain a consistent look and feel across your website and reduces code duplication. <br>
+                Let's create a base template called base_TimeTable.html in the TimeTable/templates/TimeTable directory.
+                <br>
+                This base template will define the common header and footer for all pages in the TimeTable app. The
+                header will
+                include a h1 tag and navigation bar with links to the course list, teacher list, and room list pages.
+                The footer will include a simple copyright notice.
+            </div>
+            <pre class="prettyprint html Code">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;TimeTable&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;header&gt;
+        &lt;h1&gt;TimeTable&lt;/h1&gt;
+        &lt;nav&gt;
+            &lt;a href="{% url 'course_list' %}"&gt;Courses&lt;/a&gt;
+            &lt;a href="{% url 'teacher_list' %}"&gt;Teachers&lt;/a&gt;
+            &lt;a href="{% url 'room_list' %}"&gt;Rooms&lt;/a&gt;
+        &lt;/nav&gt;
+    &lt;/header&gt;
+                &lt;main&gt;
+                    {% block content %}
+                    {% endblock %}
+                &lt;/main&gt;
+    &lt;footer&gt;
+        &lt;p&gt;&amp;copy; 2024 TimeTable App&lt;/p&gt;
+    &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+            </pre>
+            <div class="Definitions">
+                In this base template, we define a header with a h1 tag and navigation links, a main content area
+                defined by the {% block content %} tag, and a footer with a copyright notice. <br>
+                Now, let's modify the course_list.html template to extend the base template and add specific content to
+                the content block:
+            </div>
+            <pre class="prettyprint html Code">
+{% extends "TimeTable/base_TimeTable.html" %}
+{% block content %}
+    &lt;h1&gt;Course List&lt;/h1&gt;
+    &lt;ul&gt;
+        {% for course in courses %}
+            &lt;li&gt;&lt;b&gt;{{ course.name }}&lt;/b&gt;, taught by {{ course.teacher }}, in {{ course.room }}, on {{ course.day_of_week }} at {{ course.time }}&lt;/li&gt;
+            {% empty %}
+            &lt;li&gt;No courses available.&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+{% endblock %}
+            </pre>
+            <div class="Definitions">
+                In this modified course_list.html template, we use the {% extends %} tag to specify that this template
+                extends the base_TimeTable.html template. We then define the content for the content block using the
+                {% block content %} and {% endblock %} tags. <br>
+                This block, named content, is a placeholder;
+                the child template will define the kind of information that goes in
+                the content block. <br>
+                Everything that we aren't inheriting from the parent
+                template goes inside a content block. <br>
+                When Django processes this template, it will combine the base template with the content defined in the
+                content block. <br>
+                A child template doesn't have to define every block from its parent, so
+                you can reserve space in parent templates for as many blocks as you like,
+                and the child template uses only as many as it requires. <br>
+                The code used in templates
+                differs from Python in some important ways. Python uses indentation
+                to indicate which lines of a for statement are part of a loop. In a template,
+                every for loop needs an explicit {% endfor %} tag indicating where the end of
+                the loop occurs. <br>
+                To print a variable in a template, wrap the variable name in double curly
+                braces ({{ and }}). <br>
+                the {% empty %} template tag, which tells Django what to do
+                if there are no items in the list. In this case, if there are no courses,
+                Django will display a message indicating that no courses are available. <br>
+                You can similarly modify the teacher_list.html and room_list.html templates to extend the base template
+                and add specific content to the content block.
+            </div>
+        </section>
     </main>
 
 </body>

@@ -62,10 +62,10 @@
   padding-left: 10px;
 }
 
-.Labs_Menu {
+.Sub_Menu {
   text-decoration: none;
   color: #fff;
-  background-color: rgba(140, 21, 21, 0.9);
+  background-color: rgba(83, 175, 50, 0.9);
   font-size: 1.2rem;
   font-weight: 600;
   padding: 0.7rem 1rem;
@@ -77,12 +77,12 @@
   list-style: none;
 }
 
-#Nav_Bar_Item_Labs_ID:hover .Labs_Menu {
+#Nav_Bar_Item_Sub_Menus_ID:hover .Sub_Menu {
   display: grid;
   grid-template-columns: 3fr 3fr 3fr 3fr 1fr;
 }
 
-.Labs_Menu_Item {
+.Sub_Menu_Item {
   text-decoration: none;
   color: #fff;
   background-color: transparent;
@@ -95,7 +95,7 @@
   list-style: none;
 }
 
-.Labs_Menu_Item:hover {
+.Sub_Menu_Item:hover {
   color: white;
   transition: all 0.2s ease-in-out;
   border-radius: 4px;
