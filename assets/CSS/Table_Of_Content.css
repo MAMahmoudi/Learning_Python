@@ -20,11 +20,8 @@ main {
   position: relative;
 }
 
-.Content_list_Title {
-}
-
 .Chapter_List {
-  color: #8c1515;
+  color: #53af32;
   font-size: 20px;
   font-weight: bold;
   margin-top: 20px;
@@ -33,16 +30,15 @@ main {
 }
 
 .Chapter_List_Element {
-  color: #8c1515;
+  color: #53af32;
   font-size: 20px;
   font-weight: bold;
   margin-top: 20px;
   margin-bottom: 20px;
   margin-left: 20px;
 }
-
-.Section_List_Element {
-  color: #8c1515;
+.Section_List {
+  color: #53af32;
   font-size: 15px;
   font-weight: bold;
   margin-top: 20px;
@@ -50,11 +46,11 @@ main {
   margin-left: 40px;
 }
 
-.Subsection_List_Element {
-  color: #8c1515;
-  font-size: 10px;
+.Section_List_Element {
+  color: #53af32;
+  font-size: 15px;
   font-weight: bold;
   margin-top: 20px;
   margin-bottom: 20px;
-  margin-left: 60px;
+  margin-left: 40px;
 }

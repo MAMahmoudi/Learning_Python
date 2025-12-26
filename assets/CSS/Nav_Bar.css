@@ -55,7 +55,8 @@
   color: white;
   transition: all 0.2s ease-in-out;
   border-radius: 4px;
-  background-color: #01959a;
+  background-color: #fff;
+  color: #53af32;
 }
 
 .Nav_Bar_Menu_Item i {
@@ -99,7 +100,8 @@
   color: white;
   transition: all 0.2s ease-in-out;
   border-radius: 4px;
-  background-color: #01959a;
+  background-color: #fff;
+  color: #53af32;
 }
 
 @media screen and (max-width: 850px) {
