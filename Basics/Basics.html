@@ -10,9 +10,9 @@
 </head>
 
 <body>
-
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
     <main>
-        <aside class="Sections_Tab"></aside>
+        <aside class="Sections_Tab" id="Sections_Tab"></aside>
         <div class="Content_Area">
             <h1 class="Chapter_Title">Basics of Python</h1>
             <div class="Sections_Area">
@@ -458,46 +458,61 @@ print(greet("Alice"))
                     <h2 class="Section_Title">Lambda Functions</h2>
                     <div class="Definitions">
                         Lambda functions are small anonymous functions defined using the lambda keyword. They can take
-                        any
-                        number of arguments but can only have a single expression.
+                        any number of arguments but can only have a single expression. <br>
+                        The syntax is: <br>
+                        <strong>Func_Name = lambda arguments: expression</strong>
                     </div>
                     <pre class="prettyprint python Code">
 # Example of a lambda function
 add = lambda x, y: x + y
 print(add(5, 3))
+# Using lambda with map() function
+numbers = [1, 2, 3, 4, 5]
+squared_numbers = list(map(lambda x: x**2, numbers))
+print(squared_numbers)
+# Using lambda with filter() function
+even_numbers = list(filter(lambda x: x % 2 == 0, numbers))
+print(even_numbers)
             </pre>
                 </section>
                 <section id="Modules">
                     <h2 class="Section_Title">Modules</h2>
                     <div class="Definitions">
                         Modules in Python are files containing Python code that can be imported and used in other Python
-                        programs. They help organize code and promote reusability.
+                        programs. They help organize code and promote reusability. <br>
+                        You can create your own modules or use built-in and third-party modules.
+                        Let's see how to create and use a simple module.
+
                     </div>
                     <pre class="prettyprint python Code">
-# Importing and using a module
-import math
-print(math.sqrt(16))
+# Creating a module named my_module.py
+def add(a, b):
+    return a + b
+def subtract(a, b):
+    return a - b
             </pre>
-                </section>
-                <section id="Library">
-                    <h2 class="Section_Title">Standard Library</h2>
-                    <div class="Definitions">
-                        Python's standard library is a collection of modules and packages that come bundled with Python.
-                        It provides a wide range of functionalities, from file I/O to web development.
-                    </div>
                     <pre class="prettyprint python Code">
-# Example of using the datetime module from the standard library
-import datetime
-now = datetime.datetime.now()
-print("Current date and time:", now)
+# Using the module in another Python file
+import my_module
+print(my_module.add(5, 3))
+print(my_module.subtract(5, 3))
+# Importing specific functions from the module
+from my_module import add, subtract # or from my_module import * to import all functions
+print(subtract(10, 4))
+print(add(10, 4))
             </pre>
                 </section>
                 <section id="Classes">
                     <h2 class="Section_Title">Classes and Objects</h2>
                     <div class="Definitions">
                         Classes in Python are blueprints for creating objects. They encapsulate data and behavior
-                        related to
-                        that data. An object is an instance of a class.
+                        related to that data. An object is an instance of a class. <br>
+                        Classes are defined using the <strong>class</strong> keyword, followed by the class name and a
+                        colon. <br>
+                        The __init__() method is a special method used to initialize the attributes of the class. <br>
+                        Methods are functions defined within a class that operate on the object's data. <br>
+                        The self parameter refers to the instance of the class and is used to access its attributes and methods.
+                        
                     </div>
                     <pre class="prettyprint python Code">
 # Defining a class and creating an object
@@ -510,14 +525,14 @@ class Student:
 student1 = Student("Alice", 25)
 print(student1.introduce())
             </pre>
+
                 </section>
             </div>
         </div>
     </main>
-
 </body>
 <script src="../assets/JS/Nav_Bar.js" type="module"></script>
-<script src="../assets/JS/Side_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
 <script
     src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 
