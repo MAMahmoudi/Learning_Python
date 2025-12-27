@@ -11,17 +11,23 @@
 
 <body>
     <main>
-        <h1 class="Chapter_Title">Introduction to Django</h1>
-        <section id="Virtual_Environment">
-            <h2 class="Section_Title">Creating a Virtual Environment</h2>
-            <div class="Definitions">
-                A virtual environment is a self-contained directory that contains a Python installation and a set of
-                packages.
-                It allows you to manage dependencies for different projects separately.
-                Create a new directory for your project called learning_log, switch to that directory in a terminal, and
-                create a virtual environment.
-            </div>
-            <pre class="prettyprint python Code">
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Introduction to Django</h1>
+            <div class="Sections_Area">
+                <section id="Virtual_Environment">
+                    <h2 class="Section_Title">Creating a Virtual Environment</h2>
+                    <div class="Definitions">
+                        A virtual environment is a self-contained directory that contains a Python installation and a
+                        set of
+                        packages.
+                        It allows you to manage dependencies for different projects separately.
+                        Create a new directory for your project called learning_log, switch to that directory in a
+                        terminal,
+                        and
+                        create a virtual environment.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Create a virtual environment
 python -m venv myenv
 
@@ -31,116 +37,132 @@ myenv\Scripts\activate
 # On macOS/Linux:
 source myenv/bin/activate
             </pre>
-        </section>
-        <section id="Install_Django">
-            <h2 class="Section_Title">Installing Django</h2>
-            <div class="Definitions">
-                With your virtual environment activated, install Django using pip, the Python package manager.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Install_Django">
+                    <h2 class="Section_Title">Installing Django</h2>
+                    <div class="Definitions">
+                        With your virtual environment activated, install Django using pip, the Python package manager.
+                    </div>
+                    <pre class="prettyprint python Code">
 pip install django
             </pre>
-        </section>
-        <section id="Create_Django_Project">
-            <h2 class="Section_Title">Creating a Django Project</h2>
-            <div class="Definitions">
-                Use the django-admin command-line tool to create a new Django project called ESST.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Create_Django_Project">
+                    <h2 class="Section_Title">Creating a Django Project</h2>
+                    <div class="Definitions">
+                        Use the django-admin command-line tool to create a new Django project called ESST.
+                    </div>
+                    <pre class="prettyprint python Code">
 django-admin startproject ESST .
             </pre>
-            <div class="Definitions">
-                The dot (.) at the end of the command tells Django to create the project in the current directory.
-                If you look in your project directory, using `ls` (on macOS/Linux) or `dir` (on Windows), you should see
-                a new folder called ESST containing several files.
-                <ul>
-                    <li><strong>manage.py:</strong> A command-line utility that lets you interact with this Django
-                        project
-                        in various ways.</li>
-                    <li><strong>ESST/</strong> directory contains four files, the most important
-                        of which are settings.py, urls.py, and wsgi.py.
+                    <div class="Definitions">
+                        The dot (.) at the end of the command tells Django to create the project in the current
+                        directory.
+                        If you look in your project directory, using `ls` (on macOS/Linux) or `dir` (on Windows), you
+                        should
+                        see
+                        a new folder called ESST containing several files.
                         <ul>
-                            <li><strong>settings.py:</strong> Controls how Django interacts with your system and manages
-                                your project.</li>
-                            <li><strong>urls.py:</strong> Tells Django which pages to build in response to browser
-                                requests.</li>
-                            <li><strong>wsgi.py:</strong> Helps Django serve the files it creates. The filename is an
-                                acronym for web server gateway interface.</li>
+                            <li><strong>manage.py:</strong> A command-line utility that lets you interact with this
+                                Django
+                                project
+                                in various ways.</li>
+                            <li><strong>ESST/</strong> directory contains four files, the most important
+                                of which are settings.py, urls.py, and wsgi.py.
+                                <ul>
+                                    <li><strong>settings.py:</strong> Controls how Django interacts with your system and
+                                        manages
+                                        your project.</li>
+                                    <li><strong>urls.py:</strong> Tells Django which pages to build in response to
+                                        browser
+                                        requests.</li>
+                                    <li><strong>wsgi.py:</strong> Helps Django serve the files it creates. The filename
+                                        is
+                                        an
+                                        acronym for web server gateway interface.</li>
+                                </ul>
+                            </li>
                         </ul>
-                    </li>
-                </ul>
-            </div>
-        </section>
-        <section id="Creating_the_Database">
-            <h2 class="Section_Title">Creating the Database</h2>
-            <div class="Definitions">
-                Django uses a database to store information for your project. By default, Django is configured to use
-                SQLite, a lightweight database that is easy to set up and requires no additional configuration.
-                To create the database, run the following command:
-            </div>
-            <pre class="prettyprint python Code">
+                    </div>
+                </section>
+                <section id="Creating_the_Database">
+                    <h2 class="Section_Title">Creating the Database</h2>
+                    <div class="Definitions">
+                        Django uses a database to store information for your project. By default, Django is configured
+                        to
+                        use
+                        SQLite, a lightweight database that is easy to set up and requires no additional configuration.
+                        To create the database, run the following command:
+                    </div>
+                    <pre class="prettyprint python Code">
 python manage.py migrate
             </pre>
-            <div class="Definitions">
-                Any time we modify a database, we say we are migrating the database.
-                Issuing the migrate command for the first time tells Django to make sure the
-                database matches the current state of the project. The first time we run this
-                command in a new project using SQLite, Django will create a new database for us. <br>
-                Running the ls command (dir on Windows) shows that Django created another file called
-                db.sqlite3.
-            </div>
-        </section>
-        <section id="Run_Development_Server">
-            <h2 class="Section_Title">Running the Development Server</h2>
-            <div class="Definitions">
-                Django includes a lightweight web server for development purposes. To start the server, run the
-                following command:
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        Any time we modify a database, we say we are migrating the database.
+                        Issuing the migrate command for the first time tells Django to make sure the
+                        database matches the current state of the project. The first time we run this
+                        command in a new project using SQLite, Django will create a new database for us. <br>
+                        Running the ls command (dir on Windows) shows that Django created another file called
+                        db.sqlite3.
+                    </div>
+                </section>
+                <section id="Run_Development_Server">
+                    <h2 class="Section_Title">Running the Development Server</h2>
+                    <div class="Definitions">
+                        Django includes a lightweight web server for development purposes. To start the server, run the
+                        following command:
+                    </div>
+                    <pre class="prettyprint python Code">
 python manage.py runserver
             </pre>
-            <div class="Definitions">
-                After starting the server, open a web browser and navigate to http://localhost:8000. You should see the
-                default Django welcome page, indicating that your project is set up correctly. <br>
-                To stop the server, return to the terminal and press Ctrl+C. <br>
-                If you receive the error message That port is already in use, tell Django to use a
-                different port by entering python manage.py runserver 8001 and cycle through higher
-                numbers until you find an open port. For example:
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        After starting the server, open a web browser and navigate to http://localhost:8000. You should
+                        see
+                        the
+                        default Django welcome page, indicating that your project is set up correctly. <br>
+                        To stop the server, return to the terminal and press Ctrl+C. <br>
+                        If you receive the error message That port is already in use, tell Django to use a
+                        different port by entering python manage.py runserver 8001 and cycle through higher
+                        numbers until you find an open port. For example:
+                    </div>
+                    <pre class="prettyprint python Code">
 python manage.py runserver 8001
             </pre>
-        </section>
-        <section id="Starting_an_App">
-            <h2 class="Section_Title">Starting a Django App</h2>
-            <div class="Definitions">
-                In Django, a project is a collection of settings and configurations for an entire website, while an app
-                is a
-                web application that does something specific, such as a blog or a forum. A project can contain multiple
-                apps. <br>
-                You should still be running runserver in the terminal window you
-                opened earlier. Open a new terminal window (or tab) and navigate to the
-                directory that contains manage.py. Activate the virtual environment, and
-                then run the startapp command:
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Starting_an_App">
+                    <h2 class="Section_Title">Starting a Django App</h2>
+                    <div class="Definitions">
+                        In Django, a project is a collection of settings and configurations for an entire website, while
+                        an
+                        app
+                        is a
+                        web application that does something specific, such as a blog or a forum. A project can contain
+                        multiple
+                        apps. <br>
+                        You should still be running runserver in the terminal window you
+                        opened earlier. Open a new terminal window (or tab) and navigate to the
+                        directory that contains manage.py. Activate the virtual environment, and
+                        then run the startapp command:
+                    </div>
+                    <pre class="prettyprint python Code">
 python manage.py startapp TimeTable
             </pre>
-            <div class="Definitions">
-                The command startapp appname tells Django to create the infrastructure
-                needed to build an app. If you look in the project directory now, you'll see
-                a new folder called learning_logs u. Open that folder to see what Django has
-                created v. The most important files are models.py, admin.py, and views.py.
-            </div>
-        </section>
-        <section id="Defining_Models">
-            <h2 class="Section_Title">Defining Models</h2>
-            <div class="Definitions">
-                In Django, a model is a Python class that represents a database table. Each attribute of the class
-                corresponds to a column in the table. Models are defined in the models.py file of your app. <br>
-                Here's an example of how to define a simple model for a Course in the TimeTable app:
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        The command startapp appname tells Django to create the infrastructure
+                        needed to build an app. If you look in the project directory now, you'll see
+                        a new folder called learning_logs u. Open that folder to see what Django has
+                        created v. The most important files are models.py, admin.py, and views.py.
+                    </div>
+                </section>
+                <section id="Defining_Models">
+                    <h2 class="Section_Title">Defining Models</h2>
+                    <div class="Definitions">
+                        In Django, a model is a Python class that represents a database table. Each attribute of the
+                        class
+                        corresponds to a column in the table. Models are defined in the models.py file of your app. <br>
+                        Here's an example of how to define a simple model for a Course in the TimeTable app:
+                    </div>
+                    <pre class="prettyprint python Code">
 from django.db import models
 
 # Create your models here.
@@ -192,26 +214,27 @@ class Course(models.Model):
         return f"{self.course_name} ({self.day_of_week})"
 
             </pre>
-            <div class="Definitions">
-                In this example, we define a Course model with three fields: title, description, and created_at.
-                Each field is represented by a specific field type provided by Django, such as CharField for short
-                text and TextField for longer text. <br>
-                To see the different kinds of fields you can use in a model, see the Django Model
-                Field Reference at <a
-                    href="https://docs.djangoproject.com/en/1.8/ref/models/fields/">https://docs.djangoproject.com/en/1.8/ref/models/fields/</a>.
-                <br>
-                We need to tell Django which attribute to use by default when it displays
-                information about a topic. Django calls a __str__() method to display
-                a simple representation of a model. <br>
-            </div>
-            <section id="Activating_Models">
-                <h2 class="Section_Title">Activating Models</h2>
-                <div class="Definitions">
-                    To use our models, we have to tell Django to include our app in the overall
-                    project. Open settings.py (in the ESST/ESST directory), and
-                    you'll see a section that tells Django which apps are installed in the project:
-                </div>
-                <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        In this example, we define a Course model with three fields: title, description, and created_at.
+                        Each field is represented by a specific field type provided by Django, such as CharField for
+                        short
+                        text and TextField for longer text. <br>
+                        To see the different kinds of fields you can use in a model, see the Django Model
+                        Field Reference at <a
+                            href="https://docs.djangoproject.com/en/1.8/ref/models/fields/">https://docs.djangoproject.com/en/1.8/ref/models/fields/</a>.
+                        <br>
+                        We need to tell Django which attribute to use by default when it displays
+                        information about a topic. Django calls a __str__() method to display
+                        a simple representation of a model. <br>
+                    </div>
+                    <section id="Activating_Models">
+                        <h2 class="Section_Title">Activating Models</h2>
+                        <div class="Definitions">
+                            To use our models, we have to tell Django to include our app in the overall
+                            project. Open settings.py (in the ESST/ESST directory), and
+                            you'll see a section that tells Django which apps are installed in the project:
+                        </div>
+                        <pre class="prettyprint python Code">
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',  
@@ -223,53 +246,60 @@ INSTALLED_APPS = [
     'TimeTable',  # Add this line to include the TimeTable app
 ]
                 </pre>
-                <div class="Definitions">
-                    Add the name of your app (TimeTable) to the list of installed apps. This
-                    tells Django to include the models defined in the TimeTable app when it
-                    creates the database schema.
-                </div>
-            </section>
+                        <div class="Definitions">
+                            Add the name of your app (TimeTable) to the list of installed apps. This
+                            tells Django to include the models defined in the TimeTable app when it
+                            creates the database schema.
+                        </div>
+                    </section>
 
-            <div class="Definitions">
-                After defining your models, you need to create and apply migrations to update the database schema.
-                Migrations are a way to propagate changes made to your models into the database. To create and apply
-                migrations, run the following commands:
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        After defining your models, you need to create and apply migrations to update the database
+                        schema.
+                        Migrations are a way to propagate changes made to your models into the database. To create and
+                        apply
+                        migrations, run the following commands:
+                    </div>
+                    <pre class="prettyprint python Code">
 python manage.py makemigrations TimeTable
 python manage.py migrate
             </pre>
-            <div class="Definitions">
-                Whenever we want to modify the data that TimeTable manages, we'll follow these three steps: modify
-                models.py, call makemigrations on TimeTable, and tell Django to migrate the project.
-            </div>
-        </section>
-        <section id="Admin_Site">
-            <h2 class="Section_Title">Using the Admin Site</h2>
-            <div class="Definitions">
-                Django includes a built-in admin site that allows you to manage your models through a web interface.
-                To use the admin site, you need to create a superuser account. Run the following command:
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        Whenever we want to modify the data that TimeTable manages, we'll follow these three steps:
+                        modify
+                        models.py, call makemigrations on TimeTable, and tell Django to migrate the project.
+                    </div>
+                </section>
+                <section id="Admin_Site">
+                    <h2 class="Section_Title">Using the Admin Site</h2>
+                    <div class="Definitions">
+                        Django includes a built-in admin site that allows you to manage your models through a web
+                        interface.
+                        To use the admin site, you need to create a superuser account. Run the following command:
+                    </div>
+                    <pre class="prettyprint python Code">
 python manage.py createsuperuser
             </pre>
-            <div class="Definitions">
-                Follow the prompts to create a username, email address, and password for the superuser account.
-                Once the superuser account is created, you can access the admin site by navigating to
-                http://localhost:8000/admin in your web browser. Log in using the superuser credentials you just
-                created. <br>
-                For our example we created a superuser with the username ESST_Admin, ESST_Admin@esst-sup.com as an email
-                and a simple password "123456789". <br>
-                After logging in, you'll see the admin dashboard, where you can manage your models.<br>
-            </div>
-        </section>
-        <section id="Registering_Model_with_Admin_Site">
-            <h2 class="Section_Title">Registering Models with the Admin Site</h2>
-            <div class="Definitions">
-                To manage your models through the admin site, you need to register them in the admin.py file of your
-                app. Open admin.py in the TimeTable app and add the following code:
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        Follow the prompts to create a username, email address, and password for the superuser account.
+                        Once the superuser account is created, you can access the admin site by navigating to
+                        http://localhost:8000/admin in your web browser. Log in using the superuser credentials you just
+                        created. <br>
+                        For our example we created a superuser with the username ESST_Admin, ESST_Admin@esst-sup.com as
+                        an
+                        email
+                        and a simple password "123456789". <br>
+                        After logging in, you'll see the admin dashboard, where you can manage your models.<br>
+                    </div>
+                </section>
+                <section id="Registering_Model_with_Admin_Site">
+                    <h2 class="Section_Title">Registering Models with the Admin Site</h2>
+                    <div class="Definitions">
+                        To manage your models through the admin site, you need to register them in the admin.py file of
+                        your
+                        app. Open admin.py in the TimeTable app and add the following code:
+                    </div>
+                    <pre class="prettyprint python Code">
 from django.contrib import admin
 from .models import Course, Teacher, Room
 
@@ -279,29 +309,32 @@ admin.site.register(Course)
 admin.site.register(Teacher)
 admin.site.register(Room)
             </pre>
-        </section>
-        <section id="Making_Pages">
-            <h2 class="Section_Title">Making Pages</h2>
-            <div class="Definitions">
-                making web pages with Django consists of three stages: defining
-                URLs, writing views, and writing templates. <br>
-                First, you must define patterns
-                for URLs. A URL pattern describes the way the URL is laid out and tells
-                Django what to look for when matching a browser request with a site URL
-                so it knows which page to return. <br>
-                Each URL then maps to a particular view—the view function retrieves
-                and processes the data needed for that page. The view function often calls a
-                template, which builds a page that a browser can read. <br>
-                In Django, views are Python functions that handle requests and return responses. Views are defined in
-                the views.py file of your app.
-            </div>
-            <h2 class="Subsection_Title">Mapping a URL</h2>
-            <div class="Definitions">
-                To map a URL to a view, you need to define a URL pattern in the urls.py file of your app.
-                We need to include the URLs for the TimeTable app in the project's main urls.py file located in the
-                ESST/ESST directory. Open that file and modify it as follows:
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Making_Pages">
+                    <h2 class="Section_Title">Making Pages</h2>
+                    <div class="Definitions">
+                        making web pages with Django consists of three stages: defining
+                        URLs, writing views, and writing templates. <br>
+                        First, you must define patterns
+                        for URLs. A URL pattern describes the way the URL is laid out and tells
+                        Django what to look for when matching a browser request with a site URL
+                        so it knows which page to return. <br>
+                        Each URL then maps to a particular view—the view function retrieves
+                        and processes the data needed for that page. The view function often calls a
+                        template, which builds a page that a browser can read. <br>
+                        In Django, views are Python functions that handle requests and return responses. Views are
+                        defined
+                        in
+                        the views.py file of your app.
+                    </div>
+                    <h2 class="Subsection_Title">Mapping a URL</h2>
+                    <div class="Definitions">
+                        To map a URL to a view, you need to define a URL pattern in the urls.py file of your app.
+                        We need to include the URLs for the TimeTable app in the project's main urls.py file located in
+                        the
+                        ESST/ESST directory. Open that file and modify it as follows:
+                    </div>
+                    <pre class="prettyprint python Code">
 from django.contrib import admin
 from django.urls import path, include
 urlpatterns = [
@@ -309,11 +342,12 @@ urlpatterns = [
     path('timetable/', include('TimeTable.urls')),  # Include TimeTable app URLs
 ]
         </pre>
-            <div class="Definitions">
-                Next, create a new file called urls.py in the TimeTable app directory and add the following code to
-                define the URL patterns for the app:
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        Next, create a new file called urls.py in the TimeTable app directory and add the following code
+                        to
+                        define the URL patterns for the app:
+                    </div>
+                    <pre class="prettyprint python Code">
 """Defines URL patterns for TimeTable app."""
 from django.urls import path
 from . import views
@@ -323,20 +357,24 @@ urlpatterns = [
     path('rooms/', views.room_list, name='room_list'),
 ]
             </pre>
-            <div class="Definitions">
-                In this example, we define three URL patterns: /courses/, /teachers/, and /rooms/. Each pattern maps to
-                a corresponding view function in views.py.
-            </div>
-            <h2 class="Subsection_Title">Writing Views</h2>
-            <div class="Definitions">
-                A view function takes in information from a request, prepares the data
-                needed to generate a page, and then sends the data back to the browser,
-                often by using a template that defines what the page will look like. <br>
-                The file views.py in TimeTable was generated automatically when
-                we ran the command python manage.py startapp. <br>
-                Here's an example of how to create a simple view that displays a list of courses in the TimeTable app:
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        In this example, we define three URL patterns: /courses/, /teachers/, and /rooms/. Each pattern
+                        maps
+                        to
+                        a corresponding view function in views.py.
+                    </div>
+                    <h2 class="Subsection_Title">Writing Views</h2>
+                    <div class="Definitions">
+                        A view function takes in information from a request, prepares the data
+                        needed to generate a page, and then sends the data back to the browser,
+                        often by using a template that defines what the page will look like. <br>
+                        The file views.py in TimeTable was generated automatically when
+                        we ran the command python manage.py startapp. <br>
+                        Here's an example of how to create a simple view that displays a list of courses in the
+                        TimeTable
+                        app:
+                    </div>
+                    <pre class="prettyprint python Code">
 from django.shortcuts import render
 from .models import Course
 # Create your views here.
@@ -352,24 +390,29 @@ def room_list(request):
     rooms = Room.objects.all()
     return render(request, 'TimeTable/room_list.html', {'rooms': rooms})
             </pre>
-            <div class="Definitions">
-                In this example, we define a view function called course_list that retrieves all Course objects from
-                the database and renders them using a template called course_list.html. The context dictionary
-                {'courses':
-                courses} is passed to the template, allowing it to access the list of courses.
-                The same pattern is followed for teacher_list and room_list functions.
-            </div>
-            <h2 class="Subsection_Title">Writing Templates</h2>
-            <div class="Definitions">
-                Templates define the structure and layout of the HTML pages that are sent to the browser.
-                In Django, templates are stored in a templates directory within your app. <br>
-                Create a new directory called templates inside the TimeTable app directory, and then create another
-                directory called TimeTable inside the templates directory. This structure helps Django locate the
-                templates for the TimeTable app. <br>
-                Now, create a new file called course_list.html inside the TimeTable/templates/TimeTable directory and
-                add the following code:
-            </div>
-            <pre class="prettyprint html Code">
+                    <div class="Definitions">
+                        In this example, we define a view function called course_list that retrieves all Course objects
+                        from
+                        the database and renders them using a template called course_list.html. The context dictionary
+                        {'courses':
+                        courses} is passed to the template, allowing it to access the list of courses.
+                        The same pattern is followed for teacher_list and room_list functions.
+                    </div>
+                    <h2 class="Subsection_Title">Writing Templates</h2>
+                    <div class="Definitions">
+                        Templates define the structure and layout of the HTML pages that are sent to the browser.
+                        In Django, templates are stored in a templates directory within your app. <br>
+                        Create a new directory called templates inside the TimeTable app directory, and then create
+                        another
+                        directory called TimeTable inside the templates directory. This structure helps Django locate
+                        the
+                        templates for the TimeTable app. <br>
+                        Now, create a new file called course_list.html inside the TimeTable/templates/TimeTable
+                        directory
+                        and
+                        add the following code:
+                    </div>
+                    <pre class="prettyprint html Code">
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
@@ -385,12 +428,14 @@ def room_list(request):
 &lt;/body&gt;
 &lt;/html&gt;
             </pre>
-            <div class="Definitions">
-                In this template, we use Django's template language to loop through the list of courses passed from
-                the view and display each course's name, teacher, room, day of the week, and time. <br>
-                You can create similar templates for teacher_list.html and room_list.html to display lists of teachers
-                and rooms, respectively.</div>
-            <pre class="prettyprint html Code">
+                    <div class="Definitions">
+                        In this template, we use Django's template language to loop through the list of courses passed
+                        from
+                        the view and display each course's name, teacher, room, day of the week, and time. <br>
+                        You can create similar templates for teacher_list.html and room_list.html to display lists of
+                        teachers
+                        and rooms, respectively.</div>
+                    <pre class="prettyprint html Code">
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
@@ -406,12 +451,15 @@ def room_list(request):
 &lt;/body&gt;
 &lt;/html&gt;
             </pre>
-            <div class="Definitions">
-                In this template, we use Django's template language to loop through the list of teachers passed from
-                the view and display each teacher's name and the courses they teach. <br>
-                You can create similar templates for room_list.html and teacher_list.html to display lists of rooms and
-                teachers respectively.</div>
-            <pre class="prettyprint html Code">
+                    <div class="Definitions">
+                        In this template, we use Django's template language to loop through the list of teachers passed
+                        from
+                        the view and display each teacher's name and the courses they teach. <br>
+                        You can create similar templates for room_list.html and teacher_list.html to display lists of
+                        rooms
+                        and
+                        teachers respectively.</div>
+                    <pre class="prettyprint html Code">
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
@@ -427,7 +475,7 @@ def room_list(request):
 &lt;/body&gt;
 &lt;/html&gt;
             </pre>
-            <pre class="prettyprint html Code">
+                    <pre class="prettyprint html Code">
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
@@ -443,30 +491,36 @@ def room_list(request):
 &lt;/body&gt;
 &lt;/html&gt;
 </pre>
-            <div class="Definitions">
-                With the URL patterns, views, and templates in place, you can now navigate to the following URLs in
-                your web browser to see the lists of courses, teachers, and rooms:
-                <ul>
-                    <li>http://localhost:8000/timetable/courses/</li>
-                    <li>http://localhost:8000/timetable/teachers/</li>
-                    <li>http://localhost:8000/timetable/rooms/</li>
-                </ul>
-            </div>
-        </section>
-        <section id="Template_Inheritance">
-            <h2 class="Section_Title">Template Inheritance</h2>
-            <div class="Definitions">
-                Template inheritance allows you to create a base template that defines the overall structure of your
-                web pages, and then extend that base template in other templates to add specific content. This helps
-                maintain a consistent look and feel across your website and reduces code duplication. <br>
-                Let's create a base template called base_TimeTable.html in the TimeTable/templates/TimeTable directory.
-                <br>
-                This base template will define the common header and footer for all pages in the TimeTable app. The
-                header will
-                include a h1 tag and navigation bar with links to the course list, teacher list, and room list pages.
-                The footer will include a simple copyright notice.
-            </div>
-            <pre class="prettyprint html Code">
+                    <div class="Definitions">
+                        With the URL patterns, views, and templates in place, you can now navigate to the following URLs
+                        in
+                        your web browser to see the lists of courses, teachers, and rooms:
+                        <ul>
+                            <li>http://localhost:8000/timetable/courses/</li>
+                            <li>http://localhost:8000/timetable/teachers/</li>
+                            <li>http://localhost:8000/timetable/rooms/</li>
+                        </ul>
+                    </div>
+                </section>
+                <section id="Template_Inheritance">
+                    <h2 class="Section_Title">Template Inheritance</h2>
+                    <div class="Definitions">
+                        Template inheritance allows you to create a base template that defines the overall structure of
+                        your
+                        web pages, and then extend that base template in other templates to add specific content. This
+                        helps
+                        maintain a consistent look and feel across your website and reduces code duplication. <br>
+                        Let's create a base template called base_TimeTable.html in the TimeTable/templates/TimeTable
+                        directory.
+                        <br>
+                        This base template will define the common header and footer for all pages in the TimeTable app.
+                        The
+                        header will
+                        include a h1 tag and navigation bar with links to the course list, teacher list, and room list
+                        pages.
+                        The footer will include a simple copyright notice.
+                    </div>
+                    <pre class="prettyprint html Code">
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
@@ -491,13 +545,16 @@ def room_list(request):
 &lt;/body&gt;
 &lt;/html&gt;
             </pre>
-            <div class="Definitions">
-                In this base template, we define a header with a h1 tag and navigation links, a main content area
-                defined by the {% block content %} tag, and a footer with a copyright notice. <br>
-                Now, let's modify the course_list.html template to extend the base template and add specific content to
-                the content block:
-            </div>
-            <pre class="prettyprint html Code">
+                    <div class="Definitions">
+                        In this base template, we define a header with a h1 tag and navigation links, a main content
+                        area
+                        defined by the {% block content %} tag, and a footer with a copyright notice. <br>
+                        Now, let's modify the course_list.html template to extend the base template and add specific
+                        content
+                        to
+                        the content block:
+                    </div>
+                    <pre class="prettyprint html Code">
 {% extends "TimeTable/base_TimeTable.html" %}
 {% block content %}
     &lt;h1&gt;Course List&lt;/h1&gt;
@@ -510,38 +567,46 @@ def room_list(request):
     &lt;/ul&gt;
 {% endblock %}
             </pre>
-            <div class="Definitions">
-                In this modified course_list.html template, we use the {% extends %} tag to specify that this template
-                extends the base_TimeTable.html template. We then define the content for the content block using the
-                {% block content %} and {% endblock %} tags. <br>
-                This block, named content, is a placeholder;
-                the child template will define the kind of information that goes in
-                the content block. <br>
-                Everything that we aren't inheriting from the parent
-                template goes inside a content block. <br>
-                When Django processes this template, it will combine the base template with the content defined in the
-                content block. <br>
-                A child template doesn't have to define every block from its parent, so
-                you can reserve space in parent templates for as many blocks as you like,
-                and the child template uses only as many as it requires. <br>
-                The code used in templates
-                differs from Python in some important ways. Python uses indentation
-                to indicate which lines of a for statement are part of a loop. In a template,
-                every for loop needs an explicit {% endfor %} tag indicating where the end of
-                the loop occurs. <br>
-                To print a variable in a template, wrap the variable name in double curly
-                braces ({{ and }}). <br>
-                the {% empty %} template tag, which tells Django what to do
-                if there are no items in the list. In this case, if there are no courses,
-                Django will display a message indicating that no courses are available. <br>
-                You can similarly modify the teacher_list.html and room_list.html templates to extend the base template
-                and add specific content to the content block.
+                    <div class="Definitions">
+                        In this modified course_list.html template, we use the {% extends %} tag to specify that this
+                        template
+                        extends the base_TimeTable.html template. We then define the content for the content block using
+                        the
+                        {% block content %} and {% endblock %} tags. <br>
+                        This block, named content, is a placeholder;
+                        the child template will define the kind of information that goes in
+                        the content block. <br>
+                        Everything that we aren't inheriting from the parent
+                        template goes inside a content block. <br>
+                        When Django processes this template, it will combine the base template with the content defined
+                        in
+                        the
+                        content block. <br>
+                        A child template doesn't have to define every block from its parent, so
+                        you can reserve space in parent templates for as many blocks as you like,
+                        and the child template uses only as many as it requires. <br>
+                        The code used in templates
+                        differs from Python in some important ways. Python uses indentation
+                        to indicate which lines of a for statement are part of a loop. In a template,
+                        every for loop needs an explicit {% endfor %} tag indicating where the end of
+                        the loop occurs. <br>
+                        To print a variable in a template, wrap the variable name in double curly
+                        braces ({{ and }}). <br>
+                        the {% empty %} template tag, which tells Django what to do
+                        if there are no items in the list. In this case, if there are no courses,
+                        Django will display a message indicating that no courses are available. <br>
+                        You can similarly modify the teacher_list.html and room_list.html templates to extend the base
+                        template
+                        and add specific content to the content block.
+                    </div>
+                </section>
             </div>
-        </section>
+        </div>
     </main>
 
 </body>
 <script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js"></script>
 <script
     src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 

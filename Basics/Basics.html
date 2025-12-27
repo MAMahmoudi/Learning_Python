@@ -10,61 +10,67 @@
 </head>
 
 <body>
+
     <main>
-        <h1 class="Chapter_Title">Basics of Python</h1>
-        <section id="Comment">
-            <h2 class="Section_Title">0. Comments</h2>
-            <div class="Definitions">
-                Comments in Python are used to explain code and make it more readable. They are ignored by the
-                interpreter during execution. Single-line comments start with the hash symbol (#), while multi-line
-                comments can be created using triple quotes (''' or """).
-            </div>
-            <pre class="prettyprint python Code">
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Basics of Python</h1>
+            <div class="Sections_Area">
+                <section id="Comment">
+                    <h2 class="Section_Title">Comments</h2>
+                    <div class="Definitions">
+                        Comments in Python are used to explain code and make it more readable. They are ignored by the
+                        interpreter during execution. Single-line comments start with the hash symbol (#), while
+                        multi-line
+                        comments can be created using triple quotes (''' or """).
+                    </div>
+                    <pre class="prettyprint python Code">
 # This is a single-line comment
 '''
 This is a multi-line comment.
 It can span multiple lines.
 '''
             </pre>
-        </section>
-        <section id="Variables">
-            <h2 class="Section_Title">I. Variables</h2>
-            <div class="Definitions">
-                Python variables are used to store data values. <br>
-                Variable names must start with a letter or an underscore (_) and can contain letters, numbers, and
-                underscores. <br>
-                They are case-sensitive (e.g., myVar and myvar are different variables). <br>
-                A variable is created by assigning a value to it using
-                the equals sign (=). <br>
-                For example:
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Variables">
+                    <h2 class="Section_Title">Variables</h2>
+                    <div class="Definitions">
+                        Python variables are used to store data values. <br>
+                        Variable names must start with a letter or an underscore (_) and can contain letters, numbers,
+                        and
+                        underscores. <br>
+                        They are case-sensitive (e.g., myVar and myvar are different variables). <br>
+                        A variable is created by assigning a value to it using
+                        the equals sign (=). <br>
+                        For example:
+                    </div>
+                    <pre class="prettyprint python Code">
 # Creating a variable
 x = 5
 y = "Hello, World!"
 print(x)
 print(y)
     </pre>
-            <div class="Definitions">
-                Python is dynamically typed, so you don't need to declare the variable type explicitly. <br>
-                It infers the type based on the assigned value.
+                    <div class="Definitions">
+                        Python is dynamically typed, so you don't need to declare the variable type explicitly. <br>
+                        It infers the type based on the assigned value.
 
-            </div>
-        </section>
-        <section id="Data_Types">
-            <h2 class="Section_Title">II. Data Types</h2>
-            <div class="Definitions">
-                Python has several built-in data types, including:
-                <ul>
-                    <li>Integers (int): Whole numbers, e.g., 1, 2, 3</li>
-                    <li>Floating-point numbers (float): Decimal numbers, e.g., 1.5, 2.75</li>
-                    <li>Strings (str): Text enclosed in quotes, e.g., "Hello"</li>
-                    <li>Booleans (bool): True or False values</li>
-                    <li>Lists: Ordered collections of items, e.g., [1, 2, 3]</li>
-                    <li>Dictionaries: Key-value pairs, e.g., {"name": "Alice", "age": 25}</li>
-                </ul>
-            </div>
-            <pre class="prettyprint python Code">
+                    </div>
+                </section>
+                <section id="Data_Types">
+                    <h2 class="Section_Title">Data Types</h2>
+                    <div class="Definitions">
+                        Python has several built-in data types, including:
+                        <ul>
+                            <li>Integers (int): Whole numbers, e.g., 1, 2, 3</li>
+                            <li>Floating-point numbers (float): Decimal numbers, e.g., 1.5, 2.75</li>
+                            <li>Strings (str): Text enclosed in quotes, e.g., "Hello"</li>
+                            <li>Booleans (bool): True or False values</li>
+                            <li>Lists: Ordered collections of items, e.g., [1, 2, 3]</li>
+                            <li>Dictionaries: Key-value pairs, e.g., {"name": "Alice", "age": 25}</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
 # Examples of data types
 integer_var = 10
 float_var = 10.5
@@ -79,22 +85,22 @@ print(type(boolean_var))
 print(type(list_var))
 print(type(dict_var))
             </pre>
-        </section>
-        <section id="Operators">
-            <h2 class="Section_Title">III. Operators</h2>
-            <div class="Definitions">
-                Operators in Python are special symbols that perform operations on variables and values. <br>
-                They can be categorized into several types:
-                <ul>
-                    <li>Arithmetic Operators: +, -, *, /, %, **, //</li>
-                    <li>Comparison Operators: ==, !=, >, &lt;,>=, &lt;= </li>
-                    <li>Logical Operators: and, or, not</li>
-                    <li>Assignment Operators: =, +=, -=, *=, /=</li>
-                    <li>Membership Operators: in, not in</li>
-                    <li>Identity Operators: is, is not</li>
-                </ul>
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Operators">
+                    <h2 class="Section_Title">Operators</h2>
+                    <div class="Definitions">
+                        Operators in Python are special symbols that perform operations on variables and values. <br>
+                        They can be categorized into several types:
+                        <ul>
+                            <li>Arithmetic Operators: +, -, *, /, %, **, //</li>
+                            <li>Comparison Operators: ==, !=, >, &lt;,>=, &lt;= </li>
+                            <li>Logical Operators: and, or, not</li>
+                            <li>Assignment Operators: =, +=, -=, *=, /=</li>
+                            <li>Membership Operators: in, not in</li>
+                            <li>Identity Operators: is, is not</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
 # Examples of operators
 a = 10
 b = 5
@@ -119,14 +125,14 @@ print(a is b)  # Identity operator
 
             </pre>
 
-        </section>
-        <section id="Strings">
-            <h2 class="Section_Title">IV. Strings</h2>
-            <div class="Definitions">
-                Strings in Python are sequences of characters enclosed in single or double quotes. They can be
-                manipulated using various methods and operations.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Strings">
+                    <h2 class="Section_Title">Strings</h2>
+                    <div class="Definitions">
+                        Strings in Python are sequences of characters enclosed in single or double quotes. They can be
+                        manipulated using various methods and operations.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Creating and manipulating strings
 my_string = "Salem, ESST!"
 print(my_string)  # Print the string
@@ -135,26 +141,27 @@ print(my_string.upper())  # Convert to uppercase
 print(my_string.lower())  # Convert to lowercase
 print(my_string.replace("ESST", "Python"))  # Replace substring
             </pre>
-            To get all the string methods, you can use the following code:
-            <pre class="prettyprint python Code">
+                    To get all the string methods, you can use the following code:
+                    <pre class="prettyprint python Code">
 print(dir(my_string))
             </pre>
-        </section>
-        <section id="String_Formatting">
-            <h2 class="Section_Title">V. String Formatting</h2>
-            <div class="Definitions">
-                String formatting allows you to create strings with dynamic content. <br>
-                Python provides several ways to format strings, including f-strings, the format() method, and the %
-                operator.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="String_Formatting">
+                    <h2 class="Section_Title">String Formatting</h2>
+                    <div class="Definitions">
+                        String formatting allows you to create strings with dynamic content. <br>
+                        Python provides several ways to format strings, including f-strings, the format() method, and
+                        the %
+                        operator.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Using f-strings for string formatting
 name = "Alice"
 age = 25
 formatted_string = f"My name is {name} and I am {age} years old."
 print(formatted_string)
 </pre>
-            <pre class="prettyprint python Code">
+                    <pre class="prettyprint python Code">
 # Using the format() method for string formatting
 formatted_string2 = "My name is {} and I am {} years old.".format(name, age)
 print(formatted_string2)
@@ -164,22 +171,23 @@ formatted_string2_kw = "My name is {name} and I am {age} years old.".format(name
 print(formatted_string2_pos)
 print(formatted_string2_kw)
 </pre>
-            <pre class="prettyprint python Code">
+                    <pre class="prettyprint python Code">
 # Using the % operator for string formatting
 formatted_string3 = "My name is %s and I am %d years old." % (name, age)
 print(formatted_string3)
             </pre>
-            <div class="Definitions">
-                When using the % operator, %s is used for strings and %d is used for integers.
-            </div>
-        </section>
-        <section id="Conditional_Statements">
-            <h2 class="Section_Title">VI. Conditional Statements</h2>
-            <div class="Definitions">
-                Conditional statements allow you to execute different blocks of code based on certain conditions.
-                The primary conditional statements in Python are if, elif, and else.
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        When using the % operator, %s is used for strings and %d is used for integers.
+                    </div>
+                </section>
+                <section id="Conditional_Statements">
+                    <h2 class="Section_Title">Conditional Statements</h2>
+                    <div class="Definitions">
+                        Conditional statements allow you to execute different blocks of code based on certain
+                        conditions.
+                        The primary conditional statements in Python are if, elif, and else.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Example of conditional statements
 x = 10
 if x > 0:
@@ -189,25 +197,25 @@ elif x == 0:
 else:
     print("x is negative")
             </pre>
-            <div class="Definitions">
-                The pass statement is used as a placeholder when no action is required. <br>
-                We can also use ... to indicate an incomplete block of code.
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        The pass statement is used as a placeholder when no action is required. <br>
+                        We can also use ... to indicate an incomplete block of code.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Using pass and ...
 if True:
     pass  # Placeholder for future code
 else:
     ...  # Placeholder for future code
             </pre>
-        </section>
-        <section id="Lists">
-            <h2 class="Section_Title">VII. Lists</h2>
-            <div class="Definitions">
-                Lists in Python are ordered collections of items that can be of different data types. They are
-                mutable, meaning you can change their content after creation.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Lists">
+                    <h2 class="Section_Title">Lists</h2>
+                    <div class="Definitions">
+                        Lists in Python are ordered collections of items that can be of different data types. They are
+                        mutable, meaning you can change their content after creation.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Creating and manipulating lists
 my_list = [1, 2, 3, 4, 5]
 print(my_list)
@@ -216,12 +224,12 @@ print(my_list)
 my_list.remove(3)  # Remove an item from the list
 print(my_list)
             </pre>
-            <div class="Definitions">
-                The elements of a list can be of different data types, including other lists.
-                There are various methods available for list manipulation, such as insert(), pop(), sort(), and
-                reverse().
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        The elements of a list can be of different data types, including other lists.
+                        There are various methods available for list manipulation, such as insert(), pop(), sort(), and
+                        reverse().
+                    </div>
+                    <pre class="prettyprint python Code">
 # Example of a list with different data types
 mixed_list = [1, "Hello", 3.14, [2, 4, 6]]
 print(mixed_list)
@@ -242,18 +250,22 @@ print(my_list)
 my_list.reverse()  # Reverse the list
 print(my_list)
             </pre>
-        </section>
-        <section id="Dictionaries">
-            <h2 class="Section_Title">VIII. Dictionaries</h2>
-            <div class="Definitions">
-                Dictionaries in Python are collections of key-value pairs. They are mutable and allow you to access
-                values by their keys. <br>
-                Keys must be unique and immutable (e.g., strings, numbers, or tuples), while values can be of any data
-                type. They must be hashable. Meaning, they must have a hash value that remains constant during their
-                lifetime.
-                Data types like lists and dictionaries are not hashable and cannot be used as keys.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Dictionaries">
+                    <h2 class="Section_Title">Dictionaries</h2>
+                    <div class="Definitions">
+                        Dictionaries in Python are collections of key-value pairs. They are mutable and allow you to
+                        access
+                        values by their keys. <br>
+                        Keys must be unique and immutable (e.g., strings, numbers, or tuples), while values can be of
+                        any
+                        data
+                        type. They must be hashable. Meaning, they must have a hash value that remains constant during
+                        their
+                        lifetime.
+                        Data types like lists and dictionaries are not hashable and cannot be used as keys.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Creating and manipulating dictionaries
 my_dict = {"name": "Alice", "age": 25}
 print(my_dict)
@@ -271,10 +283,11 @@ age = my_dict.pop("age", "Not Found")  # Returns "Not Found" if key doesn't exis
 print(age)
 print(my_dict)
             </pre>
-            <div class="Definitions">
-                Iterating through a dictionary can be done using a for loop to access keys, values, or key-value pairs.
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        Iterating through a dictionary can be done using a for loop to access keys, values, or key-value
+                        pairs.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Iterating through a dictionary
 for key in my_dict:
     print(f"Key: {key}, Value: {my_dict[key]}")
@@ -282,14 +295,15 @@ for key in my_dict:
 for key, value in my_dict.items():
     print(f"Key: {key}, Value: {value}")
             </pre>
-        </section>
-        <section id="Sets">
-            <h2 class="Section_Title">IX. Sets</h2>
-            <div class="Definitions">
-                Sets in Python are unordered collections of unique items. They are mutable and support mathematical
-                set operations like union, intersection, and difference.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Sets">
+                    <h2 class="Section_Title">Sets</h2>
+                    <div class="Definitions">
+                        Sets in Python are unordered collections of unique items. They are mutable and support
+                        mathematical
+                        set operations like union, intersection, and difference.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Creating and manipulating sets
 my_set = {1, 2, 3, 4, 5}
 print(my_set)
@@ -308,19 +322,20 @@ print(set_a.union(set_b))        # Union {1, 2, 3, 4, 5}
 print(set_a.intersection(set_b)) # Intersection {3}
 print(set_a.difference(set_b))   # Difference {1, 2}
             </pre>
-            <div class="Definitions">
-                To access set elements, you can iterate through the set using a for loop since sets do not support
-                indexing. <br>
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        To access set elements, you can iterate through the set using a for loop since sets do not
+                        support
+                        indexing. <br>
+                    </div>
+                    <pre class="prettyprint python Code">
 # Iterating through a set
 for item in my_set:
     print(item)
             </pre>
-            <div class="Definitions">
-                We can convert a set to a list as follows:
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        We can convert a set to a list as follows:
+                    </div>
+                    <pre class="prettyprint python Code">
 # Converting a set to a list
 set_as_list = list(my_set)
 print(set_as_list)
@@ -328,19 +343,23 @@ print(set_as_list)
 list_as_set = set(set_as_list)
 print(list_as_set)
             </pre>
-            <div class="Definitions">
-                Sets are mainly used for membership testing and eliminating duplicate entries from a collection.
-            </div>
-        </section>
-        <section id="Tuples">
-            <h2 class="Section_Title">X. Tuples</h2>
-            <div class="Definitions">
-                Tuples in Python are ordered collections of items that are immutable, meaning their content cannot be
-                changed after creation. They are mainly used to group related data together. For example, you can use a
-                tuple to represent a
-                coordinate point (x, y).
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        Sets are mainly used for membership testing and eliminating duplicate entries from a collection.
+                    </div>
+                </section>
+                <section id="Tuples">
+                    <h2 class="Section_Title">Tuples</h2>
+                    <div class="Definitions">
+                        Tuples in Python are ordered collections of items that are immutable, meaning their content
+                        cannot
+                        be
+                        changed after creation. They are mainly used to group related data together. For example, you
+                        can
+                        use a
+                        tuple to represent a
+                        coordinate point (x, y).
+                    </div>
+                    <pre class="prettyprint python Code">
 # Creating and manipulating tuples
 my_tuple = (1, 2, 3, 4, 5)
 print(my_tuple)
@@ -353,17 +372,19 @@ print(sub_tuple)
 mixed_tuple = (1, "Hello", 3.14, (2, 4, 6))
 print(mixed_tuple)
             </pre>
-        </section>
-        <section id="Loops">
-            <h2 class="Section_Title">XI. Loops</h2>
-            <div class="Definitions">
-                Loops in Python are used to execute a block of code multiple times. The two main types of loops are
-                for loops and while loops. <br>
-                A for loop iterates over a sequence (like a list, tuple, or string) or other iterable objects. <br>
-                To break out of a loop, you can use the break statement. <br>
-                To skip the current iteration and move to the next one, you can use the continue statement.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Loops">
+                    <h2 class="Section_Title">Loops</h2>
+                    <div class="Definitions">
+                        Loops in Python are used to execute a block of code multiple times. The two main types of loops
+                        are
+                        for loops and while loops. <br>
+                        A for loop iterates over a sequence (like a list, tuple, or string) or other iterable objects.
+                        <br>
+                        To break out of a loop, you can use the break statement. <br>
+                        To skip the current iteration and move to the next one, you can use the continue statement.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Example of a for loop
 for i in range(5):
     print(i)
@@ -379,37 +400,38 @@ for i in range(10):
     if i % 2 == 0:
         continue  # Skip even numbers
             </pre>
-            <div class="Definitions">
-                The range() function generates a sequence of numbers, which is commonly used in for loops. <br>
-                The syntaxe of range() can be:
-                <ul>
-                    <li>range(stop): Generates numbers from 0 to stop-1</li>
-                    <li>range(start, stop): Generates numbers from start to stop-1</li>
-                    <li>range(start, stop, step): Generates numbers from start to stop-1 with a specified step</li>
-                </ul>
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        The range() function generates a sequence of numbers, which is commonly used in for loops. <br>
+                        The syntaxe of range() can be:
+                        <ul>
+                            <li>range(stop): Generates numbers from 0 to stop-1</li>
+                            <li>range(start, stop): Generates numbers from start to stop-1</li>
+                            <li>range(start, stop, step): Generates numbers from start to stop-1 with a specified step
+                            </li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
 # Examples of range() function
 print(list(range(5)))          # Output: [0, 1, 2, 3, 4]
 print(list(range(2, 6)))       # Output: [2, 3, 4, 5]
 print(list(range(1, 10, 2)))   # Output: [1, 3, 5, 7, 9]
             </pre>
-        </section>
-        <section id="List_Comprehensions">
-            <h2 class="Section_Title">XII. List Comprehensions</h2>
-            <div class="Definitions">
-                List comprehensions provide a concise way to create lists in Python. They consist of brackets
-                containing an expression followed by a for clause, and can include optional if clauses.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="List_Comprehensions">
+                    <h2 class="Section_Title">List Comprehensions</h2>
+                    <div class="Definitions">
+                        List comprehensions provide a concise way to create lists in Python. They consist of brackets
+                        containing an expression followed by a for clause, and can include optional if clauses.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Example of a list comprehension
 squares = [x**2 for x in range(10) if x % 2 == 0]
 print(squares)
             </pre>
-            <div class="Definitions">
-                We can use the same method with sets and dictionaries:
-            </div>
-            <pre class="prettyprint python Code">
+                    <div class="Definitions">
+                        We can use the same method with sets and dictionaries:
+                    </div>
+                    <pre class="prettyprint python Code">
 # Set comprehension
 even_squares_set = {x**2 for x in range(10) if x % 2 == 0}
 print(even_squares_set)
@@ -417,64 +439,67 @@ print(even_squares_set)
 squares_dict = {x: x**2 for x in range(10) if x % 2 == 0}
 print(squares_dict)
             </pre>
-        </section>
-        <section id="Functions">
-            <h2 class="Section_Title">XIII. Functions</h2>
-            <div class="Definitions">
-                Functions in Python are blocks of reusable code that perform a specific task. They are defined using
-                the <strong>def</strong> keyword, followed by the function name and parentheses.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Functions">
+                    <h2 class="Section_Title">Functions</h2>
+                    <div class="Definitions">
+                        Functions in Python are blocks of reusable code that perform a specific task. They are defined
+                        using
+                        the <strong>def</strong> keyword, followed by the function name and parentheses.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Defining and calling a function
 def greet(name):
     return f"Hello, {name}!"
 print(greet("Alice"))
             </pre>
-        </section>
-        <section id="Lambda">
-            <h2 class="Section_Title">XIV. Lambda Functions</h2>
-            <div class="Definitions">
-                Lambda functions are small anonymous functions defined using the lambda keyword. They can take any
-                number of arguments but can only have a single expression.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Lambda">
+                    <h2 class="Section_Title">Lambda Functions</h2>
+                    <div class="Definitions">
+                        Lambda functions are small anonymous functions defined using the lambda keyword. They can take
+                        any
+                        number of arguments but can only have a single expression.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Example of a lambda function
 add = lambda x, y: x + y
 print(add(5, 3))
             </pre>
-        </section>
-        <section id="Modules">
-            <h2 class="Section_Title">XV. Modules</h2>
-            <div class="Definitions">
-                Modules in Python are files containing Python code that can be imported and used in other Python
-                programs. They help organize code and promote reusability.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Modules">
+                    <h2 class="Section_Title">Modules</h2>
+                    <div class="Definitions">
+                        Modules in Python are files containing Python code that can be imported and used in other Python
+                        programs. They help organize code and promote reusability.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Importing and using a module
 import math
 print(math.sqrt(16))
             </pre>
-        </section>
-        <section id="Library">
-            <h2 class="Section_Title">XVI. Standard Library</h2>
-            <div class="Definitions">
-                Python's standard library is a collection of modules and packages that come bundled with Python.
-                It provides a wide range of functionalities, from file I/O to web development.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Library">
+                    <h2 class="Section_Title">Standard Library</h2>
+                    <div class="Definitions">
+                        Python's standard library is a collection of modules and packages that come bundled with Python.
+                        It provides a wide range of functionalities, from file I/O to web development.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Example of using the datetime module from the standard library
 import datetime
 now = datetime.datetime.now()
 print("Current date and time:", now)
             </pre>
-        </section>
-        <section id="Classes">
-            <h2 class="Section_Title">XVII. Classes and Objects</h2>
-            <div class="Definitions">
-                Classes in Python are blueprints for creating objects. They encapsulate data and behavior related to
-                that data. An object is an instance of a class.
-            </div>
-            <pre class="prettyprint python Code">
+                </section>
+                <section id="Classes">
+                    <h2 class="Section_Title">Classes and Objects</h2>
+                    <div class="Definitions">
+                        Classes in Python are blueprints for creating objects. They encapsulate data and behavior
+                        related to
+                        that data. An object is an instance of a class.
+                    </div>
+                    <pre class="prettyprint python Code">
 # Defining a class and creating an object
 class Student:
     def __init__(self, name, age):
@@ -485,12 +510,14 @@ class Student:
 student1 = Student("Alice", 25)
 print(student1.introduce())
             </pre>
-        </section>
-
+                </section>
+            </div>
+        </div>
     </main>
 
 </body>
 <script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" type="module"></script>
 <script
     src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 
