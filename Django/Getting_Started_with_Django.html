@@ -601,13 +601,120 @@ def room_list(request):
                         and add specific content to the content block.
                     </div>
                 </section>
+                <section id="Teacher_Page">
+                    <h2 class="Section_Title">Creating a Teacher Detail Page</h2>
+                    <div class="Definitions">
+                        To create a detail page for each teacher, we need to define a new URL pattern, create a view
+                        function,
+                        and create a template for the teacher detail page. <br>
+                        First, let's update the urls.py file in the TimeTable app to include a new URL pattern for the
+                        teacher
+                        detail page:
+                    </div>
+                    <pre class="prettyprint python Code">
+from django.urls import path
+from . import views
+urlpatterns = [
+    path('courses/', views.course_list, name='course_list'),
+    path('teachers/&lt;int:teacher_id&gt;/', views.teacher_detail, name='teacher_detail'),
+    path('rooms/', views.room_list, name='room_list'),
+]
+</pre>
+                    <div class="Definitions">
+                        In this updated urls.py file, we added a new URL pattern that includes a dynamic segment
+                        &lt;int:teacher_id&gt;.
+                        This segment captures the ID of the teacher and passes it to the teacher_detail view
+                        function.
+                    </div>
+                    <pre class="prettyprint python Code">
+from django.shortcuts import render, get_object_or_404
+from .models import Course, Teacher, Room
+# Create your views here.
+def course_list(request):
+    courses = Course.objects.all()
+    return render(request, 'TimeTable/course_list.html', {'courses': courses})
+
+def teacher_detail(request, teacher_id):
+    teacher = get_object_or_404(Teacher, pk=teacher_id)
+    return render(request, 'TimeTable/teacher_detail.html', {'teacher': teacher})
+def room_list(request):
+    rooms = Room.objects.all()
+    return render(request, 'TimeTable/room_list.html', {'rooms': rooms})
+            </pre>
+                    <div class="Definitions">
+                        In this updated views.py file, we added a new view function called teacher_detail. This function
+                        retrieves
+                        the Teacher object with the specified ID using the get_object_or_404 shortcut, which returns a
+                        404
+                        error
+                        if the teacher does not exist. The function then renders the teacher_detail.html template,
+                        passing
+                        the
+                        Teacher object as context.
+                    </div>
+                    <pre class="prettyprint html Code">
+{% extends "TimeTable/base_TimeTable.html" %}
+{% block content %}
+    &lt;h1&gt;Teacher Detail&lt;/h1&gt;
+    &lt;h2&gt;{{ teacher.first_name }} {{ teacher.last_name }}&lt;/h2&gt;
+    &lt;p&gt;Email: {{ teacher.email }}&lt;/p&gt;
+    &lt;p&gt;Department: {{ teacher.department }}&lt;/p&gt;
+    &lt;h3&gt;Courses Taught:&lt;/h3&gt;
+    &lt;ul&gt;
+        {% for course in teacher.course_set.all %}
+            &lt;li&gt;{{ course.name }} on {{ course.day_of_week }} at {{ course.time }} in {{ course.room }}&lt;/li&gt;
+        {% empty %}
+            &lt;li&gt;No courses assigned.&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+{% endblock %}
+            </pre>
+                    <div class="Definitions">
+                        In this teacher_detail.html template, we extend the base_TimeTable.html template and define the
+                        content
+                        block to display the details of the teacher, including their name, email, department, and a list
+                        of
+                        courses they teach. <br>
+                        With these changes in place, you can now navigate to a teacher's detail page by visiting a URL
+                        like
+                        the
+                        following in your web browser:
+                    </div>
+                    <pre class="prettyprint text Code">
+http://localhost:8000/timetable/teachers/1/
+            </pre>
+                    <div class="Definitions">
+                        Replace 1 with the actual ID of the teacher you want to view. This will display the teacher's
+                        details
+                        along with the list of courses they teach. <br>
+                        Now in the teacher list page, we can add links to each teacher's detail page:
+                    </div>
+                    <pre class="prettyprint html Code">
+{% extends "TimeTable/base_TimeTable.html" %}
+{% block content %}
+    &lt;h1&gt;Teacher List&lt;/h1&gt;
+    &lt;ul&gt;
+        {% for teacher in teachers %}
+            &lt;li&gt;{{ teacher.first_name }} {{ teacher.last_name }}  &lt;a href="{% url 'teacher_detail' teacher.teacher_id %}"&gt;View&lt;/a&gt; &lt;/li&gt;
+        {% empty %}
+            &lt;li&gt;No teachers available.&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+{% endblock %}
+            </pre>
+                    <div class="Definitions">
+                        In this modified teacher_list.html template, we added a link to each teacher's detail page using
+                        the
+                        {% url %} template tag. This allows users to click on "View Details" to navigate to the
+                        corresponding teacher's detail page.
+                    </div>
+                </section>
             </div>
         </div>
     </main>
-
 </body>
 <script src="../assets/JS/Nav_Bar.js" type="module"></script>
-<script src="../assets/JS/Side_Bar.js"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
 <script
     src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 

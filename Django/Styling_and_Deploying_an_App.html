@@ -4,11 +4,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
     <title>Styling and Deploying an App</title>
 </head>
 
 <body>
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Styling and Deploying an App</h1>
+            <div class="Sections_Area">
+                <section id="The_django-bootstrap3_App">
+                    <h2 class="Section_Title">The django-bootstrap3 App</h2>
+                    <div class="Definitions">
+                        The django-bootstrap3 app is a third-party package that integrates Bootstrap 3 with Django
+                        projects.
+                        It provides template tags and filters to easily include Bootstrap styles and components in
+                        Django templates. <br>
+                        This
+                        app downloads the required Bootstrap files, places them in an appropriate
+                        location in your project, and makes the styling directives available in your
+                        project's templates.
+                        To install django-bootstrap3, issue the following command in an active
+                        virtual environment:
+                    </div>
+                    <pre class="prettyprint python Code">
+pip install django-bootstrap3
+                    </pre>
+                    <div class="Definitions">
+                        Next, we need to add the following code to include django-boostrap3 in
+                        INSTALLED_APPS in settings.py:
+                    </div>
+                    <pre class="prettyprint python Code">
+INSTALLED_APPS = (
+--snip--
+'django.contrib.staticfiles',
+.......
+# Third party apps
+'bootstrap3',
+# My apps
+.....
+)
+                    </pre>
+                    <div class="Definitions">
+                        We need django-bootstrap3 to include jQuery. Add this code to the end of settings.py. <br>
+                        This code spares us from having to download jQuery and place it in the
+                        correct location manually.
+                    </div>
+                    <pre class="prettyprint python Code">
+# Settings for django-bootstrap3
+BOOTSTRAP3 = {
+'include_jquery': True,
+}
+</pre>
+                </section>
+                <section id="Modifying_BaseTimeTable.html">
+                    <h2 class="Section_Title">Modifying BaseTimeTable.html</h2>
+                    <div class="Definitions">
+                        Next, we need to modify baseTimeTable.html to use the django-bootstrap3
+                        template tags. First, we need to load the bootstrap3 tags at the top of
+                        the file. <br>
+                        Then just before the closing &lt;/head&gt; tag, we need to add the
+                        bootstrap_css and bootstrap_javascript tags to include the necessary
+                        Bootstrap CSS and JavaScript files.
+                    </div>
+                    <pre class="prettyprint html Code">
+{% load bootstrap3 %}
+......
+
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+&lt;/head&gt;
+                    
+                    </pre>
+                </section>
+            </div>
+        </div>
+    </main>
 
 </body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
+
 
 </html>

@@ -511,8 +511,8 @@ print(add(10, 4))
                         colon. <br>
                         The __init__() method is a special method used to initialize the attributes of the class. <br>
                         Methods are functions defined within a class that operate on the object's data. <br>
-                        The self parameter refers to the instance of the class and is used to access its attributes and methods.
-                        
+                        The self parameter refers to the instance of the class and is used to access its attributes and
+                        methods.
                     </div>
                     <pre class="prettyprint python Code">
 # Defining a class and creating an object
@@ -525,7 +525,55 @@ class Student:
 student1 = Student("Alice", 25)
 print(student1.introduce())
             </pre>
-
+                    <div class="Definitions">
+                        There are other special methods in Python classes, such as __str__() for string representation
+                        and __repr__()
+                        for a detailed string representation. To see the list of all special methods, you can visit
+                        <a href="https://docs.python.org/3/reference/datamodel.html#special-method-names">Python's
+                            official documentation</a>.
+                    </div>
+                    <pre class="prettyprint python Code">
+# Example of __str__ and __repr__ methods
+class Student:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+    def __str__(self):
+        return f"Student(name={self.name}, age={self.age})"
+    def __repr__(self):
+        return f"Student('{self.name}', {self.age})"
+student1 = Student("Alice", 25)
+print(student1)
+print(repr(student1))
+            </pre>
+                    <div class="Definitions">
+                        Inheritance allows a class (child class) to inherit attributes and methods from another class
+                        (parent
+                        class). This promotes code reusability and establishes a hierarchical relationship between
+                        classes.
+                    </div>
+                    <pre class="prettyprint python Code">
+# Example of inheritance
+class Person:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+    def introduce(self):
+        return f"My name is {self.name} and I am {self.age} years old."
+class Student(Person):
+    def __init__(self, name, age, grade):
+        super().__init__(name, age)
+        self.grade = grade
+    def introduce(self):
+        return f"My name is {self.name}, I am {self.age} years old, and my grade is {self.grade}."
+student1 = Student("Alice", 25, "A")
+print(student1.introduce()) 
+            </pre>
+                    <div class="Definitions">
+                        In this example, the Student class inherits from the Person class, allowing it to use the
+                        introduce()
+                        method while adding its own attribute (grade) and overriding the introduce() method.
+                    </div>
                 </section>
             </div>
         </div>
