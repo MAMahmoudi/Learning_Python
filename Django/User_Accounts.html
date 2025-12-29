@@ -4,11 +4,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
     <title>User Accounts</title>
 </head>
 
 <body>
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">User Accounts</h1>
+            <div class="Sections_Area">
+                <section id="Adding_Forms">
+                    <h2 class="Section_Title">Adding Forms</h2>
+                    <div class="Definitions">
+                        The simplest way to build a form in Django is to use a ModelForm, which
+                        uses the information from the models we defined earlier to automatically
+                        build a form. <br>
+                        Let's create a new model for students in models.py:
+                    </div>
+                    <pre class="prettyprint python Code">
+class Student(models.Model):
+    student_id = models.AutoField(primary_key=True)
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
+    email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=10)
+    level = models.CharField(max_length=50)
+    speciality = models.CharField(max_length=50)
+    department = models.CharField(max_length=100)
+    photo = models.ImageField(upload_to='./student_photos/', default='student_photos/default.jpg')
 
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+                        </pre>
+                    <div class="Definitions">
+                        Write your first form in the file forms.py, which you
+                        should create in the same directory as models.py:
+                    </div>
+                    <pre class="prettyprint python Code">
+from django import forms
+from .models import Student
+
+class StudentForm(forms.ModelForm):
+    class Meta:
+        model = Student
+        fields = ['first_name', 'last_name', 'email', 'phone', 'level', 'speciality', 'department', 'photo']
+        labels = {
+            'first_name': 'First Name',
+            'last_name': 'Last Name',
+            'email': 'Email Address',
+            'phone': 'Phone Number',
+            'level': 'Level of Study',
+            'speciality': 'Speciality',
+            'department': 'Department',
+            'photo': 'Profile Photo',
+        }
+        </pre>
+                    <div class="Definitions">
+                        This code creates a ModelForm named StudentForm that corresponds to the
+                        Student model. The fields attribute specifies which fields from the model
+                        should be included in the form, and the labels attribute provides
+                        human-readable labels for each field. <br>
+                        Now, we need to add a URL pattern in urls.py to point to the view that will
+                        handle the form. Let's call the view register_student and add the following
+                        urlpatterns list :
+                    </div>
+                    <pre class="prettyprint python Code">
+......
+    path('register/', views.register_student, name='register_student'),
+......
+                        </pre>
+                    <div class="Definitions">
+                        Next, we need to create the register_student view in views.py to handle
+                        the form submission and rendering:
+                    </div>
+                    <pre class="prettyprint python Code">
+from django.shortcuts import render, redirect
+from .forms import StudentForm
+from django.contrib import messages
+def register_student(request):
+    if request.method == 'POST':
+        form = StudentForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Student registered successfully!')
+            return redirect('register_student')
+    else:
+        form = StudentForm()
+    return render(request, 'Home/register_student.html', {'form': form})
+                        </pre>
+                    <div class="Definitions">
+                        This view handles both GET and POST requests. If the request method is POST,
+                        it processes the submitted form data. <br>
+                        This is done by creating an instance of StudentForm with the submitted data
+                        and any uploaded files. <br>
+                        It checks then if the form is valid, meaning all required fields are filled out
+                        correctly (all fields in a form are required by default) and
+                        that the data entered matches the field types expected—for example, that
+                        the length of text is less than or equal to the max number of characters, as we specified in
+                        models.py <br>
+                        If the form is valid, it saves the new
+                        student to the database and redirects back to the registration page with a
+                        success message. <br>
+                        If the request method is GET, meaning the user is accessing the page for the first time,
+                        it simply renders an empty
+                        form. <br>
+                        The last line renders the register_student.html template, passing the form instance to the
+                        template context. <br>
+                        Finally, we need to create the register_student.html template to display the
+                        form:
+                    </div>
+                    <pre class="prettyprint html Code">
+{% extends "Home/base_Home.html" %}
+{% block content %}
+&lt;h1&gt;Student Registration&lt;/h1&gt;
+&lt;form method="post" action="{% url 'register_student' %}"&gt;
+    {% csrf_token %}
+    {{ form.as_p }}
+    &lt;button type="submit"&gt;Register&lt;/button&gt;
+&lt;/form&gt;
+{% endblock %}
+        </pre>
+                    <div class="Definitions">
+                        This template extends a base template named base_Home.html. <br>
+                        Inside the content block, it displays a heading and a form. <br>
+                        The form uses the POST method to submit data to the register_student view. <br>
+                        The {% csrf_token %} tag is included for security purposes to prevent Cross-Site Request Forgery
+                        attacks. <br>
+                        The {{ form.as_p }} renders the form fields as paragraphs, and a submit button is provided to
+                        submit the form. <br>
+                        Django doesn't create a submit button for forms, so we define one
+                        at the end of the form. <br>
+                        With these components in place, users can now register new students through the web interface.
+                        <br>
+                        Next, we need to include a link to the registration page in the navigation bar. <br>
+                        Open base_Home.html and add the following code inside the &lt;nav&gt; element:
+                    </div>
+                    <pre class="prettyprint html Code">
+&lt;li&gt;&lt;a href="{% url 'register_student' %}"&gt;Register Student&lt;/a&gt;&lt;/li&gt;
+                    </pre>
+                </section>
+            </div>
+        </div>
+    </main>
 </body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
+
 
 </html>
