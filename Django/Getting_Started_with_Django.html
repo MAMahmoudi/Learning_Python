@@ -20,23 +20,23 @@
                     <h2 class="Section_Title">Creating a Virtual Environment</h2>
                     <div class="Definitions">
                         A virtual environment is a self-contained directory that contains a Python installation and a
-                        set of
-                        packages.
+                        set of packages. <br>
                         It allows you to manage dependencies for different projects separately.
-                        Create a new directory for your project called learning_log, switch to that directory in a
+                        Create a new directory for your project. For example, "University_Platform", switch to that
+                        directory in a
                         terminal,
                         and
                         create a virtual environment.
                     </div>
                     <pre class="prettyprint python Code">
 # Create a virtual environment
-python -m venv myenv
+python -m venv UniversityPlatformEnv 
 
 # Activate the virtual environment
 # On Windows:
-myenv\Scripts\activate
+UniversityPlatformEnv\Scripts\activate
 # On macOS/Linux:
-source myenv/bin/activate
+source UniversityPlatformEnv/bin/activate
             </pre>
                 </section>
                 <section id="Install_Django">
@@ -51,10 +51,11 @@ pip install django
                 <section id="Create_Django_Project">
                     <h2 class="Section_Title">Creating a Django Project</h2>
                     <div class="Definitions">
-                        Use the django-admin command-line tool to create a new Django project called ESST.
+                        Use the django-admin command-line tool to create a new Django project called
+                        University_Platform.
                     </div>
                     <pre class="prettyprint python Code">
-django-admin startproject ESST .
+django-admin startproject University_Platform .
             </pre>
                     <div class="Definitions">
                         The dot (.) at the end of the command tells Django to create the project in the current
@@ -62,13 +63,13 @@ django-admin startproject ESST .
                         If you look in your project directory, using `ls` (on macOS/Linux) or `dir` (on Windows), you
                         should
                         see
-                        a new folder called ESST containing several files.
+                        a new folder called University_Platform containing several files.
                         <ul>
                             <li><strong>manage.py:</strong> A command-line utility that lets you interact with this
                                 Django
                                 project
                                 in various ways.</li>
-                            <li><strong>ESST/</strong> directory contains four files, the most important
+                            <li><strong>University_Platform/</strong> directory contains four files, the most important
                                 of which are settings.py, urls.py, and wsgi.py.
                                 <ul>
                                     <li><strong>settings.py:</strong> Controls how Django interacts with your system and
@@ -146,175 +147,39 @@ python manage.py runserver 8001
                         then run the startapp command:
                     </div>
                     <pre class="prettyprint python Code">
-python manage.py startapp TimeTable
+python manage.py startapp Home
             </pre>
                     <div class="Definitions">
                         The command startapp appname tells Django to create the infrastructure
                         needed to build an app. If you look in the project directory now, you'll see
-                        a new folder called learning_logs u. Open that folder to see what Django has
-                        created v. The most important files are models.py, admin.py, and views.py.
-                    </div>
-                </section>
-                <section id="Defining_Models">
-                    <h2 class="Section_Title">Defining Models</h2>
-                    <div class="Definitions">
-                        In Django, a model is a Python class that represents a database table. Each attribute of the
-                        class
-                        corresponds to a column in the table. Models are defined in the models.py file of your app. <br>
-                        Here's an example of how to define a simple model for a Course in the TimeTable app:
+                        a new folder called Home. Open that folder to see what Django has
+                        created. The most important files are models.py, admin.py, and views.py.
+                        To include our app in the overall project, open settings.py (in the
+                        University_Platform/University_Platform directory), and you'll see a section that tells Django
+                        which apps are installed in the project:
                     </div>
                     <pre class="prettyprint python Code">
-from django.db import models
-
-# Create your models here.
-from django.db import models
-
-
-class Teacher(models.Model):
-    teacher_id = models.AutoField(primary_key=True)
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    email = models.EmailField(unique=True)
-    department = models.CharField(max_length=100, blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.first_name} {self.last_name}"
-
-
-class Room(models.Model):
-    room_id = models.AutoField(primary_key=True)
-    building = models.CharField(max_length=100)
-    room_number = models.CharField(max_length=20)
-    capacity = models.PositiveIntegerField()
-
-    def __str__(self):
-        return f"{self.building} {self.room_number}"
-
-
-class Course(models.Model):
-    course_id = models.AutoField(primary_key=True)
-    course_name = models.CharField(max_length=100)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    day_of_week = models.CharField(
-        max_length=10,
-        choices=[
-            ("Monday", "Monday"),
-            ("Tuesday", "Tuesday"),
-            ("Wednesday", "Wednesday"),
-            ("Thursday", "Thursday"),
-            ("Friday", "Friday"),
-            ("Saturday", "Saturday"),
-            ("Sunday", "Sunday"),
-        ]
-    )
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-
-    def __str__(self):
-        return f"{self.course_name} ({self.day_of_week})"
-
-            </pre>
-                    <div class="Definitions">
-                        In this example, we define a Course model with three fields: title, description, and created_at.
-                        Each field is represented by a specific field type provided by Django, such as CharField for
-                        short
-                        text and TextField for longer text. <br>
-                        To see the different kinds of fields you can use in a model, see the Django Model
-                        Field Reference at <a
-                            href="https://docs.djangoproject.com/en/1.8/ref/models/fields/">https://docs.djangoproject.com/en/1.8/ref/models/fields/</a>.
-                        <br>
-                        We need to tell Django which attribute to use by default when it displays
-                        information about a topic. Django calls a __str__() method to display
-                        a simple representation of a model. <br>
-                    </div>
-                    <section id="Activating_Models">
-                        <h2 class="Section_Title">Activating Models</h2>
-                        <div class="Definitions">
-                            To use our models, we have to tell Django to include our app in the overall
-                            project. Open settings.py (in the ESST/ESST directory), and
-                            you'll see a section that tells Django which apps are installed in the project:
-                        </div>
-                        <pre class="prettyprint python Code">
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
-    'django.contrib.auth',  
+    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # My apps
-    'TimeTable',  # Add this line to include the TimeTable app
+    'Home',  # Add the Home app here
 ]
-                </pre>
-                        <div class="Definitions">
-                            Add the name of your app (TimeTable) to the list of installed apps. This
-                            tells Django to include the models defined in the TimeTable app when it
-                            creates the database schema.
-                        </div>
-                    </section>
-
-                    <div class="Definitions">
-                        After defining your models, you need to create and apply migrations to update the database
-                        schema.
-                        Migrations are a way to propagate changes made to your models into the database. To create and
-                        apply
-                        migrations, run the following commands:
-                    </div>
-                    <pre class="prettyprint python Code">
-python manage.py makemigrations TimeTable
-python manage.py migrate
             </pre>
                     <div class="Definitions">
-                        Whenever we want to modify the data that TimeTable manages, we'll follow these three steps:
-                        modify
-                        models.py, call makemigrations on TimeTable, and tell Django to migrate the project.
+                        Add 'Home', to the INSTALLED_APPS list to include the Home app in the project.
                     </div>
                 </section>
-                <section id="Admin_Site">
-                    <h2 class="Section_Title">Using the Admin Site</h2>
-                    <div class="Definitions">
-                        Django includes a built-in admin site that allows you to manage your models through a web
-                        interface.
-                        To use the admin site, you need to create a superuser account. Run the following command:
-                    </div>
-                    <pre class="prettyprint python Code">
-python manage.py createsuperuser
-            </pre>
-                    <div class="Definitions">
-                        Follow the prompts to create a username, email address, and password for the superuser account.
-                        Once the superuser account is created, you can access the admin site by navigating to
-                        http://localhost:8000/admin in your web browser. Log in using the superuser credentials you just
-                        created. <br>
-                        For our example we created a superuser with the username ESST_Admin, ESST_Admin@esst-sup.com as
-                        an
-                        email
-                        and a simple password "123456789". <br>
-                        After logging in, you'll see the admin dashboard, where you can manage your models.<br>
-                    </div>
-                </section>
-                <section id="Registering_Model_with_Admin_Site">
-                    <h2 class="Section_Title">Registering Models with the Admin Site</h2>
-                    <div class="Definitions">
-                        To manage your models through the admin site, you need to register them in the admin.py file of
-                        your
-                        app. Open admin.py in the TimeTable app and add the following code:
-                    </div>
-                    <pre class="prettyprint python Code">
-from django.contrib import admin
-from .models import Course, Teacher, Room
 
-# Register your models here.
-
-admin.site.register(Course)
-admin.site.register(Teacher)
-admin.site.register(Room)
-            </pre>
-                </section>
                 <section id="Making_Pages">
                     <h2 class="Section_Title">Making Pages</h2>
                     <div class="Definitions">
-                        making web pages with Django consists of three stages: defining
+                        Making web pages with Django consists of three stages: defining
                         URLs, writing views, and writing templates. <br>
                         First, you must define patterns
                         for URLs. A URL pattern describes the way the URL is laid out and tells
@@ -333,188 +198,101 @@ admin.site.register(Room)
                         To map a URL to a view, you need to define a URL pattern in the urls.py file of your app.
                         We need to include the URLs for the TimeTable app in the project's main urls.py file located in
                         the
-                        ESST/ESST directory. Open that file and modify it as follows:
+                        University_Platform/University_Platform directory. Open that file and modify it as follows:
                     </div>
                     <pre class="prettyprint python Code">
 from django.contrib import admin
 from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('timetable/', include('TimeTable.urls')),  # Include TimeTable app URLs
+    path("", include('Home.urls')),,  # Include Home app URLs
 ]
         </pre>
                     <div class="Definitions">
-                        Next, create a new file called urls.py in the TimeTable app directory and add the following code
+                        Next, create a new file called urls.py in the Home app directory and add the following code
                         to
                         define the URL patterns for the app:
                     </div>
                     <pre class="prettyprint python Code">
-"""Defines URL patterns for TimeTable app."""
+"""Defines URL patterns for Home app."""
 from django.urls import path
+
 from . import views
 urlpatterns = [
-    path('courses/', views.course_list, name='course_list'),
-    path('teachers/', views.teacher_list, name='teacher_list'),
-    path('rooms/', views.room_list, name='room_list'),
+    path('', views.index, name='index'),
+    path('News/', views.news, name='News'),
+    path('About_Us/', views.about_us, name='About_Us'),
+    path('Contact_Us', views.contact_us, name='Contact_Us'),
 ]
             </pre>
                     <div class="Definitions">
-                        In this example, we define three URL patterns: /courses/, /teachers/, and /rooms/. Each pattern
-                        maps
-                        to
-                        a corresponding view function in views.py.
+                        In this example, we define three URL patterns: <br>
+                        - The root URL ('') maps to the index view. <br>
+                        - The URL 'News/' maps to the news view. <br>
+                        - The URL 'About_Us/' maps to the about_us view. <br>
+                        - The URL 'Contact_Us' maps to the contact_us view. <br>
+                        Each URL pattern is associated with a view function defined in views.py.
                     </div>
                     <h2 class="Subsection_Title">Writing Views</h2>
                     <div class="Definitions">
                         A view function takes in information from a request, prepares the data
                         needed to generate a page, and then sends the data back to the browser,
                         often by using a template that defines what the page will look like. <br>
-                        The file views.py in TimeTable was generated automatically when
+                        The file views.py in Home was generated automatically when
                         we ran the command python manage.py startapp. <br>
-                        Here's an example of how to create a simple view that displays a list of courses in the
-                        TimeTable
-                        app:
+                        Here's an example of how to create a simple view that displays different pages for
+                        Home app:
                     </div>
                     <pre class="prettyprint python Code">
 from django.shortcuts import render
-from .models import Course
+
 # Create your views here.
-def course_list(request):
-    courses = Course.objects.all()
-    return render(request, 'TimeTable/course_list.html', {'courses': courses})
 
-def teacher_list(request):
-    teachers = Teacher.objects.all()
-    return render(request, 'TimeTable/teacher_list.html', {'teachers': teachers})
+def index(request):
+    return render(request, 'Home/index.html')
 
-def room_list(request):
-    rooms = Room.objects.all()
-    return render(request, 'TimeTable/room_list.html', {'rooms': rooms})
+def about_us(request):
+    return render(request, 'Home/About_Us.html')
+
+def contact_us(request):
+    return render(request, 'Home/Contact_Us.html')
+
+def news(request):
+    return render(request, 'Home/News.html')
             </pre>
                     <div class="Definitions">
-                        In this example, we define a view function called course_list that retrieves all Course objects
-                        from
-                        the database and renders them using a template called course_list.html. The context dictionary
-                        {'courses':
-                        courses} is passed to the template, allowing it to access the list of courses.
-                        The same pattern is followed for teacher_list and room_list functions.
+                        In this example, we define four view functions: index, about_us, contact_us, and news. Each
+                        function
+                        takes a request object as a parameter and uses the render shortcut to render a template and
+                        return
+                        an
+                        HTTP response. <br>
+                        The templates Home/index.html, Home/About_Us.html, Home/Contact_Us.html, and Home/News.html
+                        will be
+                        created later to define the structure of the corresponding web pages.
                     </div>
-                    <h2 class="Subsection_Title">Writing Templates</h2>
-                    <div class="Definitions">
-                        Templates define the structure and layout of the HTML pages that are sent to the browser.
-                        In Django, templates are stored in a templates directory within your app. <br>
-                        Create a new directory called templates inside the TimeTable app directory, and then create
-                        another
-                        directory called TimeTable inside the templates directory. This structure helps Django locate
-                        the
-                        templates for the TimeTable app. <br>
-                        Now, create a new file called course_list.html inside the TimeTable/templates/TimeTable
-                        directory
-                        and
-                        add the following code:
-                    </div>
-                    <pre class="prettyprint html Code">
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;Course List&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;h1&gt;Course List&lt;/h1&gt;
-    &lt;ul&gt;
-        {% for course in courses %}
-            &lt;li&gt;&lt;b&gt;{{ course.name }}&lt;/b&gt;, taught by {{ course.teacher }}, in {{ course.room }}, on {{ course.day_of_week }} at {{ course.time }}&lt;/li&gt;
-        {% endfor %}
-    &lt;/ul&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-            </pre>
-                    <div class="Definitions">
-                        In this template, we use Django's template language to loop through the list of courses passed
-                        from
-                        the view and display each course's name, teacher, room, day of the week, and time. <br>
-                        You can create similar templates for teacher_list.html and room_list.html to display lists of
-                        teachers
-                        and rooms, respectively.</div>
-                    <pre class="prettyprint html Code">
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;Teacher List&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;h1&gt;Teacher List&lt;/h1&gt;
-    &lt;ul&gt;
-        {% for teacher in teachers %}
-            &lt;li&gt;&lt;b&gt;{{ teacher.name }}&lt;/b&gt;, teaches {{ teacher.courses.all|join:", " }}&lt;/li&gt;
-        {% endfor %}
-    &lt;/ul&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-            </pre>
-                    <div class="Definitions">
-                        In this template, we use Django's template language to loop through the list of teachers passed
-                        from
-                        the view and display each teacher's name and the courses they teach. <br>
-                        You can create similar templates for room_list.html and teacher_list.html to display lists of
-                        rooms
-                        and
-                        teachers respectively.</div>
-                    <pre class="prettyprint html Code">
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;Room List&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;h1&gt;Room List&lt;/h1&gt;
-    &lt;ul&gt;
-        {% for room in rooms %}
-            &lt;li&gt;&lt;b&gt;{{ room.name }}&lt;/b&gt;, capacity: {{ room.capacity }}&lt;/li&gt;
-        {% endfor %}
-    &lt;/ul&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-            </pre>
-                    <pre class="prettyprint html Code">
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;Teacher List&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;h1&gt;Teacher List&lt;/h1&gt;
-    &lt;ul&gt;
-        {% for teacher in teachers %}
-            &lt;li&gt;&lt;b&gt;{{ teacher.name }}&lt;/b&gt;, teaches {{ teacher.courses.all|join:", " }}&lt;/li&gt;
-        {% endfor %}
-    &lt;/ul&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-</pre>
-                    <div class="Definitions">
-                        With the URL patterns, views, and templates in place, you can now navigate to the following URLs
-                        in
-                        your web browser to see the lists of courses, teachers, and rooms:
-                        <ul>
-                            <li>http://localhost:8000/timetable/courses/</li>
-                            <li>http://localhost:8000/timetable/teachers/</li>
-                            <li>http://localhost:8000/timetable/rooms/</li>
-                        </ul>
-                    </div>
+
+
                 </section>
                 <section id="Template_Inheritance">
                     <h2 class="Section_Title">Template Inheritance</h2>
                     <div class="Definitions">
+                        Templates define the structure and layout of the HTML pages that are sent to the browser.
+                        In Django, templates are stored in a templates directory within your app. <br>
+                        Create a new directory called templates inside the Home app directory, and then create
+                        another
+                        directory called Home inside the templates directory. This structure helps Django locate
+                        the
+                        templates for the Home app. <br>
                         Template inheritance allows you to create a base template that defines the overall structure of
                         your
                         web pages, and then extend that base template in other templates to add specific content. This
                         helps
                         maintain a consistent look and feel across your website and reduces code duplication. <br>
-                        Let's create a base template called base_TimeTable.html in the TimeTable/templates/TimeTable
+                        Let's create a base template called base_Home.html in the Home/templates/Home
                         directory.
                         <br>
-                        This base template will define the common header and footer for all pages in the TimeTable app.
+                        This base template will define the common header and footer for all pages in the Home app.
                         The
                         header will
                         include a h1 tag and navigation bar with links to the course list, teacher list, and room list
@@ -525,55 +303,108 @@ def room_list(request):
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
-    &lt;title&gt;TimeTable&lt;/title&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;University&lt;/title&gt;
 &lt;/head&gt;
 &lt;body&gt;
-    &lt;header&gt;
-        &lt;h1&gt;TimeTable&lt;/h1&gt;
-        &lt;nav&gt;
-            &lt;a href="{% url 'course_list' %}"&gt;Courses&lt;/a&gt;
-            &lt;a href="{% url 'teacher_list' %}"&gt;Teachers&lt;/a&gt;
-            &lt;a href="{% url 'room_list' %}"&gt;Rooms&lt;/a&gt;
-        &lt;/nav&gt;
+&lt;header&gt;
+&lt;nav class="navbar"&gt;
+    &lt;div class="nav-logo"&gt;
+        &lt;img src="logo.png" alt="Logo"&gt;
+    &lt;/div&gt;
+
+    &lt;ul class="nav-links"&gt;
+&lt;li&gt;&lt;a href="{% url 'News' %}"&gt;News&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href="{% url 'About_Us' %}"&gt;About Us&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href="{% url 'Contact_Us' %}"&gt;Contact Us&lt;/a&gt;&lt;/li&gt;
+
+&lt;/ul&gt;
+
+    &lt;div class="auth-links"&gt;
+       
+            &lt;a href="{% url 'login_student' %}"&gt;Sign In&lt;/a&gt;
+        &lt;span class="divider"&gt;|&lt;/span&gt;
+            &lt;a href="{% url 'register_student' %}"&gt;Sign Up&lt;/a&gt;
+
+    &lt;/div&gt;
+&lt;/nav&gt;
     &lt;/header&gt;
-                &lt;main&gt;
-                    {% block content %}
+                &lt;main class="container"&gt;
+                     {% block content %}
                     {% endblock %}
                 &lt;/main&gt;
-    &lt;footer&gt;
-        &lt;p&gt;&amp;copy; 2024 TimeTable App&lt;/p&gt;
-    &lt;/footer&gt;
+    &lt;footer class="footer"&gt;
+    &lt;div class="footer-container"&gt;
+
+        &lt;div class="footer-col"&gt;
+            &lt;h3&gt;ENSIA&lt;/h3&gt;
+            &lt;p&gt;National School of Artificial Intelligence.
+               Excellence in education, research, and innovation.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class="footer-col"&gt;
+            &lt;h4&gt;Quick Links&lt;/h4&gt;
+            &lt;ul&gt;
+                &lt;li&gt;&lt;a href="#"&gt;Home&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="#"&gt;Courses&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="#"&gt;Teachers&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="#"&gt;Rooms&lt;/a&gt;&lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/div&gt;
+
+        &lt;div class="footer-col"&gt;
+            &lt;h4&gt;Resources&lt;/h4&gt;
+            &lt;ul&gt;
+                &lt;li&gt;&lt;a href="#"&gt;Research Labs&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="#"&gt;Publications&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="#"&gt;Student Portal&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="#"&gt;Support&lt;/a&gt;&lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/div&gt;
+
+        &lt;div class="footer-col"&gt;
+            &lt;h4&gt;Newsletter&lt;/h4&gt;
+            &lt;p&gt;Stay updated with our latest news.&lt;/p&gt;
+            &lt;form class="newsletter"&gt;
+                &lt;input type="email" placeholder="Your email"&gt;
+                &lt;button type="submit"&gt;Subscribe&lt;/button&gt;
+            &lt;/form&gt;
+        &lt;/div&gt;
+
+    &lt;/div&gt;
+
+    &lt;div class="footer-bottom"&gt;
+        &lt;p&gt;© 2025 ENSIA — National School of Artificial Intelligence. All rights reserved.&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/footer&gt;
+
 &lt;/body&gt;
 &lt;/html&gt;
             </pre>
                     <div class="Definitions">
-                        In this base template, we define a header with a h1 tag and navigation links, a main content
+                        In this base template, we define a header, a main content
                         area
-                        defined by the {% block content %} tag, and a footer with a copyright notice. <br>
-                        Now, let's modify the course_list.html template to extend the base template and add specific
+                        defined by the {% block content %} tag, and a footer. <br>
+                        Now, let's modify the index.html, News.html, About_Us.html, and Contact_Us.html template to
+                        extend the base template and add specific
                         content
                         to
                         the content block:
                     </div>
                     <pre class="prettyprint html Code">
-{% extends "TimeTable/base_TimeTable.html" %}
+{% extends "Home/base_Home.html" %}
 {% block content %}
-    &lt;h1&gt;Course List&lt;/h1&gt;
-    &lt;ul&gt;
-        {% for course in courses %}
-            &lt;li&gt;&lt;b&gt;{{ course.name }}&lt;/b&gt;, taught by {{ course.teacher }}, in {{ course.room }}, on {{ course.day_of_week }} at {{ course.time }}&lt;/li&gt;
-            {% empty %}
-            &lt;li&gt;No courses available.&lt;/li&gt;
-        {% endfor %}
-    &lt;/ul&gt;
+&lt;h1&gt;Home&lt;/h1&gt;
 {% endblock %}
             </pre>
                     <div class="Definitions">
-                        In this modified course_list.html template, we use the {% extends %} tag to specify that this
-                        template
-                        extends the base_TimeTable.html template. We then define the content for the content block using
-                        the
+                        In this modified index.html template, we use the {% extends %} tag to specify that this template
+                        extends the base_Home.html template. We then define the content for the content block using the
                         {% block content %} and {% endblock %} tags. <br>
+                        You can similarly modify the News.html, About_Us.html, and Contact_Us.html templates to extend
+                        the
+                        base
+                        template and add specific content to the content block. <br>
                         This block, named content, is a placeholder;
                         the child template will define the kind of information that goes in
                         the content block. <br>
@@ -593,122 +424,52 @@ def room_list(request):
                         the loop occurs. <br>
                         To print a variable in a template, wrap the variable name in double curly
                         braces ({{ and }}). <br>
-                        the {% empty %} template tag, which tells Django what to do
-                        if there are no items in the list. In this case, if there are no courses,
-                        Django will display a message indicating that no courses are available. <br>
-                        You can similarly modify the teacher_list.html and room_list.html templates to extend the base
-                        template
-                        and add specific content to the content block.
                     </div>
                 </section>
-                <section id="Teacher_Page">
-                    <h2 class="Section_Title">Creating a Teacher Detail Page</h2>
+                <section id="Styling">
+                    <h2 class="Section_Title">Styling with CSS</h2>
                     <div class="Definitions">
-                        To create a detail page for each teacher, we need to define a new URL pattern, create a view
-                        function,
-                        and create a template for the teacher detail page. <br>
-                        First, let's update the urls.py file in the TimeTable app to include a new URL pattern for the
-                        teacher
-                        detail page:
+                        To style your Django web pages, you can use CSS (Cascading Style Sheets). <br>
+                        Create a new directory called static inside the Home app directory, and then create another
+                        directory called Home inside the static directory. This structure helps Django locate the static
+                        files for the Home app. <br>
+                        Inside the Home/static/Home directory, create a new CSS folder then create a file called
+                        styles.css and add your CSS
+                        styles to it. <br>
+                        To link the CSS file to your HTML templates, you need to load the static files in your base
+                        template
+                        (base_Home.html) and include a link to the CSS file in the head section:
                     </div>
-                    <pre class="prettyprint python Code">
-from django.urls import path
-from . import views
-urlpatterns = [
-    path('courses/', views.course_list, name='course_list'),
-    path('teachers/&lt;int:teacher_id&gt;/', views.teacher_detail, name='teacher_detail'),
-    path('rooms/', views.room_list, name='room_list'),
-]
+                    <pre class="prettyprint html Code">
+{% load static %}
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;link rel="stylesheet" href="{% static 'Home/CSS/styles.css' %}"&gt;
+    &lt;title&gt;University&lt;/title&gt;
+    
+&lt;/head&gt;
+&lt;body&gt;
 </pre>
                     <div class="Definitions">
-                        In this updated urls.py file, we added a new URL pattern that includes a dynamic segment
-                        &lt;int:teacher_id&gt;.
-                        This segment captures the ID of the teacher and passes it to the teacher_detail view
-                        function.
+                        In this code, we use the {% load static %} tag to load the static files and the
+                        {% static 'Home/CSS/styles.css' %} tag to generate the URL for the styles.css file. <br>
+                        Now, when you run the development server and navigate to your web pages, the styles defined in
+                        styles.css will be applied. <br>
+                        If it does not work, make sure that the STATIC_URL setting in settings.py is set correctly:
                     </div>
                     <pre class="prettyprint python Code">
-from django.shortcuts import render, get_object_or_404
-from .models import Course, Teacher, Room
-# Create your views here.
-def course_list(request):
-    courses = Course.objects.all()
-    return render(request, 'TimeTable/course_list.html', {'courses': courses})
+STATIC_URL = '/static/'
+            </pre>
+                    <div class="Definitions">
+                        This setting tells Django where to look for static files. By default, it is set to /static/,
+                        which
+                        matches the directory structure we created earlier. <br>
+                        Or restart the server to see the changes.
+                    </div>
 
-def teacher_detail(request, teacher_id):
-    teacher = get_object_or_404(Teacher, pk=teacher_id)
-    return render(request, 'TimeTable/teacher_detail.html', {'teacher': teacher})
-def room_list(request):
-    rooms = Room.objects.all()
-    return render(request, 'TimeTable/room_list.html', {'rooms': rooms})
-            </pre>
-                    <div class="Definitions">
-                        In this updated views.py file, we added a new view function called teacher_detail. This function
-                        retrieves
-                        the Teacher object with the specified ID using the get_object_or_404 shortcut, which returns a
-                        404
-                        error
-                        if the teacher does not exist. The function then renders the teacher_detail.html template,
-                        passing
-                        the
-                        Teacher object as context.
-                    </div>
-                    <pre class="prettyprint html Code">
-{% extends "TimeTable/base_TimeTable.html" %}
-{% block content %}
-    &lt;h1&gt;Teacher Detail&lt;/h1&gt;
-    &lt;h2&gt;{{ teacher.first_name }} {{ teacher.last_name }}&lt;/h2&gt;
-    &lt;p&gt;Email: {{ teacher.email }}&lt;/p&gt;
-    &lt;p&gt;Department: {{ teacher.department }}&lt;/p&gt;
-    &lt;h3&gt;Courses Taught:&lt;/h3&gt;
-    &lt;ul&gt;
-        {% for course in teacher.course_set.all %}
-            &lt;li&gt;{{ course.name }} on {{ course.day_of_week }} at {{ course.time }} in {{ course.room }}&lt;/li&gt;
-        {% empty %}
-            &lt;li&gt;No courses assigned.&lt;/li&gt;
-        {% endfor %}
-    &lt;/ul&gt;
-{% endblock %}
-            </pre>
-                    <div class="Definitions">
-                        In this teacher_detail.html template, we extend the base_TimeTable.html template and define the
-                        content
-                        block to display the details of the teacher, including their name, email, department, and a list
-                        of
-                        courses they teach. <br>
-                        With these changes in place, you can now navigate to a teacher's detail page by visiting a URL
-                        like
-                        the
-                        following in your web browser:
-                    </div>
-                    <pre class="prettyprint text Code">
-http://localhost:8000/timetable/teachers/1/
-            </pre>
-                    <div class="Definitions">
-                        Replace 1 with the actual ID of the teacher you want to view. This will display the teacher's
-                        details
-                        along with the list of courses they teach. <br>
-                        Now in the teacher list page, we can add links to each teacher's detail page:
-                    </div>
-                    <pre class="prettyprint html Code">
-{% extends "TimeTable/base_TimeTable.html" %}
-{% block content %}
-    &lt;h1&gt;Teacher List&lt;/h1&gt;
-    &lt;ul&gt;
-        {% for teacher in teachers %}
-            &lt;li&gt;{{ teacher.first_name }} {{ teacher.last_name }}  &lt;a href="{% url 'teacher_detail' teacher.teacher_id %}"&gt;View&lt;/a&gt; &lt;/li&gt;
-        {% empty %}
-            &lt;li&gt;No teachers available.&lt;/li&gt;
-        {% endfor %}
-    &lt;/ul&gt;
-{% endblock %}
-            </pre>
-                    <div class="Definitions">
-                        In this modified teacher_list.html template, we added a link to each teacher's detail page using
-                        the
-                        {% url %} template tag. This allows users to click on "View Details" to navigate to the
-                        corresponding teacher's detail page.
-                    </div>
                 </section>
+
             </div>
         </div>
     </main>

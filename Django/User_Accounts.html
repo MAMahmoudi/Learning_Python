@@ -16,52 +16,634 @@
         <div class="Content_Area">
             <h1 class="Chapter_Title">User Accounts</h1>
             <div class="Sections_Area">
+                <section id="Defining_Models">
+                    <h2 class="Section_Title">Defining Models</h2>
+                    <div class="Definitions">
+                        In Django, a model is a Python class that represents a database table. Each attribute of the
+                        class
+                        corresponds to a column in the table. Models are defined in the models.py file of your app. <br>
+                        Here's an example of how to define a simple model for a User in the Accounts app. <br>
+                        First, create a new file called managers.py in the Accounts app directory and add the following
+                        code to
+                        define a custom user manager:
+                    </div>
+                    <pre class="prettyprint python Code">
+# accounts/managers.py
+
+from django.contrib.auth.models import BaseUserManager
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, role=None, **extra_fields):
+        """Create and return a regular user with an email and password."""
+        if not email:
+            raise ValueError("Users must have an email address")
+
+        email = self.normalize_email(email)
+
+        # Default role if not provided
+        if role is None:
+            role = self.model.STUDENT
+
+        user = self.model(email=email, role=role, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        """Create and return a superuser with ADMIN role."""
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+
+        return self.create_user(
+            email=email,
+            password=password,
+            role=self.model.ADMIN,
+            **extra_fields,
+        )
+                    </pre>
+                    <div class="Definitions">
+                        In this custom user manager, we define methods to create regular users and superusers with
+                        specific roles. <br>
+                        CustomUserManager extends BaseUserManager and provides methods to create users with email as the
+                        unique identifier and assign roles.
+                        This class has two main methods:
+                        <ul>
+                            <li><strong>create_user:</strong> This method creates a regular user with the specified
+                                email, password, and role. If no role is provided, it defaults to STUDENT.</li>
+                            <li><strong>create_superuser:</strong> This method creates a superuser with the ADMIN role
+                                and ensures that the necessary flags (is_staff, is_superuser, is_active) are set to
+                                True.</li>
+                        </ul>
+                        After defining the custom user manager, we can now define the User model in models.py:
+                    </div>
+                    <pre class="prettyprint python Code">
+# accounts/models.py
+
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from .managers import CustomUserManager
+
+
+class User(AbstractUser):
+    # We use email as the login identifier
+    username = None
+    email = models.EmailField(unique=True)
+
+    # Role choices
+    STUDENT = "student"
+    TEACHER = "teacher"
+    ADMIN = "admin"
+
+    ROLE_CHOICES = [
+        (STUDENT, "Student"),
+        (TEACHER, "Teacher"),
+        (ADMIN, "Admin"),
+    ]
+
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=STUDENT)
+
+    phone = models.CharField(max_length=20, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []  # No username required
+
+    objects = CustomUserManager()
+
+    def __str__(self):
+        return f"{self.email} ({self.role})"
+                    </pre>
+                    <div class="Definitions">
+                        In this User model, we extend AbstractUser to create a custom user model with email as the
+                        unique
+                        identifier and a role field to distinguish between different types of users (students, teachers,
+                        and
+                        admins). <br>
+                        The phone field allows storing an optional phone number for each user. The created_at and
+                        updated_at
+                        fields automatically track when a user is created and last updated. <br>
+                        The USERNAME_FIELD is set to email, indicating that email will be used for authentication
+                        instead
+                        of
+                        the default username. The REQUIRED_FIELDS list is empty because we don't require any additional
+                        fields
+                        for user creation. <br>
+                        Finally, we assign the CustomUserManager to the objects attribute to handle
+                        user
+                        creation and management.
+                    </div>
+                    <h2 class="Subsection_Title">Profile Models</h2>
+                    <div class="Definitions">
+                        Next, we can define profile models for students and teachers that extend the User model. <br>
+                        Create a new app:
+                    </div>
+                    <pre class="prettyprint python Code">
+python manage.py startapp profiles
+                    </pre>
+                    <div class="Definitions">
+                        Then, in profiles/models.py, define the StudentProfile and TeacherProfile models:
+                    </div>
+                    <pre class="prettyprint python Code">
+class StudentProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    student_id = models.CharField(max_length=20, blank=False, null=False)
+    level = models.CharField(max_length=50, blank=True, null=True)
+    group = models.CharField(max_length=50, blank=True, null=True)
+    speciality = models.CharField(max_length=50, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    address = models.CharField(max_length=500, blank=True, null=True)
+
+    def __str__(self):
+        return f"Student Profile for {self.user.first_name}, {self.user.last_name}"
+
+
+class TeacherProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    specialization = models.CharField(max_length=100, blank=True, null=True)
+    office = models.CharField(max_length=50, blank=True, null=True)
+    bio = models.TextField(max_length=500, blank=True, null=True)
+    rank = models.TextField(max_length=50, blank=True, null=True)
+    prefix = models.TextField(max_length=5, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"Teacher Profile for {self.user.first_name}, {self.user.last_name}"
+
+
+class AdminProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    position = models.CharField(max_length=100, blank=True, null=True)
+    office = models.CharField(max_length=50, blank=True, null=True)
+    service = models.CharField(max_length=50, blank=True, null=True)
+    rank = models.TextField(max_length=50, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"Admin Profile for {self.user.first_name}, {self.user.last_name}"
+                    </pre>
+                    <div class="Definitions">
+                        In these profile models, we use a OneToOneField to create a one-to-one relationship with the
+                        custom
+                        User model. Each profile model includes additional fields specific to students and teachers.
+                        <br>
+                        The __str__ method provides a human-readable representation of the profile, displaying the
+                        user's
+                        first and last name. <br>
+                        Now we need to set up signals to automatically create the appropriate profile.
+                    </div>
+                    <h2 class="Subsection_Title">Signals (auto-create correct profile based on role)</h2>
+                    <div class="Definitions">
+                        To automatically create the appropriate profile when a user is created, we'll use Django
+                        signals.
+                        Create a file called signals.py in the profiles app directory:
+                    </div>
+                    <pre class="prettyprint python Code">
+                        # profiles/signals.py
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.conf import settings
+
+from .models import StudentProfile, TeacherProfile, AdminProfile
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_profile(sender, instance, created, **kwargs):
+    if not created:
+        return
+
+    if instance.role == instance.STUDENT:
+        StudentProfile.objects.create(user=instance)
+
+    elif instance.role == instance.TEACHER:
+        TeacherProfile.objects.create(user=instance)
+
+    elif instance.role == instance.ADMIN:
+        AdminProfile.objects.create(user=instance)
+                    </pre>
+                    <div class="Definitions">
+                        In this signals.py file, we define a signal receiver function create_user_profile that listens
+                        for
+                        the
+                        post_save signal of the User model. When a new user is created, the function checks the user's
+                        role
+                        and creates the corresponding profile (StudentProfile, TeacherProfile, or AdminProfile). <br>
+                        Finally, we need to connect the signals. Open the apps.py file in the profiles app directory and
+                        modify it as follows:
+                    </div>
+                    <pre class="prettyprint python Code">
+# profiles/apps.py
+
+from django.apps import AppConfig
+
+class ProfilesConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'profiles'
+
+    def ready(self):
+        import profiles.signals
+                    </pre>
+                    <div class="Definitions">
+                        In this modified apps.py file, we override the ready method to import the signals module when
+                        the
+                        app is ready. This ensures that the signal receivers are connected and will function as
+                        expected. <br>
+                        default_auto_field is set to 'django.db.models.BigAutoField' to specify the default type of
+                        primary key field
+                        to use for models in this app. <br>
+                        Now, whenever a new user is created, the appropriate profile will be automatically created based
+                        on the user's role.
+                    </div>
+
+                </section>
+                <section id="Activating_Models">
+                    <h2 class="Section_Title">Activating Models</h2>
+                    <div class="Definitions">
+                        To use our models, we have to tell Django to include our app in the overall
+                        project. Open settings.py (in the University_Platform/University_Platform directory), and
+                        you'll see a section that tells Django which apps are installed in the project:
+                    </div>
+                    <pre class="prettyprint python Code">
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+
+    # My apps
+    "Accounts",
+    "profiles",
+]
+
+# Custom user model
+AUTH_USER_MODEL = "Accounts.User"
+
+                </pre>
+                    <div class="Definitions">
+                        Add the name of your app (accounts) to the list of installed apps. This
+                        tells Django to include the models defined in the accounts app when it
+                        creates the database. <br>
+                        Also, set the AUTH_USER_MODEL setting to point to the custom User model
+                        we defined in the accounts app. This tells Django to use our custom user model
+                        instead of the default User model for authentication and user management. <br>
+                    </div>
+                    <h2 class="Subsection_Title">Checking the Database</h2>
+                    <div class="Definitions">
+                        You can check that Django has recognized your models by running the following command:
+                    </div>
+                    <pre class="prettyprint python Code">
+python manage.py check
+            </pre>
+                    <div class="Definitions">
+                        If everything is set up correctly, you should see the message System check
+                        identified no issues (0 silenced). This indicates that Django has successfully
+                        recognized your models and there are no issues with the configuration.
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="Section_Title">Creating the Database</h2>
+                    <div class="Definitions">
+                        After defining your models, you need to create and apply migrations to update the database
+                        schema.
+                        Migrations are a way to propagate changes made to your models into the database. To create and
+                        apply
+                        migrations, run the following commands (Run this from the same directory where manage.py is
+                        located):
+                    </div>
+                    <pre class="prettyprint python Code">
+python manage.py makemigrations
+python manage.py migrate
+            </pre>
+                    <div class="Definitions">
+                        Whenever we want to modify the data, we'll follow these three steps:
+                        modify
+                        models.py, call makemigrations, and tell Django to migrate the project. <br>
+                        The makemigrations command tells Django to create new migration files based on the changes
+                        detected. <br>
+                        The migrate command applies those migrations to the database, updating its schema to match the
+                        current state of the models.
+                    </div>
+                </section>
+                <section id="Admin_Site">
+                    <h2 class="Section_Title">Using the Admin Site</h2>
+                    <div class="Definitions">
+                        Django includes a built-in admin site that allows you to manage your models through a web
+                        interface.
+                        To use the admin site, you need to create a superuser account. Run the following command:
+                    </div>
+                    <pre class="prettyprint python Code">
+python manage.py createsuperuser
+            </pre>
+                    <div class="Definitions">
+                        Follow the prompts to create a username, email address, and password for the superuser account.
+                        Once the superuser account is created, you can access the admin site by navigating to
+                        http://localhost:8000/admin in your web browser. Log in using the superuser credentials you just
+                        created. <br>
+                        For our example we created a superuser with the username ESST_Admin, ESST_Admin@esst-sup.com as
+                        an
+                        email
+                        and a simple password "123456789". <br>
+                        After logging in, you'll see the admin dashboard, where you can manage your models.<br>
+                    </div>
+                </section>
+                <section id="Registering_Model_with_Admin_Site">
+                    <h2 class="Section_Title">Registering Models with the Admin Site</h2>
+                    <div class="Definitions">
+                        To manage your models through the admin site, you need to register them in the admin.py file of
+                        your
+                        app. Open admin.py in the Accounts app directory and add the following code to register the User
+                        model:
+                    </div>
+                    <pre class="prettyprint python Code">
+from django.contrib import admin
+from .models import User
+
+
+# Register your models here.
+admin.site.register(User)
+
+            </pre>
+                </section>
+                <section>
+                    <h2 class="Section_Title">Create admin classes for each profile</h2>
+                    <div class="Definitions">
+                        To manage your profile models through the admin site, you need to create admin classes in the
+                        admin.py
+                        file of the profiles app. Open profiles/admin.py and add the following code to register the
+                        profile
+                        models:
+                    </div>
+                    <pre class="prettyprint python Code">
+# profiles/admin.py
+
+from django.contrib import admin
+from .models import StudentProfile, TeacherProfile, AdminProfile
+
+
+@admin.register(StudentProfile)
+class StudentProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "student_id", "level", "group")
+    search_fields = ("user__email", "student_id")
+
+
+@admin.register(TeacherProfile)
+class TeacherProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "specialization", "grade", "office")
+    search_fields = ("user__email", "specialization")
+
+
+@admin.register(AdminProfile)
+class AdminProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "position", "department")
+    search_fields = ("user__email", "position")
+                    </pre>
+                    <div class="Definitions">
+                        In this admin.py file, we define admin classes for each profile model (StudentProfile,
+                        TeacherProfile,
+                        and AdminProfile) using the @admin.register decorator. Each admin class specifies how the
+                        corresponding
+                        model should be displayed in the admin interface, including the fields to display in the list
+                        view
+                        (list_display) and the fields to search (search_fields). <br>
+                        With these admin classes in place, you can now manage student, teacher, and admin profiles
+                        through
+                        the Django admin site.
+                    </div>
+                </section>
+                <section>
+                    <h2 class="Section_Title">Add profile inlines to the User admin</h2>
+                    <div class="Definitions">
+                        To display the profile information directly within the User admin interface, we can use inline
+                        models.
+                        Modify the admin.py file in the Accounts app directory as follows:
+                    </div>
+                    <pre class="prettyprint python Code">
+# accounts/admin.py
+
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.forms import TextInput, Textarea
+
+from .models import User
+from profiles.models import StudentProfile, TeacherProfile, AdminProfile
+
+
+class StudentProfileInline(admin.StackedInline):
+    model = StudentProfile
+    can_delete = False
+    verbose_name_plural = "Student Profile"
+    fk_name = "user"
+
+
+class TeacherProfileInline(admin.StackedInline):
+    model = TeacherProfile
+    can_delete = False
+    verbose_name_plural = "Teacher Profile"
+    fk_name = "user"
+
+
+class AdminProfileInline(admin.StackedInline):
+    model = AdminProfile
+    can_delete = False
+    verbose_name_plural = "Admin Profile"
+    fk_name = "user"
+
+
+class UserAdmin(BaseUserAdmin):
+    model = User
+    list_display = ("email", "role", "is_staff", "is_active")
+    list_filter = ("role", "is_staff", "is_active")
+
+    fieldsets = (
+        (None, {"fields": ("email", "password")}),
+        ("Personal Info", {"fields": ("phone",)}),
+        ("Role", {"fields": ("role",)}),
+        ("Permissions", {"fields": ("is_staff", "is_active", "is_superuser")}),
+        ("Important Dates", {"fields": ("last_login", "date_joined")}),
+    )
+
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": ("email", "password1", "password2", "role", "is_staff", "is_active"),
+        }),
+    )
+
+    search_fields = ("email",)
+    ordering = ("email",)
+
+    def get_inlines(self, request, obj):
+        if not obj:
+            return []
+        if obj.role == User.STUDENT:
+            return [StudentProfileInline]
+        if obj.role == User.TEACHER:
+            return [TeacherProfileInline]
+        if obj.role == User.ADMIN:
+            return [AdminProfileInline]
+        return []
+
+
+admin.site.register(User, UserAdmin)
+                    </pre>
+                    <div class="Definitions">
+                        In this modified admin.py file, we define inline classes for each profile model
+                        (StudentProfileInline,
+                        TeacherProfileInline, and AdminProfileInline) using admin.StackedInline. These inline classes
+                        specify
+                        how the profile information should be displayed within the User admin interface. <br>
+                        We then create a custom UserAdmin class that extends BaseUserAdmin. In this class, we override
+                        the
+                        get_inlines method to return the appropriate inline class based on the user's role. This allows
+                        us to
+                        display the relevant profile information directly within the User admin interface. <br>
+                        Finally, we register the custom UserAdmin class with the User model using admin.site.register.
+                    </div>
+                </section>
                 <section id="Adding_Forms">
                     <h2 class="Section_Title">Adding Forms</h2>
                     <div class="Definitions">
                         The simplest way to build a form in Django is to use a ModelForm, which
                         uses the information from the models we defined earlier to automatically
                         build a form. <br>
-                        Let's create a new model for students in models.py:
-                    </div>
-                    <pre class="prettyprint python Code">
-class Student(models.Model):
-    student_id = models.AutoField(primary_key=True)
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=10)
-    level = models.CharField(max_length=50)
-    speciality = models.CharField(max_length=50)
-    department = models.CharField(max_length=100)
-    photo = models.ImageField(upload_to='./student_photos/', default='student_photos/default.jpg')
-
-    def __str__(self):
-        return f"{self.first_name} {self.last_name}"
-                        </pre>
-                    <div class="Definitions">
                         Write your first form in the file forms.py, which you
-                        should create in the same directory as models.py:
+                        should create in the same directory as models.py. <br>
+                        Let's create a User registration form using the User model we defined earlier. <br>
+                        Thus form will allow new users to sign up by providing their first name, last name,
+                        email, and password and choosing their role (student, teacher, or admin). <br>
+                        Open forms.py and add the following code:
                     </div>
                     <pre class="prettyprint python Code">
 from django import forms
-from .models import Student
-
-class StudentForm(forms.ModelForm):
+from .models import User
+class UserRegistrationForm(forms.ModelForm):
     class Meta:
-        model = Student
-        fields = ['first_name', 'last_name', 'email', 'phone', 'level', 'speciality', 'department', 'photo']
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'password', 'role','phone']
         labels = {
             'first_name': 'First Name',
             'last_name': 'Last Name',
             'email': 'Email Address',
+            'password': 'Password',
+            'role': 'Role',
             'phone': 'Phone Number',
-            'level': 'Level of Study',
-            'speciality': 'Speciality',
-            'department': 'Department',
-            'photo': 'Profile Photo',
         }
-        </pre>
+        widgets = {
+            'password': forms.PasswordInput(),
+            'role': forms.Select(),
+        }
+                    </pre>
+                    <div class="Definitions">
+                        This code creates a ModelForm named UserRegistrationForm that corresponds to the
+                        User model. The fields attribute specifies which fields from the model should be included in
+                        the form,
+                        and the labels attribute provides human-readable labels for each field. <br>
+                        The widgets attribute is used to customize the appearance of the password field, rendering it
+                        as a
+                        password input (hiding the characters as they are typed). <br>
+                        Now, we need to add a URL pattern in urls.py to point to the view that will handle the form.
+                        Let's call the view register_user and add the following urlpatterns list:
+                    </div>
+                    <pre class="prettyprint python Code">
+from django.urls import path
+from .views import login_view, logout_view, register_view
+
+urlpatterns = [
+    path("login/", login_view, name="login"),
+    path("logout/", logout_view, name="logout"),
+    path("register/", register_view, name="register"),
+]
+</pre>
+                    <div class="Definitions">
+                        Next, we need to create the register_view view in views.py to handle the form submission and
+                        rendering:
+                    </div>
+                    <pre class="prettyprint python Code">
+def register_view(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        role = request.POST.get("role")
+        phone = request.POST.get("phone")
+
+
+        user = User.objects.create_user(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            role=role,
+            phone=phone,
+        )
+
+        login(request, user)
+
+        if role == User.STUDENT:
+            return redirect("student_dashboard")
+        elif role == User.TEACHER:
+            return redirect("teacher_dashboard")
+        elif role == User.ADMIN:
+            return redirect("admin_dashboard")
+    else:
+        form = UserRegistrationForm()
+    return render(request, "Home/register.html", {"form": form})
+
+                    </pre>
+                    <div class="Definitions">
+                        This view handles both GET and POST requests. If the request method is POST, it processes the
+                        submitted form data. <br>
+                        This is done by creating an instance of UserRegistrationForm with the submitted data. <br>
+                        It checks then if the form is valid, meaning all required fields are filled out correctly (all
+                        fields
+                        in a form are required by default) and that the data entered matches the field types
+                        expected—for
+                        example,
+                        that the length of text is less than or equal to the max number of characters, as we specified
+                        in
+                        models.py <br>
+                        If the form is valid, it saves the new user to the database and redirects to the login page.
+                        <br>
+                        If the request method is GET, meaning the user is accessing the page for the first time, it
+                        simply
+                        renders an empty form. <br>
+                        The last line renders the register.html template, passing the form instance to the template
+                        context. <br>
+                        Finally, we need to create the register.html template to display the form:
+                    </div>
+                    <pre class="prettyprint html Code">
+{% extends "Home/base_Home.html" %}
+{% block content %}
+&lt;h1&gt;User Registration&lt;/h1&gt;
+&lt;form method="post" action="{% url 'register' %}"&gt;
+    {% csrf_token %}
+    {{ form.as_p }}
+    &lt;button type="submit"&gt;Register&lt;/button&gt;
+&lt;/form&gt;
+{% endblock %}
+                    </pre>
+                    <div class="Definitions">
+                        This template extends a base template named base_Home.html. <br>
+                        Inside the content block, it displays a heading and a form. <br>
+                        The form uses the POST method to submit data to the register_view. <br>
+                        The {% csrf_token %} tag is included for security purposes to prevent Cross-Site Request Forgery
+                        attacks. <br>
+                        The {{ form.as_p }} renders the form fields as paragraphs, and a submit button is provided to
+                        submit the form. <br>
+                        Django doesn't create a submit button for forms, so we define one at the end of the form. <br>
+                        With these components in place, users can now register new accounts through the web interface.
+                    </div>
                     <div class="Definitions">
                         This code creates a ModelForm named StudentForm that corresponds to the
                         Student model. The fields attribute specifies which fields from the model
@@ -143,8 +725,191 @@ def register_student(request):
                         Open base_Home.html and add the following code inside the &lt;nav&gt; element:
                     </div>
                     <pre class="prettyprint html Code">
-&lt;li&gt;&lt;a href="{% url 'register_student' %}"&gt;Register Student&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="{% url 'register_student' %}"&gt;Signup&lt;/a&gt;&lt;/li&gt;
                     </pre>
+                </section>
+                <section id="Login_Page">
+                    <h2 class="Section_Title">Login Page</h2>
+                    <div class="Definitions">
+                        Let's create a login page using the Student model we created earlier without the Django
+                        authentication system. <br>
+                        First, we need to create a login form in forms.py:
+                    </div>
+                    <pre class="prettyprint python Code">
+from django import forms
+class LoginForm(forms.Form):
+    email = forms.EmailField(label='Email Address')
+    password = forms.CharField(label='Password', widget=forms.PasswordInput)
+                    </pre>
+                    <div class="Definitions">
+                        This code creates a simple login form with two fields: email and password. <br>
+                        Next, we need to create a view to handle the login process in views.py:
+                    </div>
+                    <pre class="prettyprint python Code">
+from django.shortcuts import render, redirect
+from .forms import LoginForm
+from .models import Student
+from django.contrib import messages
+def login_student(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            try:
+                student = Student.objects.get(email=email)
+                if student.password == password:
+                    messages.success(request, 'Login successful.')
+                    return redirect('index')
+                else:
+                    messages.error(request, 'Invalid email or password.')
+            except Student.DoesNotExist:
+                messages.error(request, 'Invalid email or password.')
+    else:
+        form = LoginForm()
+    return render(request, 'Home/login.html', {'form': form})
+                    </pre>
+                    <div class="Definitions">
+                        This view handles both GET and POST requests. <br>
+                        If the request method is POST, it processes the submitted login form data. <br>
+                        It retrieves the email and password from the cleaned form data and attempts to find a
+                        Student object with the provided email. <br>
+                        If a matching student is found, it checks if the provided password matches the stored password.
+                        <br>
+                        If the credentials are valid, it redirects to a the homepage (in this case, 'index'). <br>
+                        If the credentials are invalid, it displays an error message. <br>
+                        If the request method is GET, it simply renders an empty login form. <br>
+                        Finally, we need to create the login_student.html template to display the login form:
+                    </div>
+                    <pre class="prettyprint html Code">
+{% extends "Home/base_Home.html" %}
+{% block content %}
+&lt;h1&gt;Student Login&lt;/h1&gt;
+&lt;form method="post" action="{% url 'login_student' %}"&gt
+    {% csrf_token %}
+    {{ form.as_p }}
+    &lt;button type="submit"&gt;Login&lt;/button&gt;
+&lt;/form&gt;   
+{% endblock %}
+                    </pre>
+                    <div class="Definitions">
+                        This template extends the base_Home.html template and displays a login form. <br>
+                        The form uses the POST method to submit data to the login_student view. <br>
+                        The {% csrf_token %} tag is included for security purposes. <br>
+                        The {{ form.as_p }} renders the form fields as paragraphs, and a submit button is provided to
+                        submit the form. <br>
+                        With these components in place, users can now log in using their email and password through the
+                        web interface. <br>
+                        Now we need to add a URL pattern in urls.py to point to the login_student view:
+                    </div>
+                    <pre class="prettyprint python Code">
+......
+    path('login/', views.login_student, name='login_student'),
+......
+                    </pre>
+                    <div class="Definitions">
+                        Finally, we need to include a link to the login page in the navigation bar if the student is not
+                        authenticated. Or display "Hello, [Student.first_name]" and a logout link if the student is
+                        authenticated. <br>
+                        We need to a way to check if a student is authenticated. <br>
+                        One way to do this is to set a session variable when the student logs in successfully. <br>
+                        We will modify the login_student view to set a session variable:
+
+                    </div>
+                    <pre class="prettyprint python Code">
+from django.shortcuts import render, redirect
+from .forms import LoginForm
+from .models import Student
+from django.contrib import messages
+def login_student(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            try:
+                student = Student.objects.get(email=email)
+                if student.password == password:
+                    request.session['student_id'] = student.student_id  # Set session variable
+                    messages.success(request, 'Login successful.')
+                    return redirect('index')
+                else:
+                    messages.error(request, 'Invalid email or password.')
+            except Student.DoesNotExist:
+                messages.error(request, 'Invalid email or password.')
+    else:
+        form = LoginForm()
+    return render(request, 'Home/login.html', {'form': form})
+                    </pre>
+                    <div class="Definitions">
+                        Now, we can check for this session variable in the base_Home.html template to conditionally
+                        display the login/signup links or the greeting and logout link:
+                    </div>
+                    <pre class="prettyprint html Code">
+&lt;nav&gt;
+    &lt;ul&gt;
+        {% if request.session.student_id %}
+            &lt;li&gt;Hello, {{ request.session.student_first_name }}&lt;/li&gt;
+            &lt;li&gt;&lt;a href="{% url 'logout_student' %}"&gt;Logout&lt;/a&gt;&lt;/li&gt;
+        {% else %}
+            &lt;li&gt;&lt;a href="{% url 'login_student' %}"&gt;Login&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href="{% url 'register_student' %}"&gt;Signup&lt;/a&gt;&lt;/li&gt;
+        {% endif %}
+    &lt;/ul&gt;
+&lt;/nav&gt;
+
+                    </pre>
+                    <div class="Definitions">
+                        This code checks if the session variable student_id exists. <br>
+                        If it does, it displays a greeting with the student's first name and a logout link. <br>
+                        If it doesn't, it displays the login and signup links. <br>
+                        Note: To display the student's first name, you need to set another session variable
+                        student_first_name when the student logs in successfully. <br>
+                        You can do this by adding the following line in the login_student view after setting
+                        the student_id session variable:
+                    </div>
+                    <pre class="prettyprint python Code">
+request.session['student_first_name'] = student.first_name  # Set session variable
+                    </pre>
+                </section>
+                <section id="Logging_Out">
+                    <h2 class="Section_Title">Logging Out</h2>
+                    <div class="Definitions">
+                        To implement the logout functionality, we need to create a view that will clear the session
+                        variables and redirect the user to the homepage. <br>
+                        Let's create the logout_student view in views.py:
+                    </div>
+                    <pre class="prettyprint python Code">
+from django.shortcuts import redirect
+from django.contrib import messages
+
+def logout_student(request):
+    try:
+        del request.session['student_id']
+        del request.session['student_first_name']
+    except KeyError:
+        pass
+    messages.success(request, 'You have been logged out.')
+    return redirect('index')
+                    </pre>
+                    <div class="Definitions">
+                        This view attempts to delete the session variables student_id and student_first_name.
+                        <br>
+                        If the variables do not exist, it catches the KeyError exception and does nothing. <br>
+                        After clearing the session variables, it displays a success message and redirects the user to
+                        the homepage (in this case, 'index'). <br>
+                        Next, we need to add a URL pattern in urls.py to point to the logout_student view:
+                    </div>
+                    <pre class="prettyprint python Code">
+......
+    path('logout/', views.logout_student, name='logout_student'),
+......
+                    </pre>
+                    <div class="Definitions">
+                        With this view and URL pattern in place, users can now log out by clicking the logout link in
+                        the navigation bar. <br>
+                        This will clear their session and redirect them to the homepage.
+                    </div>
                 </section>
             </div>
         </div>

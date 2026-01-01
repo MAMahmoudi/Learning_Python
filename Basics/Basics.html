@@ -575,6 +575,164 @@ print(student1.introduce())
                         method while adding its own attribute (grade) and overriding the introduce() method.
                     </div>
                 </section>
+                <section id="Pythonic_Thinking">
+                    <h2 class="Section_Title">Pythonic Thinking</h2>
+                    <div class="Definitions">
+                        Pythonic thinking refers to writing code that follows the conventions and idioms of the Python
+                        programming language. It emphasizes readability, simplicity, and the use of Python's built-in
+                        features. Follow the PEP 8 Style Guide for Python Code to write Pythonic code.
+                    </div>
+                    <h2 class="Subsection_Title">Whitespace</h2>
+                    <div class="Definitions">
+                        <ul>
+                            <li>Use spaces instead of tabs for indentation.</li>
+                            <li>Use four spaces for each level of syntactically significant indenting.</li>
+                            <li>Lines should be 79 characters in length or less.</li>
+                            <li>Continuations of long expressions onto additional lines should
+                                be indented by four extra spaces from their normal indentation
+                                level.
+                                In a file, functions and classes should be separated by two blank
+                                lines.
+                            <li>In a class, methods should be separated by one blank line.</li>
+                            <li>In a dictionary, put no whitespace between each key and colon,
+                                and put a single space before the corresponding value if it fits on
+                                the same line.</li>
+                            <li>Put one—and only one—space before and after the = operator in a
+                                variable assignment.</li>
+                            <li>For type annotations, ensure that there is no separation between
+                                the variable name and the colon, and use a space before the type
+                                information.</li>
+                        </ul>
+                        For example:
+                    </div>
+                    <pre class="prettyprint python Code">
+# Correct indentation and spacing
+def my_function(param1: int, param2: str) -> None:
+    my_dict = {"key1": "value1", "key2": "value2"}
+    total = param1 + 10
+    print(total)
+            </pre>
+                    <h2 class="Subsection_Title">Naming</h2>
+                    <div class="Definitions">
+                        <ul>
+                            <li>
+                                Functions, variables, and attributes should be in lowercase_underscore format.</li>
+                            <li>Protected instance attributes should be in _leading_underscore format.</li>
+                            <li>Private instance attributes should be in __double_leading_ underscore format.</li>
+                            <li>Classes (including exceptions) should be in CapitalizedWord format.</li>
+                            <li>Module-level constants should be in ALL_CAPS format.</li>
+                            <li>Instance methods in classes should use self, which refers to the object, as the name of
+                                the first parameter.</li>
+                            <li>Class methods should use cls, which refers to the class, as the name of the first
+                                parameter.</li>
+                        </ul>
+                        For example:
+                    </div>
+                    <pre class="prettyprint python Code">
+# Correct naming conventions
+class MyClass:
+    def __init__(self):
+        self.public_attr = "public"
+        self._protected_attr = "protected"
+        self.__private_attr = "private"
+
+    def public_method(self):
+        pass
+
+    def _protected_method(self):
+        pass
+
+    @classmethod
+    def class_method(cls):
+        pass
+    @staticmethod
+    def static_method():
+        pass
+MY_CONSTANT = 42
+            </pre>
+                    <h2 class="Subsection_Title">Expressions and Statements</h2>
+                    <div class="Definitions">
+                        <ul>
+                            <li>
+                                Use inline negation (if a is not b) instead of negation of positive expressions (if not
+                                a is
+                                b).</li>
+                            <li>
+                                Don't check for empty containers or sequences (like [] or '') by comparing the length to
+                                zero (if len(somelist) == 0). Use if not somelist and assume that empty values will
+                                implicitly evaluate to False. </li>
+                            <li>The same thing goes for non-empty containers or sequences (like [1] or 'hi'). The
+                                statement
+                                if somelist is implicitly True for nonempty Use inline negation (if a is not b) instead
+                                of
+                                negation of positive
+                                expressions (if not a is b).</li>
+                            <li>Don't check for empty containers or sequences (like [] or '') by comparing the length to
+                                zero (if len(somelist) == 0). Use if not somelist and assume that empty values will
+                                implicitly evaluate to False.</li>
+                            <li>The same thing goes for non-empty containers or sequences (like [1] or 'hi'). The
+                                statement
+                                values.</li>
+                            <li>Avoid single-line if statements, for and while loops, and except
+                                compound statements. Spread these over multiple lines for
+                                clarity.</li>
+                            <li>
+                                If you can't fit an expression on one line, surround it with parentheses and add line
+                                breaks
+                                and indentation to make it easier to
+                                read.</li>
+                            <li>Prefer surrounding multiline expressions with parentheses over
+                                using the \ line continuation character.
+                                values.</li>
+                            <li>Avoid single-line if statements, for and while loops, and except
+                                compound statements. Spread these over multiple lines for
+                                clarity.</li>
+                            <li>If you can't fit an expression on one line, surround it with parentheses
+                                and add line breaks and indentation to make it easier to
+                                read.</li>
+                            <li>Prefer surrounding multiline expressions with parentheses over
+                                using the \ line continuation character.</li>
+                        </ul>
+                        For example:
+                    </div>
+                    <pre class="prettyprint python Code">
+# Correct expressions and statements
+a = 10
+b = 20
+somelist = [1, 2, 3]
+if a is not b:
+    pass
+if not somelist:
+    pass
+if somelist:
+    pass
+result = (a + b +
+          30 - 5)
+            </pre>
+                    <h2 class="Subsection_Title">Imports</h2>
+                    <div class="Definitions">
+                        <ul>
+                            <li>Always put import statements (including from x import y) at the
+                                top of a file.</li>
+                            <li>Always use absolute names for modules when importing them, not
+                                names relative to the current module's own path. For example, to
+                                import the foo module from within the bar package, you should
+                                use from bar import foo, not just import foo.</li>
+                            <li>If you must do relative imports, use the explicit syntax
+                                from . import foo.</li>
+                            <li>Imports should be in sections in the following order: standard
+                                library modules, third-party modules, your own modules. Each
+                                subsection should have imports in alphabetical order.</li>
+                        </ul>
+                        For example:
+                    </div>
+                    <pre class="prettyprint python Code">
+# Correct import statements
+from pandas import DataFrame
+# Relative import
+from . import my_module
+            </pre>
+                </section>
             </div>
         </div>
     </main>
