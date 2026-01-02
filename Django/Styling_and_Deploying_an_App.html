@@ -77,8 +77,38 @@ BOOTSTRAP3 = {
 {% bootstrap_css %}
 {% bootstrap_javascript %}
 &lt;/head&gt;
-                    
                     </pre>
+                </section>
+                <section id="Deploying">
+                    <h2 class="Section_Title">Deploying</h2>
+                    <div class="Definitions">
+                        To deploy our Django app, we can use a platform like Heroku. First, we need to
+                        create a requirements.txt file that lists all the dependencies of our project.
+                        We can do this by running the following command in our terminal:
+                    </div>
+                    <pre class="prettyprint bash Code">
+pip freeze &gt; requirements.txt
+                    </pre>
+                    <div class="Definitions">
+                        Next, we need to create a Procfile that tells Heroku how to run our app. The
+                        Procfile should contain the following line:
+                    </div>
+                    <pre class="prettyprint bash Code">
+web: gunicorn myproject.wsgi --log-file -
+                    </pre>
+                    <div class="Definitions">
+                        Finally, we can deploy our app to Heroku by following these steps:
+                        <ol>
+                            <li>Install the Heroku CLI and log in to your Heroku account.</li>
+                            <li>Create a new Heroku app using the command: heroku create myappname</li>
+                            <li>Push your code to Heroku using Git: git push heroku main</li>
+                            <li>Run database migrations on Heroku: heroku run python manage.py migrate</li>
+                            <li>Open your app in a web browser: heroku open</li>
+                        </ol>
+                        With these steps, our Django app should be successfully deployed and accessible
+                        online.
+                    </div>
+
                 </section>
             </div>
         </div>
