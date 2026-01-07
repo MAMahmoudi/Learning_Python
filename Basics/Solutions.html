@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
+    <title>Basics Exercises: Solution</title>
+</head>
+
+<body>
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Basics Exercises: Solution</h1>
+            <div class="Sections_Area">
+                <section id="Exercises">
+                    <input type="checkbox" id="Exercise" class="Exercises_Done">
+                    <label for="Exercise" class="Subsection_Title collapsible-label">Basics</label>
+                    <ul class="Exercises">
+                        <li><input type="checkbox" id="Exercise" class="Exercises_Done">
+                            <label for="Exercise" class="Subsection_Title collapsible-label">Variables & Data
+                                Types</label>
+                            <ul class="Questions Definitions">
+                                <li>Create variables for name, age, and GPA and print them.
+                                    <pre class="prettyprint python Code">
+name = input("Enter your name: ")
+age = int(input("Enter your age: "))
+gpa = float(input("Enter your GPA: "))
+
+print("Name:", name)
+print("Age:", age)
+print("GPA:", gpa)
+                                    </pre>
+                                </li>
+                                <li>Convert a float to an integer and observe what changes.
+                                    <pre class="prettyprint python Code">
+value = 7.89
+converted = int(value)
+
+print("Original float:", value)
+print("After conversion to int:", converted)
+                                    </pre>
+                                </li>
+                                <li>Swap the values of two variables without using a third variable.
+                                    <pre class="prettyprint python Code">
+a = 5
+b = 10
+
+a, b = b, a
+
+print("a =", a)
+print("b =", b)
+                                    </pre>
+                                </li>
+                            </ul>
+
+                        </li>
+                        <li><input type="checkbox" id="Exercise" class="Exercises_Done">
+                            <label for="Exercise" class="Subsection_Title collapsible-label">Strings</label>
+                            <ul class="Questions Definitions">
+                                <li>Ask the user for a sentence and print its length.
+                                    <pre class="prettyprint python Code">
+sentence = input("Enter a sentence: ")
+
+print("The length of your sentence is:", len(sentence))
+                                    </pre>
+                                </li>
+                                <li>Extract the first and last character of a string.
+                                    <pre class="prettyprint python Code">
+text = "Hello"
+
+first_char = text[0]
+last_char = text[-1]
+
+print("First character:", first_char)
+print("Last character:", last_char)
+                                    </pre>
+                                </li>
+                                <li>Count how many times a letter appears in a given word.
+                                    <pre class="prettyprint python Code">
+word = input("Enter a word: ")
+letter = input("Enter a letter to count: ")
+
+count = word.count(letter)
+
+print("The letter appears", count, "times.")
+                                    </pre>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li><input type="checkbox" id="Exercise" class="Exercises_Done">
+                            <label for="Exercise" class="Subsection_Title collapsible-label">Conditionals</label>
+                            <ul class="Questions Definitions">
+                                <li>Check if a number is even or odd.
+                                    <pre class="prettyprint python Code">
+number = int(input("Enter a number: "))
+
+if number % 2 == 0:
+    print("The number is even.")
+else:
+    print("The number is odd.")
+                                    </pre>
+                                </li>
+                                <li>Determine if a year is a leap year.
+                                    <pre class="prettyprint python Code">
+year = int(input("Enter a year: "))
+
+if (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0):
+    print("Leap year")
+else:
+    print("Not a leap year")
+                                    </pre>
+                                </li>
+                                <li>Compare three numbers and print the largest.
+                                    <pre class="prettyprint python Code">
+a = int(input("Enter first number: "))
+b = int(input("Enter second number: "))
+c = int(input("Enter third number: "))
+
+if a >= b and a >= c:
+    print("The largest number is:", a)
+elif b >= a and b >= c:
+    print("The largest number is:", b)
+else:
+    print("The largest number is:", c)
+                                    </pre>
+                                </li>
+                            </ul>
+
+                        </li>
+                        <li><input type="checkbox" id="Exercise" class="Exercises_Done">
+                            <label for="Exercise" class="Subsection_Title collapsible-label">Loops</label>
+                            <ul class="Questions Definitions">
+                                <li>Print numbers from 1 to 100 using a loop.
+                                    <pre class="prettyprint python Code">
+for i in range(1, 101):
+    print(i)
+                                    </pre>
+                                </li>
+                                <li>Sum all numbers from 1 to n.
+                                    <pre class="prettyprint python Code">
+n = int(input("Enter a number: "))
+total = n * (n + 1) // 2
+print("The sum from 1 to", n, "is:", total)
+                                    </pre>
+                                </li>
+                                <li>Print a multiplication table for any number.
+                                    <pre class="prettyprint python Code">
+num = int(input("Enter a number: "))
+
+for i in range(1, 11):
+    print(num, "x", i, "=", num * i)
+                                    </pre>
+                                </li>
+                            </ul>
+
+                        </li>
+                        <li><input type="checkbox" id="Exercise" class="Exercises_Done">
+                            <label for="Exercise" class="Subsection_Title collapsible-label">Lists</label>
+                            <ul class="Questions Definitions">
+                                <li>Find the maximum element in a list without using max().
+                                    <pre class="prettyprint python Code">
+numbers = [12, 7, 25, 3, 18]
+
+largest = numbers[0]   # start with the first element
+
+for num in numbers:
+    if num > largest:
+        largest = num
+
+print("The largest element is:", largest)
+                                    </pre>
+                                </li>
+                                <li>Remove duplicates from a list.
+                                    <pre class="prettyprint python Code">
+numbers = [1, 2, 3, 2, 4, 1, 5]
+unique_list = list(set(numbers))
+print(unique_list)
+                                    </pre>
+                                </li>
+                                <li>Reverse a list manually using a loop.
+                                    <pre class="prettyprint python Code">
+numbers = [1, 2, 3, 4, 5]
+
+reversed_list = []
+for i in range(len(numbers) - 1, -1, 0 - 1):
+    reversed_list.append(numbers[i])
+
+print(reversed_list)
+                                    </pre>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><input type="checkbox" id="Exercise" class="Exercises_Done">
+                            <label for="Exercise" class="Subsection_Title collapsible-label">Functions</label>
+                            <ul class="Questions Definitions">
+                                <li>Write a function that returns the factorial of a number.
+                                    <pre class="prettyprint python Code">
+def factorial(n):
+    if n == 0 or n == 1:
+        return 1
+    return n * factorial(n - 1)
+                                    </pre>
+                                </li>
+                                <li>Create a function that checks if a string is a palindrome.
+                                    <pre class="prettyprint python Code">
+def is_palindrome(text):
+    text = text.lower()              # normalize case
+    text = text.replace(" ", "")     # optional: remove spaces
+    return text == text[::-1]        # compare with reversed string
+
+# Example
+word = input("Enter a word: ")
+if is_palindrome(word):
+    print("It is a palindrome.")
+else:
+    print("It is not a palindrome.")
+                                    </pre>
+                                </li>
+                                <li>Build a function that calculates BMI from weight and height.
+                                    <pre class="prettyprint python Code">
+def calculate_bmi(weight, height):
+    bmi = weight / (height ** 2)
+    return bmi
+
+# Example
+w = float(input("Enter your weight in kg: "))
+h = float(input("Enter your height in meters: "))
+
+print("Your BMI is:", calculate_bmi(w, h))
+                                    </pre>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><input type="checkbox" id="Exercise" class="Exercises_Done">
+                            <label for="Exercise" class="Subsection_Title collapsible-label">Dictionaries</label>
+                            <ul class="Questions Definitions">
+                                <li>Create a dictionary of student grades and compute the average.
+                                    <pre class="prettyprint python Code">
+grades = {"Alice": 15, "Bob": 12, "Charlie": 17, "Dina": 14}
+
+average = sum(grades.values()) / len(grades)
+
+print("Average grade:", average)
+                                    </pre>
+                                </li>
+                                <li>Count word frequencies in a sentence.
+                                    <pre class="prettyprint python Code">
+from collections import Counter
+
+sentence = input("Enter a sentence: ")
+freq = Counter(sentence.split())
+print(freq)
+                                    </pre>
+                                </li>
+                                <li>Merge two dictionaries into one.
+                                    <pre class="prettyprint python Code">
+dict1 = {"a": 1, "b": 2}
+dict2 = {"c": 3, "d": 4}
+
+dict1.update(dict2)
+print(dict1)
+                                    </pre>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><input type="checkbox" id="Exercise" class="Exercises_Done">
+                            <label for="Exercise" class="Subsection_Title collapsible-label">Mini-Projects</label>
+                            <ul class="Questions Definitions">
+                                <li>Simple calculator (add, subtract, multiply, divide).
+                                    <pre class="prettyprint python Code">
+def calculator(a, b, operation):
+    if operation == "+":
+        return a + b
+    elif operation == "-":
+        return a - b
+    elif operation == "*":
+        return a * b
+    elif operation == "/":
+        return a / b
+    else:
+        return "Invalid operation"
+
+# Example
+num1 = float(input("Enter first number: "))
+op = input("Enter operation (+, -, *, /): ")
+num2 = float(input("Enter second number: "))
+
+print("Result:", calculator(num1, num2, op))
+                                    </pre>
+                                </li>
+                                <li>Guess-the-number game using random numbers.
+                                    <pre class="prettyprint python Code">
+import random
+
+secret = random.randint(1, 100)
+guess = None
+
+print("I'm thinking of a number between 1 and 100...")
+
+while guess != secret:
+    guess = int(input("Enter your guess: "))
+
+    if guess &lt; secret:
+        print("Too low! Try again.")
+    elif guess > secret:
+        print("Too high! Try again.")
+    else:
+        print("Correct! You guessed the number!")
+                                    </pre>
+                                </li>
+                                <li>To-do list program with add/remove/display options.
+                                    <pre class="prettyprint python Code">
+todo = []
+
+while True:
+    print("\n--- TO-DO LIST MENU ---")
+    print("1. Add a task")
+    print("2. Remove a task")
+    print("3. Display tasks")
+    print("4. Exit")
+
+    choice = input("Choose an option: ")
+
+    if choice == "1":
+        task = input("Enter a new task: ")
+        todo.append(task)
+        print("Task added.")
+
+    elif choice == "2":
+        task = input("Enter the task to remove: ")
+        if task in todo:
+            todo.remove(task)
+            print("Task removed.")
+        else:
+            print("Task not found.")
+
+    elif choice == "3":
+        print("\nYour To-Do List:")
+        if not todo:
+            print("No tasks yet.")
+        else:
+            for i, t in enumerate(todo, start=1):
+                print(i, "-", t)
+
+    elif choice == "4":
+        print("Goodbye!")
+        break
+
+    else:
+        print("Invalid option. Try again.")
+                                    </pre>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+            </div>
+            </section>
+        </div>
+        </div>
+    </main>
+</body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
+
+</html>

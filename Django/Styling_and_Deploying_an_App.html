@@ -82,33 +82,128 @@ BOOTSTRAP3 = {
                 <section id="Deploying">
                     <h2 class="Section_Title">Deploying</h2>
                     <div class="Definitions">
-                        To deploy our Django app, we can use a platform like Heroku. First, we need to
-                        create a requirements.txt file that lists all the dependencies of our project.
-                        We can do this by running the following command in our terminal:
+                        To deploy our Django app, we can use a platform like Heroku. First, we need to create an account
+                        on Heroku if we don't already have one. <br>
+                        To do that go to <a href="https://www.heroku.com/">https://www.heroku.com/</a> and sign up for a
+                        free account. <br>
                     </div>
-                    <pre class="prettyprint bash Code">
-pip freeze &gt; requirements.txt
-                    </pre>
+                    <h2 class="Subsection_Title">Installing Heroku Toolbelt</h2>
                     <div class="Definitions">
-                        Next, we need to create a Procfile that tells Heroku how to run our app. The
-                        Procfile should contain the following line:
-                    </div>
-                    <pre class="prettyprint bash Code">
-web: gunicorn myproject.wsgi --log-file -
-                    </pre>
-                    <div class="Definitions">
-                        Finally, we can deploy our app to Heroku by following these steps:
-                        <ol>
-                            <li>Install the Heroku CLI and log in to your Heroku account.</li>
-                            <li>Create a new Heroku app using the command: heroku create myappname</li>
-                            <li>Push your code to Heroku using Git: git push heroku main</li>
-                            <li>Run database migrations on Heroku: heroku run python manage.py migrate</li>
-                            <li>Open your app in a web browser: heroku open</li>
-                        </ol>
-                        With these steps, our Django app should be successfully deployed and accessible
-                        online.
+                        Next, we need to install the Heroku Toolbelt, which is a command-line interface for
+                        managing Heroku apps. <br>
+                        You can download and install the Heroku Toolbelt from <a
+                            href="https://devcenter.heroku.com/articles/heroku-cli">https://devcenter.heroku.com/articles/heroku-cli</a>
+                        and follow the directions for your
+                        operating system, which will include either a one-line terminal command
+                        or an installer you can download and run.
                     </div>
 
+                    <h2 class="Subsection_Title">Installing Required Packages</h2>
+                    <div class="Definitions">
+                        Next, we need to install the required packages for deploying a Django app on Heroku. <br>
+                        We need to install gunicorn, which is a Python WSGI HTTP server for UNIX. <br>
+                        We also need to install dj-database-url, which allows us to use
+                        database URLs in our Django settings. <br>
+                        dj-static and static3 help Django manage static files correctly in a production environment.
+                        <br>
+                        Next, we need to add psycopg2, which helps Heroku manage the live database. <br>
+                        To install these packages, issue the following command in an active virtual environment:
+                    </div>
+                    <pre class="prettyprint python Code">
+pip install dj-database-url
+pip install dj-static
+pip install static3
+pip install gunicorn
+pip install psycopg2
+</pre>
+
+                    <h2 class="Subsection_Title">Creating a Packages List with a requirements.txt File</h2>
+                    <div class="Definitions">
+                        Next, we need to create a requirements.txt file that lists all the packages
+                        installed in our virtual environment. <br>
+                        This file is used by Heroku to install the necessary packages for our app.
+                        To create the requirements.txt file, issue the following command in an active
+                        virtual environment:
+                    </div>
+                    <pre class="prettyprint python Code">
+pip freeze &gt; requirements.txt
+</pre>
+                    <h2 class="Subsection_Title">Specifying the Python Runtime</h2>
+                    <div class="Definitions">
+                        Unless you specify a Python version, Heroku will use its own current default
+                        version of Python. Let's make sure Heroku uses the same version of Python
+                        we're using. In an active virtual environment, issue the command python
+                        --version:
+                    </div>
+                    <pre class="prettyprint python Code">
+python --version
+</pre>
+                    <div class="Definitions">
+                        Make a new file called
+                        runtime.txt in the same directory as manage.py, and enter the following line,
+                        replacing the version number with the one you found:
+                    </div>
+                    <pre class="prettyprint python Code">
+python-3.8.10
+</pre>
+                    <div class="Definitions">
+                        Make sure you enter python in lowercase, followed by a
+                        hyphen, followed by the three-part version number.
+                    </div>
+                    <h2 class="Subsection_Title">Modifying settings.py for Heroku</h2>
+                    <div class="Definitions">
+                        Now we need to add a section at the end of settings.py to define some settings
+                        specifically for the Heroku environment:
+                    </div>
+                    <pre class="prettyprint python Code">
+# Heroku settings
+if os.getcwd() == '/app':
+    import dj_database_url
+    DATABASES['default'] = dj_database_url.config()
+    # Honor the 'X-Forwarded-Proto' header for request.is_secure().
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Allow all host headers
+    ALLOWED_HOSTS = ['*']
+    # Static files settings
+    STATIC_ROOT = 'staticfiles'
+    STATICFILES_DIRS = (
+        os.path.join(BASE_DIR, 'static'),
+    )
+</pre>
+                    <div class="Definitions">
+                        This code checks if the app is running in the Heroku environment by checking the
+                        current working directory. If it is, it imports dj-database-url to configure
+                        the database settings, sets up security headers, allows all host headers, and
+                        configures static file settings.
+                    </div>
+                    <h2 class="Subsection_Title">Making a Procfile to Start Processes</h2>
+                    <div class="Definitions">
+                        A Procfile tells Heroku which processes to start in order to serve the project
+                        properly. This is a one-line file that you should save as Procfile, with an
+                        uppercase P and no file extension, in the same directory as manage.py.
+                    </div>
+                    <pre class="prettyprint python Code">
+web: gunicorn University_Platform.wsgi --log-file -
+</pre>
+                    <div class="Definitions">
+                        This line tells Heroku to start a web process using gunicorn to serve the
+                        Django application defined in University_Platform.wsgi. <br>
+                        The --log-file - option directs gunicorn to send its log output to standard output,
+                        which Heroku captures for logging purposes.
+                    </div>
+                    <h2 class="Subsection_Title">Modifying wsgi.py for Heroku</h2>
+                    <div class="Definitions">
+                        Finally, we need to modify wsgi.py to serve static files correctly in the
+                        Heroku environment. Add the following code to the end of wsgi.py:
+                    </div>
+                    <pre class="prettyprint python Code">
+from dj_static import Cling
+application = Cling(get_wsgi_application())
+</pre>
+                    <div class="Definitions">
+                        This code imports Cling from dj-static and wraps the WSGI application with it.
+                        Cling helps serve static files correctly in a production environment like Heroku.
+                    </div>
                 </section>
             </div>
         </div>

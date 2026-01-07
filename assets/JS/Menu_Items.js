@@ -10,6 +10,20 @@ export const Menu_Items = [
     url: "../Basics/Basics.html",
     cName: "Nav_Bar_Menu_Item",
     icon: "fa-solid fa-user-plus",
+    subMenu: [
+      {
+        title: "Basics",
+        url: "../Basics/Basics.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Exercises",
+        url: "../Basics/Exercises.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+    ],
   },
   {
     title: "Intermediate",
@@ -17,6 +31,18 @@ export const Menu_Items = [
     cName: "Nav_Bar_Menu_Item",
     icon: "fa-solid fa-user-plus",
     subMenu: [
+      {
+        title: "Files",
+        url: "../Intermediate/Files.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Exceptions",
+        url: "../Intermediate/Exceptions.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
       {
         title: "Lists and Dictionaries",
         url: "../Intermediate/Lists_and_Dictionaries.html",
@@ -44,6 +70,12 @@ export const Menu_Items = [
       {
         title: "Metaclasses and Attributes",
         url: "../Intermediate/Metaclasses_and_Attributes.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
+      {
+        title: "Testing and Debugging",
+        url: "../Intermediate/Testing_and_Debugging.html",
         cName: "Sub_Menu_Item",
         icon: "fa-solid fa-user-plus",
       },

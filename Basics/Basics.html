@@ -16,6 +16,33 @@
         <div class="Content_Area">
             <h1 class="Chapter_Title">Basics of Python</h1>
             <div class="Sections_Area">
+                <section id="Installation">
+                    <h2 class="Section_Title">Installation</h2>
+                    <div class="Definitions">
+                        In this course, we will set up Python using Anaconda, which is a popular distribution that
+                        includes Python and many useful libraries for data science and machine learning. <br>
+                        For the IDE, we will use PyCharm, which is a powerful and user-friendly environment for Python
+                        development. <br>
+                        Follow these steps to install Anaconda and PyCharm:
+                        <ol>
+                            <li>Download and install Anaconda from the official website: <a
+                                    href="https://www.anaconda.com/products/distribution">Anaconda
+                                    Distribution</a>. Choose the version that matches your operating system (Windows,
+                                macOS, or Linux) and follow the installation instructions.</li>
+                            <li>Download and install PyCharm from the official website: <a
+                                    href="https://www.jetbrains.com/pycharm/download/">PyCharm
+                                    Download</a>. You can choose the Community edition, which is free and sufficient for
+                                most Python development tasks.</li>
+                            <li>Once PyCharm is installed, open it and create a new project. Select "New Environment
+                                using
+                                Conda" to create a virtual environment for your project using Anaconda.</li>
+                            <li>After creating the project, you can start writing Python code in PyCharm. You can also
+                                install additional libraries using the Anaconda Navigator or by using pip in the
+                                terminal
+                                within PyCharm.</li>
+                        </ol>
+                    </div>
+                </section>
                 <section id="Comment">
                     <h2 class="Section_Title">Comments</h2>
                     <div class="Definitions">
@@ -208,6 +235,32 @@ if True:
 else:
     ...  # Placeholder for future code
             </pre>
+                </section>
+                <section id="Input">
+                    <h2 class="Section_Title">Input</h2>
+                    <div class="Definitions">
+                        The input() function is used to take input from the user. It reads a line from input, converts
+                        it
+                        into a string, and returns it.
+                    </div>
+                    <pre class="prettyprint python Code">
+# Taking input from the user
+name = input("Enter your name: ")
+age = input("Enter your age: ")
+print(f"Hello, {name}! You are {age} years old.")
+            </pre>
+                    <div class="Definitions">
+                        By default, the input() function returns the input as a string. If you need to convert it to
+                        another
+                        data type (e.g., int or float), you can use the appropriate type conversion functions.
+                    </div>
+                    <pre class="prettyprint python Code">
+# Converting input to different data types
+age = int(input("Enter your age: "))  # Convert input to integer
+height = float(input("Enter your height in meters: "))  # Convert input to float
+print(f"You are {age} years old and {height} meters tall.")
+            </pre>
+
                 </section>
                 <section id="Lists">
                     <h2 class="Section_Title">Lists</h2>

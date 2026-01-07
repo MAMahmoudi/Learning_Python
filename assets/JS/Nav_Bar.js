@@ -51,11 +51,7 @@ function Build_Nav_Bar() {
     Nav_Bar_Item_Link.setAttribute("href", item.url);
     Nav_Bar_Item_Link.setAttribute("class", item.cName);
     Nav_Bar_Item_Link.innerHTML = item.title;
-    if (
-      item.title == "Intermediate" ||
-      item.title == "Advanced" ||
-      item.title == "Django"
-    ) {
+    if (item.subMenu != null && item.subMenu.length > 0) {
       Nav_Bar_Item.setAttribute("id", "Nav_Bar_Item_Sub_Menus_ID");
       var Sub_Menus = document.createElement("ul");
       Sub_Menus.setAttribute("class", "Sub_Menu");

@@ -109,3 +109,40 @@ main {
   left: 0;
   z-index: -1;
 }
+
+.Exercises {
+  list-style: none;
+  padding: 10px;
+  margin: 20px;
+  display: block;
+}
+
+.Questions {
+  list-style: none;
+  padding: 10px;
+  margin: 20px;
+}
+
+.collapsible-label::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 12px solid #53af32;
+  margin-right: 10px;
+  transition: transform 0.3s ease;
+}
+
+.Exercises_Done:checked + .collapsible-label::before {
+  transform: rotate(-90deg);
+}
+
+.Exercises_Done:checked ~ .Exercises {
+  display: none;
+}
+
+.Exercises_Done:checked ~ .Questions {
+  display: none;
+}

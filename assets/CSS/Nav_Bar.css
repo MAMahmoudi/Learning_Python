@@ -38,6 +38,7 @@
   list-style: none;
   align-items: center;
   width: 60%;
+  left: 50%;
 }
 
 .Nav_Bar_Menu_Item {
@@ -73,9 +74,13 @@
   white-space: nowrap;
   display: none;
   position: absolute;
+  width: 98%;
   top: 60px;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   list-style: none;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0, 0.5);
 }
 
 #Nav_Bar_Item_Sub_Menus_ID:hover .Sub_Menu {
