@@ -415,8 +415,68 @@ BOOTSTRAP3 = {
                             </li>
                         </ol>
                     </div>
+                    <h2 class="Subsection_Title">Add your Vercel domain to ALLOWED_HOSTS</h2>
+                    <div class="Definitions">
+                        Django uses ALLOWED_HOSTS as a security measure to prevent Host-header attacks. <br>
+                        Every incoming request includes a Host: header, and Django checks: <br>
+                        “Is this host allowed to access my server?” <br>
+                        If the host is not in ALLOWED_HOSTS, Django immediately blocks the request with:
+                    </div>
+                    <pre class="prettyprint python Code">
+                        ALLOWED_HOSTS = [
+                                        "localhost",
+                                        "127.0.0.1",
+                                        ".vercel.app",
+                                    ]
+                    </pre>
+                    <div class="Definitions">
+                        The leading dot means: <br>
+                        project.vercel.app → allowed <br>
+                        anything.vercel.app → allowed <br>
+                    </div>
+                    <h2 class="Subsection_Title">Add your vercel.json file</h2>
+                    <div class="Definitions">
+                        Adding a vercel.json file is one of the most important steps when deploying a Django project to
+                        Vercel, because Vercel does not automatically understand how to run Django. This file becomes
+                        the blueprint that tells Vercel:
+                        <ul>
+                            <li>how to build your backend</li>
+                            <li>which Python runtime to use</li>
+                            <li>how to serve static files</li>
+                            <li>how to route all requests to Django</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+{
+    "builds": [{
+        "src": "University_Platform/wsgi.py",
+        "use": "@vercel/python",
+        "config": { "maxLambdaSize": "15mb", "runtime": "python3.12.4" }
+    }],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "University_Platform/wsgi.py"
+        }
+    ]
+}
+                    </pre>
+                    <h2 class="Subsection_Title">wsgi.py</h2>
+                    <div class="Definitions">
+                        Add : <br>
+                        app = application
+                    </div>
+                    <pre class="prettyprint python Code">
+import os
 
+from django.core.wsgi import get_wsgi_application
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "University_Platform.settings")
+
+application = get_wsgi_application()
+
+app = application
+</pre>
                     <h2 class="Subsection_Title">Creating a Packages List with a requirements.txt File</h2>
                     <div class="Definitions">
                         Next, we need to create a requirements.txt file that lists all the packages
@@ -428,9 +488,34 @@ BOOTSTRAP3 = {
                     <pre class="prettyprint python Code">
                     pip freeze &gt; requirements.txt
                     </pre>
+                    <h2 class="Subsection_Title">import your Django repository into Vercel</h2>
+                    <div class="Definitions">
+                        <ol>
+                            <li><strong>Connect your GitHub account:</strong><br>Vercel needs access to your
+                                repositories.
+                                Once connected, it can pull your Django project and deploy it automatically.</li>
+                            <li><strong>Click “New Project” in the Vercel dashboard:</strong><br>This starts the import
+                                process.You'll see a list of all your GitHub repositories.
+                            </li>
+                            <li><strong>Select the repository that contains your Django project:</strong><br></li>
+                            <li><strong>Trigger the first deployment:</strong>
+                                Once you click “Deploy”:
 
+                                Vercel installs your Python dependencies
 
+                                Builds your serverless function
 
+                                Runs your Django entry point
+
+                                Deploys your static files
+
+                                Gives you a preview URL like:
+                            </li>
+                        </ol>
+                        <pre class="prettyprint python Code">
+https://your-project-name.vercel.app
+</pre>
+                    </div>
                 </section>
             </div>
         </div>
