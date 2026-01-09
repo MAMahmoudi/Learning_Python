@@ -23,6 +23,12 @@ export const Menu_Items = [
         cName: "Sub_Menu_Item",
         icon: "fa-solid fa-user-plus",
       },
+      {
+        title: "Solutions",
+        url: "../Basics/Solutions.html",
+        cName: "Sub_Menu_Item",
+        icon: "fa-solid fa-user-plus",
+      },
     ],
   },
   {

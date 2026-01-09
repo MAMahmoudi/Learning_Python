@@ -60,10 +60,10 @@ BOOTSTRAP3 = {
 }
 </pre>
                 </section>
-                <section id="Modifying_BaseTimeTable.html">
-                    <h2 class="Section_Title">Modifying BaseTimeTable.html</h2>
+                <section id="Modifying_Base_Home.html">
+                    <h2 class="Section_Title">Modifying Base_Home.html</h2>
                     <div class="Definitions">
-                        Next, we need to modify baseTimeTable.html to use the django-bootstrap3
+                        Next, we need to modify base_Home.html to use the django-bootstrap3
                         template tags. First, we need to load the bootstrap3 tags at the top of
                         the file. <br>
                         Then just before the closing &lt;/head&gt; tag, we need to add the
@@ -79,43 +79,343 @@ BOOTSTRAP3 = {
 &lt;/head&gt;
                     </pre>
                 </section>
+                <section id="Git_GitHub">
+                    <h2 class="Section_Title">Git and GitHub</h2>
+                    <h2 class="Subsection_Title">Create a GitHub account</h2>
+                    <div class="Definitions">
+                        GitHub is a code hosting platform for version control and collaboration. It lets you and
+                        others
+                        work together on projects from anywhere.
+                        You must create an account using your university email address. This account will be used to
+                        access the repositories created by your teacher and to submit your work. <br>
+                        To create a GitHub account, you need to go to the official website: GitHub then click on the
+                        "Sign up" button and follow the instructions.
+                    </div>
+                    <h2 class="Subsection_Title">Install Git</h2>
+                    <div class="Definitions">
+                        <p>Download Git from the official website: <a href="https://git-scm.com/downloads">Git
+                                Downloads</a></p>
+                        <img src="../assets/images/Git_Download.png" alt="Git_Download" class="Smaller_Image">
+                    </div>
+                    <ul>
+                        <li>
+                            <h2 class="Subsection_Title">Windows</h2>
+                            <div class="Definitions">
+                                After downloading the installer, run it and follow the installation steps. You can
+                                leave the default
+                                settings as they are.
+                            </div>
+                        </li>
+                        <li>
+                            <h2 class="Subsection_Title">Mac</h2>
+                            <div class="Definitions">
+                                <p>
+                                    There are several ways to install Git on macOS. The easiest is probably to
+                                    install
+                                    the Xcode
+                                    Command Line Tools. On Mavericks (10.9) or above you can do this simply by
+                                    trying to
+                                    run git from
+                                    the Terminal the very first time.
+                                </p>
+                            </div>
+                            <pre class="prettyprint python Code">
+                                $ git --version
+                                 </pre>
+                            <div class="Definitions">
+                                <p>
+                                    If you don't have it installed already, it will prompt you to install it. <br>
+                                    If you want a more up to date version, you can also install it via a binary
+                                    installer. A macOS Git
+                                    installer is maintained and available for download at the Git website, at <a
+                                        href="https://git-scm.com/download/mac">https://git-scm.com/download/mac</a>.
+                                </p>
+                            </div>
+                            <img class="Smaller_Image" src="../assets/images/Git_Install_MacOS.png"
+                                alt="Git_Install_MacOS">
+                        </li>
+                        <li>
+                            <h2 class="Subsection_Title">Linux</h2>
+                            <div class="Definitions">
+                                <p>
+                                    If you want to install the basic Git tools on Linux via a binary installer, you
+                                    can
+                                    generally do so
+                                    through the package management tool that comes with your distribution. If you're
+                                    on
+                                    Fedora (or
+                                    any closely-related RPM-based distribution, such as RHEL or CentOS), you can use
+                                    dnf:
+                                </p>
+                            </div>
+                            <pre class="prettyprint python Code">
+                                $ sudo dnf install git-all
+                                            </pre>
+                            <div class="Definitions">
+                                <p>
+                                    If you're on a Debian-based distribution like Ubuntu, try apt:
+                                </p>
+                            </div>
+                            <pre class="prettyprint python Code">
+                                $ sudo apt install git-all
+                                            </pre>
+                        </li>
+                    </ul>
+                    <h1 class="Subsection_Title">First-time Git setup</h1>
+                    <div class="Definitions">
+                        <p>
+                            After you install Git, you need to configure it only once on any computer. These
+                            configurations can
+                            be changed later on if needed by runing the same commands.
+                        </p>
+                    </div>
+                    <h2 class="Subsection_Title">Your identity</h2>
+                    <div class="Definitions">
+                        <p>
+                            The first thing you should do when you install Git
+                            is to set your user name and email address. This is important because every Git commit
+                            uses
+                            this
+                            information, and it's immutably baked into the commits you start creating:</p>
+                    </div>
+                    <pre class="prettyprint python Code">
+                $ git config --global user.name "Mahmoudi Mohamed Amine"
+                $ git config --global user.email mohamed.mahmoudi@ensia.edu.dz
+            </pre>
+                    <h2 class="Subsection_Title">Your default branch name</h2>
+                    <div class="Definitions">
+                        <p>
+                            If you want to change the default branch name from "master" to "main", you can run the
+                            following
+                            command:
+                        </p>
+                    </div>
+                    <pre class="prettyprint python Code">
+                $ git config --global init.defaultBranch main
+            </pre>
+                    <h2 class="Subsection_Title">Your editor</h2>
+                    <div class="Definitions">
+                        <p>
+                            Now that you have your identity set up, you can configure the default text editor that
+                            will
+                            be used
+                            when Git needs you to type in a message. If not configured, Git uses the system default
+                            editor.
+                        </p>
+                    </div>
+                    <pre class="prettyprint python Code">
+                $ git config --global core.editor "nano"
+            </pre>
+                    <div class="Definitions">
+                        <p>
+                            You can also use other text editors like vim, emacs, or any other text editor you
+                            prefer.
+                        </p>
+                    </div>
+                    <h2 class="Subsection_Title">Checking your settings</h2>
+                    <div class="Definitions">
+                        <p>
+                            You can check your settings by running the following command:
+                        </p>
+                    </div>
+                    <pre class="prettyprint python Code">
+                $ git config --list
+            </pre>
+                </section>
+                <section id="Git_Basics">
+                    <h1 class="Section_Title">Git Basics</h1>
+                    <h2 class="Subsection_Title">Getting a Git repository</h2>
+                    <div class="Definitions">
+                        <p>
+                            You can get a Git repository in two ways: by cloning an existing repository from
+                            elsewhere
+                            or by creating a new repository from a local directory. <br>
+                            In our case, we will clone existing repositories from GitHub. Since the latters will be
+                            created by
+                            your teacher, you will only need to clone them.
+                        </p>
+                    </div>
+                    <h2 class="Subsection_Title">Clone an existing repository</h2>
+                    <div class="Definitions">
+                        <p>
+                            To clone an existing repository, you need to go to the directory for your project in
+                            your
+                            local
+                            machine then run the clone command followed by the repository URL
+                            (i.e. git clone &lt;url>):
+                        </p>
+                    </div>
+                    <pre class="prettyprint python Code">
+                $ cd /path/to/your/project
+                $ git clone https://github.com/the-repository-url
+            </pre>
+                    <div class="Definitions">
+                        <p>
+                            To get the repository URL, you need to go to the repository page on GitHub then click on
+                            the
+                            green
+                            "Code" button and copy the URL.
+                        </p>
+                    </div>
+                    <img src="../assets/images/Git_url.png" alt="Git_url" class="Smaller_Image">
+                    <h2 class="Subsection_Title">Create a new repository</h2>
+                    <div class="Definitions">
+                        <p>
+                            To create a new repository, you need to go to the project directory in your local
+                            machine
+                            then run
+                            the following command:
+                        </p>
+                    </div>
+                    <pre class="prettyprint python Code">
+                $ cd /path/to/your/project
+                $ git init
+            </pre>
+                    <h2 class="Subsection_Title">Recording Changes to the Repository</h2>
+                    <div class="Definitions">
+                        <p>
+                            Each file in your working directory can be in one of two states: tracked or
+                            untracked.
+                        </p>
+                        <ul>
+                            <li>
+                                <strong>Tracked files: </strong>
+                                <p>
+                                    These files are files that were in the last snapshot, as well as any newly
+                                    staged
+                                    files;
+                                    they can be unmodified, modified, or staged. In short, tracked files are files
+                                    that
+                                    Git
+                                    knows about.
+                                </p>
+                            </li>
+                            <li>
+                                <strong>Untracked files: </strong>
+                                <p>
+                                    Untracked files are everything else — any files in your working directory that
+                                    were
+                                    not in
+                                    your last snapshot and are not in your staging area. When you first clone a
+                                    repository, all
+                                    of your
+                                    files will be tracked and unmodified because Git just checked them out and you
+                                    haven't
+                                    edited anything.
+                                </p>
+                            </li>
+                        </ul>
+                        <p>
+                            As you edit files, Git sees them as modified, because you've changed them since your
+                            last
+                            commit.
+                            As you work, you selectively stage these modified files and then commit all those staged
+                            changes,
+                            and the cycle repeats.
+                        </p>
+                    </div>
+                    <img src="../assets/images/Git_Files_Stages.png" alt="Git_Files_Stages" class="Smaller_Image">
+                    <h2 class="Subsection_Title">Checking the Status of Your Files</h2>
+                    <div class="Definitions">
+                        <p>
+                            The main tool you use to determine which files are in which state is the git status
+                            command.
+                        </p>
+                    </div>
+                    <pre class="prettyprint python Code">
+                $ git status
+            </pre>
+                    <h2 class="Subsection_Title">Tracking New Files</h2>
+                    <div class="Definitions">
+                        <p>
+                            In order to begin tracking a new file, you use the command git add. The git add command
+                            takes a path
+                            name for either a file or a directory; if it's a directory, the command adds all the
+                            files
+                            in that
+                            directory recursively. To add all files in the directory, you can use the dot (.)
+                            symbol.
+                        </p>
+                    </div>
+                    <pre class="prettyprint python Code">
+                $ git add filename
+            </pre>
+                    <h2 class="Subsection_Title">Committing Your Changes</h2>
+                    <div class="Definitions">
+                        <p>
+                            After staging one or multiple files, you can commit them to the repository. To do so,
+                            you
+                            need to
+                            run the git commit command followed by the -m flag and the commit message. Remember
+                            that anything that is still unstaged — any files you have created or modified that you
+                            haven't run
+                            git add on since you edited them — won't go into this commit. They will stay as modified
+                            files on
+                            your disk.
+                        </p>
+                    </div>
+                    <pre class="prettyprint python Code">
+                $ git commit -m "Your commit message"
+            </pre>
+                    <h2 class="Subsection_Title">Removing Files</h2>
+                    <div class="Definitions">
+                        <p>
+                            To remove a file from the repository, you need to run the git rm command followed by the
+                            file name.
+                            This command will remove the file from the repository and the working directory.
+                        </p>
+                    </div>
+                    <pre class="prettyprint python Code">
+                $ git rm filename
+            </pre>
+                </section>
                 <section id="Deploying">
                     <h2 class="Section_Title">Deploying</h2>
                     <div class="Definitions">
-                        To deploy our Django app, we can use a platform like Heroku. First, we need to create an account
-                        on Heroku if we don't already have one. <br>
-                        To do that go to <a href="https://www.heroku.com/">https://www.heroku.com/</a> and sign up for a
-                        free account. <br>
+                        In this section we will deploy our project into Vercel.
+
                     </div>
-                    <h2 class="Subsection_Title">Installing Heroku Toolbelt</h2>
+                    <h2 class="Subsection_Title">Create a New Vercel Account Using GitHub</h2>
                     <div class="Definitions">
-                        Next, we need to install the Heroku Toolbelt, which is a command-line interface for
-                        managing Heroku apps. <br>
-                        You can download and install the Heroku Toolbelt from <a
-                            href="https://devcenter.heroku.com/articles/heroku-cli">https://devcenter.heroku.com/articles/heroku-cli</a>
-                        and follow the directions for your
-                        operating system, which will include either a one-line terminal command
-                        or an installer you can download and run.
+                        <ol>
+                            <li>
+                                Go to the Vercel signup page
+                                Open <a href="https://vercel.com/signup">https://vercel.com/signup</a>
+                            </li><br>
+                            <li>
+                                Choose the <b>free</b> option and enter your name.
+                            </li><br>
+                            <li>
+                                Choose <b>“Continue with GitHub”</b>
+                                You'll see several authentication options.
+                                Click Continue with GitHub.
+                            </li> <br>
+                            <li>
+                                Authorize Vercel on GitHub
+                                GitHub will show an OAuth screen asking you to approve access.
+                                <b>Click Authorize Vercel.</b>
+                            </li> <br>
+                            <li>
+                                Vercel creates your new account automatically
+                                Once GitHub confirms, Vercel will:
+                                <ul>
+                                    <li>
+                                        Create a new Vercel user linked to your GitHub
+                                    </li>
+                                    <li>
+                                        Redirect you to your Vercel dashboard
+                                    </li>
+                                    <li>
+                                        Ask if you want to import GitHub repositories for deployment
+                                    </li>
+                                    <li>
+                                        At this point, your account is fully created.
+                                    </li>
+                                </ul>
+                            </li>
+                        </ol>
                     </div>
 
-                    <h2 class="Subsection_Title">Installing Required Packages</h2>
-                    <div class="Definitions">
-                        Next, we need to install the required packages for deploying a Django app on Heroku. <br>
-                        We need to install gunicorn, which is a Python WSGI HTTP server for UNIX. <br>
-                        We also need to install dj-database-url, which allows us to use
-                        database URLs in our Django settings. <br>
-                        dj-static and static3 help Django manage static files correctly in a production environment.
-                        <br>
-                        Next, we need to add psycopg2, which helps Heroku manage the live database. <br>
-                        To install these packages, issue the following command in an active virtual environment:
-                    </div>
-                    <pre class="prettyprint python Code">
-pip install dj-database-url
-pip install dj-static
-pip install static3
-pip install gunicorn
-pip install psycopg2
-</pre>
 
                     <h2 class="Subsection_Title">Creating a Packages List with a requirements.txt File</h2>
                     <div class="Definitions">
@@ -126,84 +426,11 @@ pip install psycopg2
                         virtual environment:
                     </div>
                     <pre class="prettyprint python Code">
-pip freeze &gt; requirements.txt
-</pre>
-                    <h2 class="Subsection_Title">Specifying the Python Runtime</h2>
-                    <div class="Definitions">
-                        Unless you specify a Python version, Heroku will use its own current default
-                        version of Python. Let's make sure Heroku uses the same version of Python
-                        we're using. In an active virtual environment, issue the command python
-                        --version:
-                    </div>
-                    <pre class="prettyprint python Code">
-python --version
-</pre>
-                    <div class="Definitions">
-                        Make a new file called
-                        runtime.txt in the same directory as manage.py, and enter the following line,
-                        replacing the version number with the one you found:
-                    </div>
-                    <pre class="prettyprint python Code">
-python-3.8.10
-</pre>
-                    <div class="Definitions">
-                        Make sure you enter python in lowercase, followed by a
-                        hyphen, followed by the three-part version number.
-                    </div>
-                    <h2 class="Subsection_Title">Modifying settings.py for Heroku</h2>
-                    <div class="Definitions">
-                        Now we need to add a section at the end of settings.py to define some settings
-                        specifically for the Heroku environment:
-                    </div>
-                    <pre class="prettyprint python Code">
-# Heroku settings
-if os.getcwd() == '/app':
-    import dj_database_url
-    DATABASES['default'] = dj_database_url.config()
-    # Honor the 'X-Forwarded-Proto' header for request.is_secure().
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    # Allow all host headers
-    ALLOWED_HOSTS = ['*']
-    # Static files settings
-    STATIC_ROOT = 'staticfiles'
-    STATICFILES_DIRS = (
-        os.path.join(BASE_DIR, 'static'),
-    )
-</pre>
-                    <div class="Definitions">
-                        This code checks if the app is running in the Heroku environment by checking the
-                        current working directory. If it is, it imports dj-database-url to configure
-                        the database settings, sets up security headers, allows all host headers, and
-                        configures static file settings.
-                    </div>
-                    <h2 class="Subsection_Title">Making a Procfile to Start Processes</h2>
-                    <div class="Definitions">
-                        A Procfile tells Heroku which processes to start in order to serve the project
-                        properly. This is a one-line file that you should save as Procfile, with an
-                        uppercase P and no file extension, in the same directory as manage.py.
-                    </div>
-                    <pre class="prettyprint python Code">
-web: gunicorn University_Platform.wsgi --log-file -
-</pre>
-                    <div class="Definitions">
-                        This line tells Heroku to start a web process using gunicorn to serve the
-                        Django application defined in University_Platform.wsgi. <br>
-                        The --log-file - option directs gunicorn to send its log output to standard output,
-                        which Heroku captures for logging purposes.
-                    </div>
-                    <h2 class="Subsection_Title">Modifying wsgi.py for Heroku</h2>
-                    <div class="Definitions">
-                        Finally, we need to modify wsgi.py to serve static files correctly in the
-                        Heroku environment. Add the following code to the end of wsgi.py:
-                    </div>
-                    <pre class="prettyprint python Code">
-from dj_static import Cling
-application = Cling(get_wsgi_application())
-</pre>
-                    <div class="Definitions">
-                        This code imports Cling from dj-static and wraps the WSGI application with it.
-                        Cling helps serve static files correctly in a production environment like Heroku.
-                    </div>
+                    pip freeze &gt; requirements.txt
+                    </pre>
+
+
+
                 </section>
             </div>
         </div>
