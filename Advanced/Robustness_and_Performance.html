@@ -1,11 +1,708 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
     <title>Robustness and Performance</title>
 </head>
+
 <body>
-    
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Robustness and Performance</h1>
+            <div class="Sections_Area">
+                <section id="Try_Except_Else_Finally">
+                    <h2 class="Section_Title">Take Advantage of try/except/else/finally</h2>
+                    <div class="Definitions">
+                        A <code>try</code> statement can have four kinds of blocks, and each one has a distinct job:
+                        <ul>
+                            <li><strong>try</strong>: the code that might raise an exception. Keep it as small as
+                                possible.</li>
+                            <li><strong>except</strong>: runs only if a matching exception was raised in the
+                                <code>try</code> block.</li>
+                            <li><strong>else</strong>: runs only if the <code>try</code> block finished
+                                <strong>without</strong> an exception.</li>
+                            <li><strong>finally</strong>: <strong>always</strong> runs, whether an exception occurred,
+                                was handled, or was not handled. It is the place for clean-up such as closing files.</li>
+                        </ul>
+                        Why have an <code>else</code> block at all? Because anything you put inside <code>try</code>
+                        is covered by the <code>except</code> clauses. If you put the "success" code in the
+                        <code>try</code> too, an unrelated error from it could be caught by mistake and reported as
+                        the wrong problem. Moving it to <code>else</code> makes it clear which line you expect to
+                        fail.
+                    </div>
+                    <pre class="prettyprint python Code">
+import json
+
+def load_settings(text):
+    try:
+        data = json.loads(text)            # the only line we expect may fail
+    except json.JSONDecodeError as exc:
+        print(f"Invalid JSON: {exc.msg}")
+        return None
+    else:
+        # Runs only on success. A KeyError here is a real bug and is NOT
+        # silently swallowed by the except clause above.
+        print("Parsed OK, theme =", data["theme"])
+        return data
+    finally:
+        print("finished parsing attempt")   # always runs, even after return
+
+load_settings('{"theme": "dark"}')
+# Parsed OK, theme = dark
+# finished parsing attempt
+load_settings('{theme: dark}')
+# Invalid JSON: Expecting property name enclosed in double quotes
+# finished parsing attempt
+</pre>
+                    <h3 class="Subsection_Title">finally for clean-up</h3>
+                    <div class="Definitions">
+                        Open the resource <strong>before</strong> the <code>try</code>. If opening fails, there is
+                        nothing to close, and the <code>finally</code> block should not run.
+                    </div>
+                    <pre class="prettyprint python Code">
+import os
+import tempfile
+
+path = os.path.join(tempfile.gettempdir(), "demo_finally.txt")
+handle = open(path, "w", encoding="utf-8")   # may raise OSError: keep it outside try
+try:
+    handle.write("hello")
+    raise RuntimeError("something went wrong while writing")
+except RuntimeError as exc:
+    print("handled:", exc)
+finally:
+    handle.close()                            # runs in every case
+    print("closed:", handle.closed)           # closed: True
+os.remove(path)
+</pre>
+                    <div class="Warning">
+                        <ul>
+                            <li>Never write a bare <code>except:</code> or <code>except Exception: pass</code>. It
+                                hides bugs (even typos and <code>KeyboardInterrupt</code> in the bare case). Catch the
+                                specific exceptions you know how to handle.</li>
+                            <li>A <code>return</code> inside <code>finally</code> silently discards any exception in
+                                flight. Avoid it (Python 3.14 even warns about it).</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="Contextlib_With">
+                    <h2 class="Section_Title">contextlib and with Statements</h2>
+                    <div class="Definitions">
+                        The <code>try/finally</code> pattern for "set up, do work, always clean up" is so common that
+                        Python gives it its own syntax: the <code>with</code> statement. An object usable in
+                        <code>with</code> is a <strong>context manager</strong>: its <code>__enter__</code> method runs
+                        at the start of the block and its <code>__exit__</code> method runs at the end, even if an
+                        exception is raised. Files, locks and database connections all work this way. <br>
+                        Instead of writing a class with two special methods, you can turn a simple generator into a
+                        context manager using the <code>@contextlib.contextmanager</code> decorator. Everything before
+                        <code>yield</code> is the set-up, the yielded value is what <code>as</code> receives, and
+                        everything after <code>yield</code> is the clean-up.
+                    </div>
+                    <pre class="prettyprint python Code">
+from contextlib import contextmanager
+import logging
+
+logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
+
+@contextmanager
+def log_level(level, name):
+    logger = logging.getLogger(name)
+    old_level = logger.getEffectiveLevel()
+    logger.setLevel(level)             # set-up
+    try:
+        yield logger                   # the body of the with block runs here
+    finally:
+        logger.setLevel(old_level)     # clean-up, even if the body raises
+
+with log_level(logging.DEBUG, "my-app") as logger:
+    logger.debug("visible: level temporarily lowered to DEBUG")
+
+logging.getLogger("my-app").debug("hidden: level restored to WARNING")
+# DEBUG: visible: level temporarily lowered to DEBUG
+</pre>
+                    <div class="Warning">
+                        Always wrap the <code>yield</code> in <code>try/finally</code>. Otherwise, if the body of the
+                        <code>with</code> block raises an exception, it is re-raised at the <code>yield</code> and your
+                        clean-up code never runs.
+                    </div>
+                    <h3 class="Subsection_Title">Other useful contextlib helpers</h3>
+                    <div class="Definitions">
+                        <ul>
+                            <li><code>suppress(*exceptions)</code>: ignore specific, expected exceptions in a readable
+                                way.</li>
+                            <li><code>closing(obj)</code>: call <code>obj.close()</code> at the end for objects that
+                                have a <code>close</code> method but are not context managers.</li>
+                            <li><code>ExitStack</code>: manage a variable number of context managers, for example
+                                opening a list of files whose length is only known at run time.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+from contextlib import suppress, ExitStack
+import os
+import tempfile
+
+with suppress(FileNotFoundError):
+    os.remove("this_file_does_not_exist.txt")   # no error, no noise
+print("still running")                          # still running
+
+folder = tempfile.mkdtemp()
+names = [os.path.join(folder, f"part{i}.txt") for i in range(3)]
+with ExitStack() as stack:
+    files = [stack.enter_context(open(n, "w", encoding="utf-8")) for n in names]
+    for i, f in enumerate(files):
+        f.write(f"chunk {i}")
+print(all(f.closed for f in files))             # True: all three were closed
+</pre>
+                </section>
+
+                <section id="Datetime_Zoneinfo">
+                    <h2 class="Section_Title">Use datetime and zoneinfo Instead of time for Local Clocks</h2>
+                    <div class="Definitions">
+                        The <strong>UTC</strong> (Coordinated Universal Time) is the standard, time-zone-independent
+                        reference for time. Computers should store and compute in UTC, and convert to a local time
+                        zone only when displaying times to people. <br>
+                        The <code>time</code> module is a thin wrapper around the operating system's C functions. It
+                        can only convert between UTC and the <strong>machine's own</strong> local zone, and its
+                        behaviour differs between platforms. To work with arbitrary time zones, use the
+                        <code>datetime</code> module together with <code>zoneinfo</code> (standard library since
+                        Python 3.9), which uses the official IANA time zone database and handles daylight saving time
+                        correctly.
+                    </div>
+                    <h3 class="Subsection_Title">Naive vs aware datetimes</h3>
+                    <div class="Definitions">
+                        A <strong>naive</strong> datetime has no time zone attached (<code>tzinfo is None</code>); it
+                        is ambiguous, like a meeting time written without a city. An <strong>aware</strong> datetime
+                        knows its zone and represents an exact instant. Always use aware datetimes when time zones
+                        matter.
+                    </div>
+                    <pre class="prettyprint python Code">
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
+# A flight departs New York at 18:30 local time
+departure = datetime(2024, 3, 9, 18, 30, tzinfo=ZoneInfo("America/New_York"))
+print(departure)                 # 2024-03-09 18:30:00-05:00
+
+# Store it as UTC
+as_utc = departure.astimezone(timezone.utc)
+print(as_utc)                    # 2024-03-09 23:30:00+00:00
+
+# Show the arrival (7h45 later) in Paris local time
+arrival = as_utc + timedelta(hours=7, minutes=45)
+print(arrival.astimezone(ZoneInfo("Europe/Paris")))   # 2024-03-10 08:15:00+01:00
+
+# The current moment, as an aware datetime
+now = datetime.now(timezone.utc)
+print(now.tzinfo)                # UTC
+</pre>
+                    <div class="Definitions">
+                        Daylight saving time is handled for you. On 10 March 2024, clocks in New York jumped from 2:00
+                        to 3:00, so the UTC offset changes from -05:00 to -04:00:
+                    </div>
+                    <pre class="prettyprint python Code">
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
+ny = ZoneInfo("America/New_York")
+before = datetime(2024, 3, 10, 1, 30, tzinfo=ny)
+after = (before.astimezone(timezone.utc) + timedelta(hours=1)).astimezone(ny)
+print(before)   # 2024-03-10 01:30:00-05:00
+print(after)    # 2024-03-10 03:30:00-04:00  (one real hour later)
+</pre>
+                    <div class="Warning">
+                        <ul>
+                            <li><code>datetime.utcnow()</code> returns a <em>naive</em> datetime and is deprecated
+                                since Python 3.12. Use <code>datetime.now(timezone.utc)</code>.</li>
+                            <li>Comparing or subtracting a naive and an aware datetime raises <code>TypeError</code>.
+                            </li>
+                            <li>Do arithmetic in UTC: adding a <code>timedelta</code> to an aware local datetime works
+                                on "wall clock" time and can give surprising results across a DST change.</li>
+                            <li>On Windows, the time zone database may not be included with Python. If
+                                <code>ZoneInfo</code> raises <code>ZoneInfoNotFoundError</code>, run
+                                <code>pip install tzdata</code>.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="Serializing_Safely">
+                    <h2 class="Section_Title">Serializing Safely: pickle, copyreg and json</h2>
+                    <div class="Definitions">
+                        <strong>Serialization</strong> turns Python objects into bytes or text so they can be saved to
+                        a file or sent over a network, and later turned back into objects. The <code>pickle</code>
+                        module can serialize almost any Python object, including your own classes.
+                    </div>
+                    <pre class="prettyprint python Code">
+import pickle
+
+class GameState:
+    def __init__(self, level=0, lives=4):
+        self.level = level
+        self.lives = lives
+
+state = GameState(level=3)
+data = pickle.dumps(state)            # bytes
+restored = pickle.loads(data)
+print(restored.level, restored.lives)  # 3 4
+</pre>
+                    <div class="Warning">
+                        <strong>Never unpickle data from an untrusted source.</strong> A pickle is not just data; it is
+                        a small program that tells Python which objects to build and which functions to call. A
+                        malicious pickle can run any command on your computer the moment you call
+                        <code>pickle.loads()</code>. Use pickle only for data your own program wrote and nobody else
+                        could tamper with.
+                    </div>
+                    <h3 class="Subsection_Title">Making pickles survive class changes with copyreg</h3>
+                    <div class="Definitions">
+                        Pickle stores an object's attribute dictionary and the import path of its class. If you later
+                        add a new attribute to the class, old pickles restore objects <strong>without</strong> that
+                        attribute, because <code>__init__</code> is not called on unpickling. The
+                        <code>copyreg</code> module lets you register a function that controls how objects are
+                        pickled, so you can make unpickling go through a function that fills in defaults and
+                        handles versions.
+                    </div>
+                    <pre class="prettyprint python Code">
+import copyreg
+import pickle
+
+class GameState:
+    def __init__(self, level=0, lives=4, points=0):   # 'points' added in version 2
+        self.level = level
+        self.lives = lives
+        self.points = points
+
+def unpickle_game_state(kwargs):
+    return GameState(**kwargs)          # missing attributes get their defaults
+
+def pickle_game_state(state):
+    return unpickle_game_state, (state.__dict__,)
+
+copyreg.pickle(GameState, pickle_game_state)
+
+# Simulate an old pickle that was saved before 'points' existed
+old = GameState(level=2)
+del old.points
+data = pickle.dumps(old)
+
+restored = pickle.loads(data)
+print(restored.__dict__)   # {'level': 2, 'lives': 4, 'points': 0}
+</pre>
+                    <h3 class="Subsection_Title">Prefer json for data exchange</h3>
+                    <div class="Definitions">
+                        For configuration files, APIs and anything shared between programs or people, prefer
+                        <code>json</code>. It can only represent plain data (dicts, lists, strings, numbers,
+                        booleans and <code>None</code>), so loading it can never execute code. It is also readable by
+                        humans and by every other programming language. Convert your objects to and from
+                        dictionaries explicitly.
+                    </div>
+                    <pre class="prettyprint python Code">
+import json
+from dataclasses import dataclass, asdict
+
+@dataclass
+class GameState:
+    level: int = 0
+    lives: int = 4
+
+text = json.dumps(asdict(GameState(level=5)))
+print(text)                                 # {"level": 5, "lives": 4}
+restored = GameState(**json.loads(text))
+print(restored)                             # GameState(level=5, lives=4)
+</pre>
+                </section>
+
+                <section id="Decimal_Precision">
+                    <h2 class="Section_Title">Use decimal When Precision Is Paramount</h2>
+                    <div class="Definitions">
+                        Python's <code>float</code> uses binary floating point (IEEE 754). Most decimal fractions,
+                        like 0.1, cannot be represented exactly in binary, just as 1/3 cannot be written exactly in
+                        decimal. The tiny errors are fine for science and graphics, but unacceptable for money, where
+                        every cent must add up.
+                    </div>
+                    <pre class="prettyprint python Code">
+print(0.1 + 0.2)            # 0.30000000000000004
+print(0.1 + 0.2 == 0.3)     # False
+print(round(2.675, 2))      # 2.67 (not 2.68: 2.675 is stored as 2.67499999...)
+</pre>
+                    <div class="Definitions">
+                        The <code>decimal</code> module performs exact <strong>base-10</strong> arithmetic and lets you
+                        choose exactly how rounding works. Use <code>quantize()</code> to round to a fixed number of
+                        places with an explicit rounding mode.
+                    </div>
+                    <pre class="prettyprint python Code">
+from decimal import Decimal, ROUND_HALF_UP, ROUND_UP
+
+print(Decimal("0.1") + Decimal("0.2"))                    # 0.3
+print(Decimal("0.1") + Decimal("0.2") == Decimal("0.3"))  # True
+
+# Price of a 5-minute international call at $1.45 per minute
+cost = Decimal("1.45") * 5 / 60
+print(cost)                                                # 0.1208333333333333333333333333
+print(cost.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))  # 0.12
+print(cost.quantize(Decimal("0.01"), rounding=ROUND_UP))       # 0.13  (never undercharge)
+</pre>
+                    <div class="Warning">
+                        Create decimals from <strong>strings</strong> (or integers), not floats.
+                        <code>Decimal(0.1)</code> faithfully copies the float's error:
+                        <code>Decimal('0.1000000000000000055511151231257827021181583404541015625')</code>.
+                    </div>
+                    <div class="Note">
+                        If you need exact rational numbers such as 1/3, the <code>fractions.Fraction</code> class
+                        stores a numerator and denominator with no rounding at all. Decimal arithmetic is slower than
+                        float, so use it where correctness matters, not everywhere.
+                    </div>
+                </section>
+
+                <section id="Profile_Before_Optimizing">
+                    <h2 class="Section_Title">Profile Before Optimizing</h2>
+                    <div class="Definitions">
+                        Programmers are notoriously bad at guessing where their programs are slow. Time spent
+                        "optimizing" code that barely runs is wasted, and makes the code harder to read. Instead,
+                        <strong>measure</strong> first:
+                        <ul>
+                            <li><code>timeit</code> times small snippets precisely, running them many times to smooth
+                                out noise.</li>
+                            <li><code>cProfile</code> runs a whole program and records how much time is spent in every
+                                function. <code>pstats</code> sorts and prints the results.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+import timeit
+
+setup = "data = list(range(10_000))"
+t_list = timeit.timeit("9_999 in data", setup=setup, number=1_000)
+t_set = timeit.timeit("9_999 in s", setup=setup + "; s = set(data)", number=1_000)
+print(f"list membership: {t_list:.4f}s")   # e.g. 0.0600s
+print(f"set membership:  {t_set:.6f}s")    # e.g. 0.000020s  (thousands of times faster)
+</pre>
+                    <div class="Definitions">
+                        From a terminal, <code>timeit</code> chooses the number of repetitions for you:
+                    </div>
+                    <pre class="prettyprint Code">
+python -m timeit -s "data = list(range(10_000))" "9_999 in data"
+python -m cProfile -s cumulative my_script.py
+</pre>
+                    <div class="Definitions">
+                        Here is a profiling session inside Python. The output columns mean: <code>ncalls</code>
+                        (number of calls), <code>tottime</code> (time spent in the function itself, excluding the
+                        functions it calls) and <code>cumtime</code> (time including everything it calls).
+                    </div>
+                    <pre class="prettyprint python Code">
+import cProfile
+import pstats
+import io
+
+def insertion_sort(data):
+    result = []
+    for value in data:
+        insert_value(result, value)
+    return result
+
+def insert_value(array, value):
+    for i, existing in enumerate(array):      # linear scan: the hidden bottleneck
+        if existing &gt; value:
+            array.insert(i, value)
+            return
+    array.append(value)
+
+import random
+data = [random.randint(0, 10_000) for _ in range(3_000)]
+
+profiler = cProfile.Profile()
+profiler.runcall(insertion_sort, data)
+
+out = io.StringIO()
+stats = pstats.Stats(profiler, stream=out)
+stats.strip_dirs().sort_stats("cumulative").print_stats(4)
+print(out.getvalue())
+# Shows that nearly all the time is spent in insert_value (3000 calls).
+# Replacing the linear scan with bisect.insort (see below) makes it far faster.
+</pre>
+                    <div class="Note">
+                        Profile with realistic input. A bottleneck that only appears with large data will not show up
+                        if you profile with ten items.
+                    </div>
+                </section>
+
+                <section id="Deque_Queues">
+                    <h2 class="Section_Title">Prefer deque for Producer-Consumer Queues</h2>
+                    <div class="Definitions">
+                        A first-in, first-out (FIFO) queue is easy to build with a list: <code>append()</code> to add
+                        at the end and <code>pop(0)</code> to take from the front. The problem is that
+                        <code>pop(0)</code> must shift every remaining element one position to the left, so it costs
+                        time proportional to the length of the list (O(n)). As the queue grows, the program slows down
+                        dramatically. <br>
+                        <code>collections.deque</code> (double-ended queue) is designed for this: adding or removing
+                        at <strong>either end</strong> is O(1), no matter how long it is.
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import deque
+import timeit
+
+queue = deque()
+queue.append("email 1")      # producer adds to the right
+queue.append("email 2")
+queue.appendleft("urgent")   # can also add to the left
+print(queue.popleft())       # urgent   (consumer takes from the left)
+print(queue)                 # deque(['email 1', 'email 2'])
+
+n = 20_000   # empty a 20,000-item queue completely
+t_list = timeit.timeit("q.pop(0)", setup=f"q = list(range({n}))", number=n)
+t_deque = timeit.timeit("q.popleft()",
+                        setup=f"from collections import deque; q = deque(range({n}))", number=n)
+print(f"list.pop(0):     {t_list:.4f}s")    # e.g. 0.4000s (grows with the square of n)
+print(f"deque.popleft(): {t_deque:.4f}s")   # e.g. 0.0006s
+</pre>
+                    <div class="Definitions">
+                        A deque with a <code>maxlen</code> automatically discards items from the opposite end when it
+                        is full, which is perfect for "keep the last N items":
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import deque
+
+recent = deque(maxlen=3)
+for page in ["home", "about", "blog", "contact", "shop"]:
+    recent.append(page)
+print(list(recent))   # ['blog', 'contact', 'shop']
+</pre>
+                    <div class="Warning">
+                        Accessing an element in the <em>middle</em> of a deque by index is O(n). A deque is a queue,
+                        not a replacement for a list when you need random access. For queues shared between threads,
+                        use <code>queue.Queue</code>, which adds blocking and locking.
+                    </div>
+                </section>
+
+                <section id="Bisect_Search">
+                    <h2 class="Section_Title">Use bisect for Searching Sorted Sequences</h2>
+                    <div class="Definitions">
+                        Finding a value in a list with <code>list.index()</code> or <code>in</code> checks every
+                        element in turn: O(n). If the list is <strong>already sorted</strong>, you can do much better
+                        with <strong>binary search</strong>: look at the middle element, discard the half that cannot
+                        contain the value, and repeat. Each step halves the search space, so a list of one million
+                        items needs only about 20 comparisons (O(log n)). <br>
+                        The <code>bisect</code> module implements this:
+                        <ul>
+                            <li><code>bisect_left(a, x)</code> returns the index where <code>x</code> would be
+                                inserted to keep <code>a</code> sorted (before any equal items).</li>
+                            <li><code>bisect_right(a, x)</code> (alias <code>bisect</code>) does the same, after any
+                                equal items.</li>
+                            <li><code>insort(a, x)</code> inserts <code>x</code> at the correct position.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+from bisect import bisect_left, insort
+
+data = list(range(0, 1_000_000, 2))      # sorted even numbers
+
+def contains(sorted_list, x):
+    i = bisect_left(sorted_list, x)
+    return i &lt; len(sorted_list) and sorted_list[i] == x
+
+print(contains(data, 777_778))  # True
+print(contains(data, 777_777))  # False
+
+scores = [12, 45, 67, 89]
+insort(scores, 50)
+print(scores)                   # [12, 45, 50, 67, 89]
+</pre>
+                    <div class="Definitions">
+                        <code>bisect</code> is also handy for mapping numbers to ranges, such as grade boundaries:
+                    </div>
+                    <pre class="prettyprint python Code">
+from bisect import bisect_right
+
+def grade(score, breakpoints=(60, 70, 80, 90), grades="FDCBA"):
+    return grades[bisect_right(breakpoints, score)]
+
+print([grade(s) for s in (33, 60, 77, 89, 90, 100)])  # ['F', 'D', 'C', 'B', 'A', 'A']
+</pre>
+                    <div class="Warning">
+                        <code>bisect</code> does not check that the list is sorted. On unsorted data it silently
+                        returns wrong answers. Also, <code>insort</code> finds the position in O(log n) but inserting
+                        into a list is still O(n), because elements must be shifted.
+                    </div>
+                    <div class="Note">
+                        Since Python 3.10, all <code>bisect</code> functions accept a <code>key</code> argument, so you
+                        can search a list of records sorted by one field.
+                    </div>
+                </section>
+
+                <section id="Heapq_Priority">
+                    <h2 class="Section_Title">Use heapq for Priority Queues</h2>
+                    <div class="Definitions">
+                        Sometimes items should not be processed in arrival order but by <strong>priority</strong>: the
+                        most urgent support ticket first, the next timer to expire first, the shortest path first.
+                        Sorting the whole list every time something is added would be O(n log n) per insertion. <br>
+                        A <strong>heap</strong> is a list arranged so that the smallest item is always at index 0.
+                        The <code>heapq</code> module maintains this arrangement with O(log n) insertions and removals:
+                        <ul>
+                            <li><code>heappush(heap, item)</code> adds an item.</li>
+                            <li><code>heappop(heap)</code> removes and returns the smallest item.</li>
+                            <li><code>heapify(list)</code> turns an existing list into a heap in O(n).</li>
+                            <li><code>nsmallest(k, data)</code> / <code>nlargest(k, data)</code> pick the top k
+                                items without sorting everything.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+import heapq
+import itertools
+
+tasks = []
+counter = itertools.count()    # tie-breaker: keeps insertion order for equal priorities
+
+def add_task(priority, name):
+    # Tuples compare element by element: priority first, then the counter
+    heapq.heappush(tasks, (priority, next(counter), name))
+
+add_task(3, "write docs")
+add_task(1, "fix production bug")
+add_task(2, "review pull request")
+add_task(1, "reply to customer")
+
+while tasks:
+    priority, _, name = heapq.heappop(tasks)
+    print(priority, name)
+# 1 fix production bug
+# 1 reply to customer
+# 2 review pull request
+# 3 write docs
+
+prices = [42, 7, 19, 88, 3, 56]
+print(heapq.nlargest(2, prices))   # [88, 56]
+print(heapq.nsmallest(2, prices))  # [3, 7]
+</pre>
+                    <div class="Warning">
+                        <ul>
+                            <li><code>heapq</code> is a <strong>min</strong>-heap. For a max-heap, push negated
+                                priorities (<code>-priority</code>).</li>
+                            <li>Without the tie-breaking counter, two items with the same priority would be compared by
+                                their next field. If that field is not comparable (a dict, a custom object), you get a
+                                <code>TypeError</code>.</li>
+                            <li>A heap is <em>not</em> sorted: only <code>heap[0]</code> is guaranteed to be the
+                                smallest. Do not iterate over it expecting order.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="Memoryview_Bytearray">
+                    <h2 class="Section_Title">Zero-Copy with memoryview and bytearray</h2>
+                    <div class="Definitions">
+                        Slicing a <code>bytes</code> object creates a <strong>new copy</strong> of the data. When a
+                        program handles large binary data, such as network packets, video frames or file chunks,
+                        those copies waste memory and CPU time. <br>
+                        A <code>memoryview</code> wraps any object that supports the <strong>buffer protocol</strong>
+                        (<code>bytes</code>, <code>bytearray</code>, <code>array.array</code>, NumPy arrays) and lets you
+                        slice it <strong>without copying</strong>: the slice is just a window onto the same memory.
+                    </div>
+                    <pre class="prettyprint python Code">
+import timeit
+
+data = b"x" * 10_000_000          # 10 MB
+
+t_copy = timeit.timeit(lambda: data[1_000:5_000_000], number=50)
+view = memoryview(data)
+t_view = timeit.timeit(lambda: view[1_000:5_000_000], number=50)
+print(f"bytes slice:      {t_copy * 1e6 / 50:9.1f} microseconds")   # e.g. 600 microseconds
+print(f"memoryview slice: {t_view * 1e6 / 50:9.1f} microseconds")   # e.g. 0.2 microseconds
+
+chunk = view[0:5]
+print(chunk.tobytes())            # b'xxxxx' (copy only when you really need bytes)
+</pre>
+                    <div class="Definitions">
+                        <code>bytes</code> is immutable, so a view of it is read-only. A <code>bytearray</code> is the
+                        mutable version of <code>bytes</code>. Combining it with <code>memoryview</code> lets you
+                        write <strong>into</strong> a part of a buffer in place, for example with
+                        <code>socket.recv_into()</code> or <code>file.readinto()</code>, which fill an existing buffer
+                        instead of allocating a new one each time.
+                    </div>
+                    <pre class="prettyprint python Code">
+import io
+
+buffer = bytearray(12)                     # pre-allocated, zero-filled
+view = memoryview(buffer)
+
+view[0:5] = b"Hello"                       # write through the view
+view[5:7] = b", "
+print(buffer)                              # bytearray(b'Hello, \x00\x00\x00\x00\x00')
+
+stream = io.BytesIO(b"World")
+n = stream.readinto(view[7:])              # read straight into the free space, no copy
+print(n, bytes(buffer))                    # 5 b'Hello, World'
+</pre>
+                    <div class="Warning">
+                        While a <code>memoryview</code> of a <code>bytearray</code> exists, the bytearray cannot be
+                        resized (<code>append</code> raises <code>BufferError</code>). Call <code>view.release()</code>
+                        or use the view in a <code>with</code> block when you are done with it.
+                    </div>
+                </section>
+
+                <section id="Lru_Cache">
+                    <h2 class="Section_Title">Caching Results with functools.lru_cache and cache</h2>
+                    <div class="Definitions">
+                        If a function is <strong>pure</strong> (its result depends only on its arguments and it has no
+                        side effects) and it is called repeatedly with the same arguments, you can store results and
+                        return them instantly next time. This is called <strong>memoization</strong>. <br>
+                        <code>functools.cache</code> (Python 3.9+) remembers every result forever.
+                        <code>functools.lru_cache(maxsize=N)</code> keeps only the N most recently used results, which
+                        bounds memory use.
+                    </div>
+                    <pre class="prettyprint python Code">
+from functools import cache, lru_cache
+import time
+
+def fib_slow(n):
+    return n if n &lt; 2 else fib_slow(n - 1) + fib_slow(n - 2)
+
+@cache
+def fib(n):
+    return n if n &lt; 2 else fib(n - 1) + fib(n - 2)
+
+start = time.perf_counter()
+print(fib_slow(30))                                 # 832040
+print(f"no cache: {time.perf_counter() - start:.2f}s")    # e.g. 0.15s
+
+start = time.perf_counter()
+print(fib(30))                                      # 832040
+print(f"cached:   {time.perf_counter() - start:.6f}s")    # e.g. 0.000020s
+print(fib.cache_info())    # CacheInfo(hits=28, misses=31, maxsize=None, currsize=31)
+
+@lru_cache(maxsize=128)
+def lookup_country(code):
+    print(f"  (expensive lookup for {code})")
+    return {"fr": "France", "jp": "Japan"}.get(code, "Unknown")
+
+lookup_country("fr")   # prints the expensive lookup message
+lookup_country("fr")   # served from the cache: nothing printed
+lookup_country.cache_clear()   # empty the cache when the data changes
+</pre>
+                    <div class="Warning">
+                        <ul>
+                            <li>All arguments must be <strong>hashable</strong>: calling a cached function with a list
+                                raises <code>TypeError: unhashable type: 'list'</code>. Pass a tuple instead.</li>
+                            <li>Never cache functions with side effects or whose results change over time (reading the
+                                clock, a file or a database); you would get stale answers.</li>
+                            <li>A cached function returns the <strong>same object</strong> each time. If the caller
+                                mutates a returned list or dict, the cache is corrupted for everyone.</li>
+                            <li>Using <code>@cache</code> on a method keeps every <code>self</code> alive forever
+                                (memory leak). Consider <code>functools.cached_property</code> for per-instance
+                                values.</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
 </body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
+
 </html>

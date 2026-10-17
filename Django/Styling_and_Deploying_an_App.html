@@ -30,7 +30,7 @@
                         To install django-bootstrap3, issue the following command in an active
                         virtual environment:
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 pip install django-bootstrap3
                     </pre>
                     <div class="Definitions">
@@ -119,7 +119,7 @@ BOOTSTRAP3 = {
                                     the Terminal the very first time.
                                 </p>
                             </div>
-                            <pre class="prettyprint python Code">
+                            <pre class="prettyprint Code">
                                 $ git --version
                                  </pre>
                             <div class="Definitions">
@@ -148,7 +148,7 @@ BOOTSTRAP3 = {
                                     dnf:
                                 </p>
                             </div>
-                            <pre class="prettyprint python Code">
+                            <pre class="prettyprint Code">
                                 $ sudo dnf install git-all
                                             </pre>
                             <div class="Definitions">
@@ -156,7 +156,7 @@ BOOTSTRAP3 = {
                                     If you're on a Debian-based distribution like Ubuntu, try apt:
                                 </p>
                             </div>
-                            <pre class="prettyprint python Code">
+                            <pre class="prettyprint Code">
                                 $ sudo apt install git-all
                                             </pre>
                         </li>
@@ -178,7 +178,7 @@ BOOTSTRAP3 = {
                             this
                             information, and it's immutably baked into the commits you start creating:</p>
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                 $ git config --global user.name "Mahmoudi Mohamed Amine"
                 $ git config --global user.email mohamed.mahmoudi@ensia.edu.dz
             </pre>
@@ -190,7 +190,7 @@ BOOTSTRAP3 = {
                             command:
                         </p>
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                 $ git config --global init.defaultBranch main
             </pre>
                     <h2 class="Subsection_Title">Your editor</h2>
@@ -203,7 +203,7 @@ BOOTSTRAP3 = {
                             editor.
                         </p>
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                 $ git config --global core.editor "nano"
             </pre>
                     <div class="Definitions">
@@ -218,7 +218,7 @@ BOOTSTRAP3 = {
                             You can check your settings by running the following command:
                         </p>
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                 $ git config --list
             </pre>
                 </section>
@@ -245,7 +245,7 @@ BOOTSTRAP3 = {
                             (i.e. git clone &lt;url>):
                         </p>
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                 $ cd /path/to/your/project
                 $ git clone https://github.com/the-repository-url
             </pre>
@@ -267,7 +267,7 @@ BOOTSTRAP3 = {
                             the following command:
                         </p>
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                 $ cd /path/to/your/project
                 $ git init
             </pre>
@@ -322,7 +322,7 @@ BOOTSTRAP3 = {
                             command.
                         </p>
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                 $ git status
             </pre>
                     <h2 class="Subsection_Title">Tracking New Files</h2>
@@ -337,7 +337,7 @@ BOOTSTRAP3 = {
                             symbol.
                         </p>
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                 $ git add filename
             </pre>
                     <h2 class="Subsection_Title">Committing Your Changes</h2>
@@ -354,7 +354,7 @@ BOOTSTRAP3 = {
                             your disk.
                         </p>
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                 $ git commit -m "Your commit message"
             </pre>
                     <h2 class="Subsection_Title">Removing Files</h2>
@@ -365,7 +365,7 @@ BOOTSTRAP3 = {
                             This command will remove the file from the repository and the working directory.
                         </p>
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                 $ git rm filename
             </pre>
                 </section>
@@ -423,12 +423,12 @@ BOOTSTRAP3 = {
                         If the host is not in ALLOWED_HOSTS, Django immediately blocks the request with:
                     </div>
                     <pre class="prettyprint python Code">
-                        ALLOWED_HOSTS = [
-                                        "localhost",
-                                        "127.0.0.1",
-                                        ".vercel.app",
-                                    ]
-                    </pre>
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    ".vercel.app",
+]
+</pre>
                     <div class="Definitions">
                         The leading dot means: <br>
                         project.vercel.app → allowed <br>
@@ -485,7 +485,7 @@ app = application
                         To create the requirements.txt file, issue the following command in an active
                         virtual environment:
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
                     pip freeze &gt; requirements.txt
                     </pre>
                     <h2 class="Subsection_Title">import your Django repository into Vercel</h2>
@@ -512,7 +512,7 @@ app = application
                                 Gives you a preview URL like:
                             </li>
                         </ol>
-                        <pre class="prettyprint python Code">
+                        <pre class="prettyprint Code">
 https://your-project-name.vercel.app
 </pre>
                     </div>

@@ -19,32 +19,680 @@
                 <section id="Exceptions">
                     <h2 class="Section_Title">Handling the ZeroDivisionError Exception</h2>
                     <div class="Definitions">
+                        When something goes wrong while a program is running, Python creates a special object called
+                        an <strong>exception</strong>. If nothing in your code handles that exception, the program
+                        stops and Python prints a <strong>traceback</strong>: a report of where the error happened
+                        and what kind of error it was. <br>
+                        Dividing a number by zero is impossible, so Python raises a <code>ZeroDivisionError</code>:
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+print(5 / 0)
+# ZeroDivisionError: division by zero
+</pre>
+                    <div class="Definitions">
+                        The full traceback looks like this:
+                    </div>
+                    <pre class="prettyprint Code">
+Traceback (most recent call last):
+  File "division_calculator.py", line 1, in &lt;module&gt;
+    print(5 / 0)
+          ~~^~~
+ZeroDivisionError: division by zero
+</pre>
+                    <div class="Definitions">
+                        Read a traceback from the <strong>bottom up</strong>:
+                        <ul>
+                            <li>The last line gives the <strong>type</strong> of the exception
+                                (<code>ZeroDivisionError</code>) and a message explaining it.</li>
+                            <li>The lines above show the file, the line number and the code that failed. Since
+                                Python 3.11 the <code>~~^~~</code> markers even point at the exact operation.</li>
+                            <li>When the error happens inside a function, the traceback lists every call that led
+                                there, with the most recent call last.</li>
+                        </ul>
+                        Every exception type is a class, and its name tells you what went wrong. Knowing the name is
+                        what lets you write code that handles that specific problem.
+                    </div>
+                </section>
+
+                <section id="Try_Except">
                     <h2 class="Section_Title">Using try-except Blocks</h2>
                     <div class="Definitions">
+                        When you know an error might happen, you can tell Python what to do instead of crashing.
+                        Put the code that might fail in a <code>try</code> block, and the code that should run if it
+                        fails in an <code>except</code> block naming the exception type:
+                        <ul>
+                            <li>If the <code>try</code> block runs without error, the <code>except</code> block is
+                                skipped.</li>
+                            <li>If an error of the named type happens, Python stops running the <code>try</code> block
+                                at that line, jumps to the matching <code>except</code> block, and then continues with
+                                the rest of the program.</li>
+                            <li>If a <em>different</em> type of error happens, the <code>except</code> block does not
+                                match and the program still crashes with a traceback.</li>
+                        </ul>
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+try:
+    print(5 / 0)
+    print("This line is never reached.")
+except ZeroDivisionError:
+    print("You can't divide by zero!")
+
+print("The program keeps running.")
+# Output:
+# You can't divide by zero!
+# The program keeps running.
+</pre>
+                    <div class="Definitions">
+                        You can access the exception object itself with <code>as</code>. Converting it to a string
+                        gives the error message:
+                    </div>
+                    <pre class="prettyprint python Code">
+try:
+    number = int("forty-two")
+except ValueError as error:
+    print(f"Conversion failed: {error}")
+    print(type(error).__name__)
+# Output:
+# Conversion failed: invalid literal for int() with base 10: 'forty-two'
+# ValueError
+</pre>
+                    <div class="Warning">
+                        Keep the <code>try</code> block as small as possible: only the lines that can actually raise
+                        the error you are handling. A large <code>try</code> block can accidentally catch errors from
+                        lines you did not expect to fail, hiding real bugs.
+                    </div>
+                </section>
+
+                <section id="Preventing_Crashes">
                     <h2 class="Section_Title">Using Exceptions to Prevent Crashes</h2>
                     <div class="Definitions">
+                        Handling errors matters most when the program depends on things you do not control, such as
+                        user input, files or network connections. A crash is a bad experience for users: the work in
+                        progress is lost, and a traceback can reveal details about your code (file names, paths) that
+                        you may not want to show. <br>
+                        Here is a simple calculator that keeps asking for numbers. Without error handling, a single
+                        zero or a typo would end the program:
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+print("Give me two numbers, and I'll divide them.")
+print("Enter 'q' to quit.")
+
+while True:
+    first_number = input("\nFirst number: ")
+    if first_number == 'q':
+        break
+    second_number = input("Second number: ")
+    if second_number == 'q':
+        break
+    try:
+        answer = float(first_number) / float(second_number)
+    except ZeroDivisionError:
+        print("You can't divide by 0!")
+    except ValueError:
+        print("Please enter numbers only.")
+    else:
+        print(answer)
+# Example session:
+# First number: 10
+# Second number: 0
+# You can't divide by 0!
+#
+# First number: 10
+# Second number: abc
+# Please enter numbers only.
+#
+# First number: 10
+# Second number: 4
+# 2.5
+#
+# First number: q
+</pre>
+                    <div class="Definitions">
+                        The program now survives bad input, explains the problem in plain language, and lets the user
+                        try again.
+                    </div>
+                </section>
+
+                <section id="Else_Block">
                     <h2 class="Section_Title">The else Block</h2>
                     <div class="Definitions">
+                        A <code>try</code> statement can have an <code>else</code> block that runs <strong>only if
+                        the <code>try</code> block raised no exception</strong>. In the calculator above,
+                        <code>print(answer)</code> is in the <code>else</code> block because it only makes sense when
+                        the division succeeded. <br>
+                        Why not just put that code at the end of the <code>try</code> block? Because then any error
+                        it raises would also be caught by the <code>except</code> blocks, possibly with a misleading
+                        message. The <code>else</code> block keeps the <code>try</code> block focused on the one
+                        operation that may fail. The flow is:
+                        <ol>
+                            <li><code>try</code>: the code that might fail.</li>
+                            <li><code>except</code>: runs if it failed with a matching exception.</li>
+                            <li><code>else</code>: runs if it succeeded.</li>
+                        </ol>
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+def safe_divide(a, b):
+    try:
+        result = a / b
+    except ZeroDivisionError:
+        print(f"Cannot divide {a} by zero.")
+    else:
+        print(f"{a} / {b} = {result}")
+
+safe_divide(10, 4)  # 10 / 4 = 2.5
+safe_divide(10, 0)  # Cannot divide 10 by zero.
+</pre>
+                </section>
+
+                <section id="File_Not_Found">
                     <h2 class="Section_Title">Handling the FileNotFoundError Exception</h2>
                     <div class="Definitions">
+                        Files are a classic source of errors: a file may have been moved, renamed, deleted, or the
+                        name may contain a typo. Trying to read a file that does not exist raises
+                        <code>FileNotFoundError</code>:
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+with open('alice.txt', encoding='utf-8') as f:
+    contents = f.read()
+# FileNotFoundError: [Errno 2] No such file or directory: 'alice.txt'
+</pre>
+                    <div class="Definitions">
+                        The <code>open()</code> call is the line that fails, so it goes inside the
+                        <code>try</code> block. The work that depends on the file goes in <code>else</code>:
+                    </div>
+                    <pre class="prettyprint python Code">
+filename = 'alice.txt'
+
+try:
+    with open(filename, encoding='utf-8') as f:
+        contents = f.read()
+except FileNotFoundError:
+    print(f"Sorry, the file {filename} does not exist.")
+else:
+    words = contents.split()
+    print(f"The file {filename} has about {len(words)} words.")
+# Output (when alice.txt is missing):
+# Sorry, the file alice.txt does not exist.
+</pre>
+                    <div class="Note">
+                        <code>FileNotFoundError</code> is one of several file-related errors that all inherit from
+                        <code>OSError</code>. Others you may meet are <code>PermissionError</code> (you are not
+                        allowed to read or write the file) and <code>IsADirectoryError</code> (the path is a folder).
+                        Catching <code>OSError</code> handles all of them.
+                    </div>
+                </section>
+
+                <section id="Failing_Silently">
                     <h2 class="Section_Title">Failing Silently</h2>
                     <div class="Definitions">
+                        Sometimes you do not want to tell the user anything when an exception occurs; the program
+                        should simply carry on. The <code>pass</code> statement does nothing, and it can be used as
+                        the body of an <code>except</code> block. <br>
+                        In the example below, missing files are skipped without a message, so the output only lists
+                        the files that could be processed:
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+def count_words(filename):
+    """Count the approximate number of words in a file."""
+    try:
+        with open(filename, encoding='utf-8') as f:
+            contents = f.read()
+    except FileNotFoundError:
+        pass
+    else:
+        print(f"The file {filename} has about {len(contents.split())} words.")
+
+with open('poem.txt', 'w', encoding='utf-8') as f:
+    f.write("Roses are red\nViolets are blue\n")
+
+for name in ['poem.txt', 'missing.txt']:
+    count_words(name)
+# Output:
+# The file poem.txt has about 6 words.
+</pre>
+                    <div class="Definitions">
+                        <code>pass</code> also acts as a placeholder that reminds you a decision was made to do
+                        nothing here. The <code>contextlib.suppress</code> helper (shown
+                        <a href="#Context_Managers">later</a>) expresses the same idea more compactly.
+                    </div>
+                    <div class="Warning">
+                        Never silence errors you do not understand, and never write a bare <code>except:</code> with
+                        <code>pass</code>. It swallows every possible error, including typos in your own code, and
+                        makes bugs almost impossible to find. Always name the specific exception you expect.
+                    </div>
+                </section>
+
+                <section id="Which_Errors_to_Report">
                     <h2 class="Section_Title">Deciding Which Errors to Report</h2>
                     <div class="Definitions">
+                        Whether to report an error, handle it quietly, or let the program crash depends on who uses
+                        the program and what the error means. Some guidelines:
+                        <ul>
+                            <li><strong>Report</strong> errors the user can fix: a typo in a file name, a letter where
+                                a number was expected. Give a clear message that explains what to do.</li>
+                            <li><strong>Stay silent</strong> when the situation is expected and harmless: an optional
+                                configuration file that is not there yet, a cache that has to be rebuilt.</li>
+                            <li><strong>Let it crash</strong> (or re-raise) when the error is a bug in your code or
+                                when the program cannot continue in a meaningful way. Hiding it would only produce
+                                wrong results later.</li>
+                            <li><strong>Log</strong> errors in long-running programs or servers, so a developer can
+                                investigate them later even if the user only sees a short message.</li>
+                        </ul>
+                        A good error message says what went wrong <em>and</em> what the user can do about it.
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+def load_settings(filename):
+    """Settings are optional: fall back to defaults silently."""
+    try:
+        with open(filename, encoding='utf-8') as f:
+            return f.read().splitlines()
+    except FileNotFoundError:
+        return ['theme=light']   # expected situation, nothing to report
+
+def load_data(filename):
+    """Data is required: tell the user exactly what is wrong."""
+    try:
+        with open(filename, encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        print(f"Could not find '{filename}'. Check the name and the folder, then try again.")
+        return None
+
+print(load_settings('settings.txt'))  # ['theme=light']
+load_data('sales_2024.txt')
+# Could not find 'sales_2024.txt'. Check the name and the folder, then try again.
+</pre>
+                </section>
+
+                <section id="Finally_Block">
+                    <h2 class="Section_Title">The finally Block</h2>
+                    <div class="Definitions">
+                        A <code>finally</code> block runs <strong>no matter what</strong>: whether the
+                        <code>try</code> block succeeded, an exception was handled, an exception was
+                        <em>not</em> handled, or the function returned early. It is meant for clean-up work that must
+                        always happen, such as closing a connection, releasing a lock or printing a final status.
+                        <br>
+                        The complete form of the statement is <code>try</code> / <code>except</code> /
+                        <code>else</code> / <code>finally</code>, in that order. Only <code>try</code> is required,
+                        together with at least one <code>except</code> or a <code>finally</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+def divide(a, b):
+    try:
+        result = a / b
+    except ZeroDivisionError:
+        print("  except: division by zero")
+        return None
+    else:
+        print("  else: success")
+        return result
+    finally:
+        print("  finally: always runs")
+
+print(divide(10, 2))
+print(divide(10, 0))
+# Output:
+#   else: success
+#   finally: always runs
+# 5.0
+#   except: division by zero
+#   finally: always runs
+# None
+</pre>
+                    <div class="Definitions">
+                        Notice that <code>finally</code> runs even though both branches <code>return</code>: Python
+                        runs the clean-up first and then returns the value. If the exception is not handled at all,
+                        <code>finally</code> runs and then the exception continues to propagate:
+                    </div>
+                    <pre class="prettyprint python Code">
+try:
+    int("abc")
+finally:
+    print("Cleaning up before the crash.")
+# Output:
+# Cleaning up before the crash.
+# ValueError: invalid literal for int() with base 10: 'abc'
+</pre>
+                    <div class="Warning">
+                        Do not use <code>return</code>, <code>break</code> or <code>continue</code> inside
+                        <code>finally</code>. They silently discard any exception that was on its way out, so errors
+                        disappear without a trace.
+                    </div>
+                </section>
+
+                <section id="Multiple_Exceptions">
+                    <h2 class="Section_Title">Catching Multiple Exceptions</h2>
+                    <div class="Definitions">
+                        A single piece of code can fail in several ways. You have two options:
+                        <ul>
+                            <li><strong>Several <code>except</code> blocks</strong>, when each error needs a different
+                                response. Python checks them from top to bottom and runs only the <em>first</em> one
+                                that matches.</li>
+                            <li><strong>One <code>except</code> with a tuple</strong> of exception types, when they
+                                should all be handled the same way.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+def parse_and_invert(text):
+    try:
+        value = int(text)
+        return 1 / value
+    except ValueError:
+        print(f"{text!r} is not a whole number.")
+    except ZeroDivisionError:
+        print("Zero has no inverse.")
+
+print(parse_and_invert("4"))   # 0.25
+parse_and_invert("four")       # 'four' is not a whole number.
+parse_and_invert("0")          # Zero has no inverse.
+
+def read_number(data, key):
+    try:
+        return int(data[key])
+    except (KeyError, ValueError, TypeError) as error:
+        print(f"Could not read {key!r}: {type(error).__name__}")
+        return 0
+
+record = {'age': '21', 'height': 'tall'}
+print(read_number(record, 'age'))     # 21
+read_number(record, 'height')         # Could not read 'height': ValueError
+read_number(record, 'weight')         # Could not read 'weight': KeyError
+</pre>
+                    <div class="Warning">
+                        Order matters: put specific exceptions <em>before</em> general ones. Because
+                        <code>FileNotFoundError</code> is a kind of <code>OSError</code>, an
+                        <code>except OSError</code> placed first would catch it, and a later
+                        <code>except FileNotFoundError</code> block would never run.
+                    </div>
+                </section>
+
+                <section id="Raising_Exceptions">
+                    <h2 class="Section_Title">Raising Exceptions</h2>
+                    <div class="Definitions">
+                        Your own code can signal errors too, with the <code>raise</code> statement. This is the right
+                        thing to do when a function receives input it cannot work with. Raising an exception is
+                        better than returning a special value like <code>None</code> or <code>-1</code>, because the
+                        caller cannot accidentally ignore it: either they handle it, or the program stops and
+                        shows exactly where the problem is. <br>
+                        Choose the built-in exception that best describes the problem, and include a helpful
+                        message:
+                        <ul>
+                            <li><code>ValueError</code>: the type is right but the value is not acceptable.</li>
+                            <li><code>TypeError</code>: the argument has the wrong type.</li>
+                            <li><code>KeyError</code> / <code>IndexError</code>: a key or index does not exist.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+def set_age(age):
+    if not isinstance(age, int):
+        raise TypeError(f"age must be an int, not {type(age).__name__}")
+    if age &lt; 0 or age &gt; 150:
+        raise ValueError(f"age must be between 0 and 150, got {age}")
+    return age
+
+print(set_age(30))  # 30
+
+try:
+    set_age(-5)
+except ValueError as error:
+    print(error)    # age must be between 0 and 150, got -5
+
+set_age("thirty")
+# TypeError: age must be an int, not str
+</pre>
+                    <h3 class="Subsection_Title">Re-raising an Exception</h3>
+                    <div class="Definitions">
+                        Sometimes you want to react to an error (for example, log it) but still let it continue to
+                        the caller, because you cannot actually fix it at this level. A bare <code>raise</code>
+                        inside an <code>except</code> block re-raises the current exception with its original
+                        traceback.
+                    </div>
+                    <pre class="prettyprint python Code">
+def read_config(filename):
+    try:
+        with open(filename, encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        print(f"[log] config file {filename!r} is missing")
+        raise   # pass the same exception on to the caller
+
+try:
+    read_config('app.cfg')
+except FileNotFoundError:
+    print("Using default configuration.")
+# Output:
+# [log] config file 'app.cfg' is missing
+# Using default configuration.
+</pre>
+                    <h3 class="Subsection_Title">Chaining with raise ... from</h3>
+                    <div class="Definitions">
+                        Often a low-level error should be turned into one that makes sense to the caller: a
+                        <code>KeyError</code> deep inside your code is less helpful than "unknown product code".
+                        <code>raise NewError(...) from original</code> raises the new exception and records the
+                        original as its <strong>cause</strong>. The traceback then shows both, joined by the line
+                        "The above exception was the direct cause of the following exception", so no information is
+                        lost. <br>
+                        Use <code>from None</code> to hide the original exception when it would only add noise.
+                    </div>
+                    <pre class="prettyprint python Code">
+PRICES = {'A100': 9.99, 'B200': 24.50}
+
+def get_price(code):
+    try:
+        return PRICES[code]
+    except KeyError as error:
+        raise ValueError(f"unknown product code: {code}") from error
+
+try:
+    get_price('Z999')
+except ValueError as error:
+    print(error)                  # unknown product code: Z999
+    print(repr(error.__cause__))  # KeyError('Z999')
+</pre>
+                </section>
+
+                <section id="Custom_Exceptions">
+                    <h2 class="Section_Title">Custom Exceptions</h2>
+                    <div class="Definitions">
+                        For larger programs, it helps to define your own exception types. A custom exception is just
+                        a class that inherits from <code>Exception</code> (or from a more specific built-in
+                        exception). Benefits:
+                        <ul>
+                            <li>The name documents exactly what went wrong
+                                (<code>InsufficientFundsError</code> says more than <code>ValueError</code>).</li>
+                            <li>Callers can catch <em>your</em> errors without accidentally catching unrelated ones.
+                            </li>
+                            <li>The exception can carry extra data as attributes.</li>
+                        </ul>
+                        A common pattern is to create one base exception for your module or application and derive
+                        the specific errors from it, so callers can catch them all with a single
+                        <code>except</code>. By convention, exception names end in <code>Error</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+class BankError(Exception):
+    """Base class for all errors in the bank module."""
+
+class InsufficientFundsError(BankError):
+    def __init__(self, balance, amount):
+        super().__init__(f"cannot withdraw {amount}, balance is only {balance}")
+        self.balance = balance
+        self.amount = amount
+
+class AccountLockedError(BankError):
+    pass
+
+def withdraw(balance, amount, locked=False):
+    if locked:
+        raise AccountLockedError("this account is locked")
+    if amount &gt; balance:
+        raise InsufficientFundsError(balance, amount)
+    return balance - amount
+
+try:
+    withdraw(100, 250)
+except InsufficientFundsError as error:
+    print(error)                           # cannot withdraw 250, balance is only 100
+    print(error.amount - error.balance)    # 150
+
+try:
+    withdraw(100, 10, locked=True)
+except BankError as error:                 # catches every bank error
+    print(f"{type(error).__name__}: {error}")  # AccountLockedError: this account is locked
+</pre>
+                    <div class="Note">
+                        If your <code>__init__</code> takes custom arguments, call
+                        <code>super().__init__(message)</code> so the exception still has a readable message when it
+                        is printed or shown in a traceback.
+                    </div>
+                </section>
+
+                <section id="Exception_Hierarchy">
+                    <h2 class="Section_Title">The Exception Hierarchy</h2>
+                    <div class="Definitions">
+                        Built-in exceptions are organised as a family tree of classes. An <code>except</code> clause
+                        matches the named class <strong>and all its subclasses</strong>. Here is a small part of the
+                        tree:
+                    </div>
+                    <pre class="prettyprint Code">
+BaseException
+ ├── SystemExit                 (raised by sys.exit())
+ ├── KeyboardInterrupt          (the user pressed Ctrl+C)
+ └── Exception                  (base of all "normal" errors)
+      ├── ArithmeticError
+      │    └── ZeroDivisionError
+      ├── LookupError
+      │    ├── IndexError
+      │    └── KeyError
+      ├── OSError
+      │    ├── FileNotFoundError
+      │    ├── FileExistsError
+      │    └── PermissionError
+      ├── TypeError
+      └── ValueError
+           └── UnicodeError
+</pre>
+                    <pre class="prettyprint python Code">
+print(issubclass(FileNotFoundError, OSError))    # True
+print(issubclass(KeyError, LookupError))         # True
+print(issubclass(KeyboardInterrupt, Exception))  # False
+
+try:
+    [1, 2, 3][10]
+except LookupError as error:   # catches both IndexError and KeyError
+    print(type(error).__name__, '-', error)  # IndexError - list index out of range
+</pre>
+                    <div class="Definitions">
+                        Practical consequences:
+                        <ul>
+                            <li><code>except Exception</code> catches almost everything but deliberately leaves out
+                                <code>KeyboardInterrupt</code> and <code>SystemExit</code>, so the user can still stop
+                                the program with Ctrl+C. Use it only at the top level of a program, for example to log
+                                unexpected errors before exiting.</li>
+                            <li>A bare <code>except:</code> catches <code>BaseException</code>, which includes those
+                                two. Avoid it.</li>
+                            <li>Custom exceptions should inherit from <code>Exception</code>, never directly from
+                                <code>BaseException</code>.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="Context_Managers">
+                    <h2 class="Section_Title">Context Managers and Exceptions</h2>
+                    <div class="Definitions">
+                        The <code>with</code> statement works with objects called <strong>context managers</strong>.
+                        A context manager runs set-up code when the block starts and clean-up code when it ends,
+                        <em>even if an exception is raised inside the block</em>. That is exactly what a
+                        <code>try</code>/<code>finally</code> would do, but packaged so you cannot forget it. File
+                        objects are context managers: the file is closed however the block ends.
+                    </div>
+                    <pre class="prettyprint python Code">
+try:
+    with open('data.txt', 'w', encoding='utf-8') as f:
+        f.write('some data\n')
+        raise RuntimeError('something failed mid-way')
+except RuntimeError as error:
+    print(error)       # something failed mid-way
+
+print(f.closed)        # True: the with block closed the file despite the error
+
+# The with block above is roughly equivalent to:
+f = open('data.txt', 'w', encoding='utf-8')
+try:
+    f.write('some data\n')
+finally:
+    f.close()
+</pre>
+                    <div class="Note">
+                        <code>with</code> does not <em>handle</em> the exception; it only guarantees clean-up. The
+                        exception still propagates, which is why the example above still needs
+                        <code>try</code>/<code>except</code> around it.
+                    </div>
+                    <h3 class="Subsection_Title">Ignoring Errors with contextlib.suppress</h3>
+                    <div class="Definitions">
+                        <code>contextlib.suppress</code> is a context manager that silently ignores the exceptions
+                        you list. It is a compact, readable replacement for <code>try</code>/<code>except</code>/
+                        <code>pass</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+import os
+from contextlib import suppress
+
+with suppress(FileNotFoundError):
+    os.remove('temporary_file.txt')   # no error if the file is already gone
+
+print("Done.")  # Done.
+</pre>
+                    <h3 class="Subsection_Title">Writing Your Own Context Manager</h3>
+                    <div class="Definitions">
+                        The <code>@contextmanager</code> decorator turns a generator function into a context
+                        manager. Code before <code>yield</code> is the set-up, the yielded value is what
+                        <code>as</code> receives, and code after <code>yield</code> is the clean-up. Putting the
+                        <code>yield</code> inside <code>try</code>/<code>finally</code> makes sure the clean-up runs
+                        even when the block raises an exception.
+                    </div>
+                    <pre class="prettyprint python Code">
+import time
+from contextlib import contextmanager
+
+@contextmanager
+def timer(label):
+    start = time.perf_counter()
+    print(f"[{label}] started")
+    try:
+        yield
+    finally:
+        elapsed = time.perf_counter() - start
+        print(f"[{label}] finished in {elapsed:.2f} s")
+
+with timer("sum"):
+    total = sum(range(1_000_000))
+
+try:
+    with timer("division"):
+        1 / 0
+except ZeroDivisionError:
+    print("Error handled, and the timer still reported.")
+# Output (times will vary):
+# [sum] started
+# [sum] finished in 0.02 s
+# [division] started
+# [division] finished in 0.00 s
+# Error handled, and the timer still reported.
+</pre>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>Catch specific exceptions, keep <code>try</code> blocks small, and put the code that
+                                depends on success in <code>else</code>.</li>
+                            <li>Use <code>finally</code> or, better, a <code>with</code> statement for clean-up that
+                                must always happen.</li>
+                            <li>Raise exceptions with clear messages when your function cannot do its job, and use
+                                <code>raise ... from</code> to keep the original cause.</li>
+                            <li>Define custom exceptions that inherit from <code>Exception</code>, ideally from one
+                                base class per application.</li>
+                            <li>Never silence errors with a bare <code>except:</code>.</li>
+                        </ul>
+                    </div>
                 </section>
             </div>
         </div>

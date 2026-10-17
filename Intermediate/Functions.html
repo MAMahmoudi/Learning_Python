@@ -4,11 +4,720 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
     <title>Functions</title>
 </head>
 
 <body>
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Functions</h1>
+            <div class="Sections_Area">
+                <section id="Returning_Multiple_Values">
+                    <h2 class="Section_Title">Returning Multiple Values</h2>
+                    <div class="Definitions">
+                        A Python function always returns exactly one object. When you write
+                        <code>return a, b</code>, Python quietly builds a <strong>tuple</strong> <code>(a, b)</code>
+                        and returns that. The caller can then use <strong>unpacking</strong> to split the tuple back
+                        into separate variables. This makes it feel as if the function returned several values at once.
+                    </div>
+                    <pre class="prettyprint python Code">
+def min_max(numbers):
+    return min(numbers), max(numbers)   # really returns one tuple
+
+result = min_max([7, 2, 9, 4])
+print(result)          # (2, 9)
+print(type(result))    # &lt;class 'tuple'&gt;
+
+lowest, highest = min_max([7, 2, 9, 4])   # unpack the tuple
+print(lowest, highest)  # 2 9
+</pre>
+                    <div class="Definitions">
+                        Starred expressions (covered in the Lists and Dictionaries chapter) work here too, which is
+                        handy when a function returns a sequence and you only care about some parts of it:
+                    </div>
+                    <pre class="prettyprint python Code">
+def ranked(scores):
+    return sorted(scores, reverse=True)
+
+first, second, *others = ranked([55, 91, 78, 64, 88])
+print(first, second)  # 91 88
+print(others)         # [78, 64, 55]
+</pre>
+                    <h3 class="Subsection_Title">Don't unpack more than three values</h3>
+                    <div class="Definitions">
+                        Returning many values in a tuple quickly becomes fragile. The caller must remember the
+                        <strong>exact order</strong> of the values, and since they are often all numbers, swapping two
+                        of them produces no error, only wrong results that are hard to spot. Long unpacking lines are
+                        also hard to read. <br>
+                        A good rule: if a function returns more than three values, return a small object with
+                        <strong>named fields</strong> instead, such as a <code>NamedTuple</code> or a
+                        <code>dataclass</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+# Hard to use correctly: which position is which?
+def describe(numbers):
+    count = len(numbers)
+    total = sum(numbers)
+    return count, total, total / count, min(numbers), max(numbers)
+
+count, average, total, low, high = describe([3, 5, 10])  # oops: average and total swapped!
+print(average)  # 18  (this is actually the total)
+</pre>
+                    <pre class="prettyprint python Code">
+from typing import NamedTuple
+
+class Stats(NamedTuple):
+    count: int
+    total: float
+    average: float
+    low: float
+    high: float
+
+def describe(numbers):
+    count = len(numbers)
+    total = sum(numbers)
+    return Stats(count, total, total / count, min(numbers), max(numbers))
+
+stats = describe([3, 5, 10])
+print(stats.average)  # 6.0
+print(stats.high)     # 10
+print(stats)          # Stats(count=3, total=18, average=6.0, low=3, high=10)
+low, high = stats.low, stats.high   # read only the fields you need
+</pre>
+                    <div class="Note">A <code>NamedTuple</code> is still a tuple, so old code that unpacks it
+                        positionally keeps working, while new code can use the clearer attribute names.</div>
+                </section>
+                <section id="Raise_Exceptions_Not_None">
+                    <h2 class="Section_Title">Prefer Raising Exceptions to Returning None</h2>
+                    <div class="Definitions">
+                        When a function cannot produce a valid result, it is tempting to return <code>None</code> as a
+                        "special" value. The problem is that <code>None</code>, <code>0</code>, <code>""</code> and
+                        empty containers are all <strong>falsy</strong>. A caller who checks the result with a simple
+                        <code>if not result:</code> cannot tell the difference between "it failed" and "it worked and
+                        the answer is zero".
+                    </div>
+                    <pre class="prettyprint python Code">
+def careful_divide(a, b):
+    try:
+        return a / b
+    except ZeroDivisionError:
+        return None
+
+result = careful_divide(0, 5)    # a perfectly valid answer: 0.0
+if not result:
+    print("Invalid inputs")      # Wrongly printed! 0.0 is falsy too.
+</pre>
+                    <div class="Definitions">
+                        The better approach is to <strong>raise an exception</strong> and document it. Now the caller
+                        is forced to deal with the error case explicitly, and a valid result of <code>0.0</code> can
+                        never be mistaken for a failure. Type hints make the contract even clearer: the function
+                        returns a <code>float</code>, never <code>None</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+def careful_divide(a: float, b: float) -&gt; float:
+    """Divide a by b.
+
+    Raises:
+        ValueError: if b is zero.
+    """
+    try:
+        return a / b
+    except ZeroDivisionError as e:
+        raise ValueError("Invalid inputs: cannot divide by zero") from e
+
+try:
+    result = careful_divide(10, 0)
+except ValueError as error:
+    print(error)                 # Invalid inputs: cannot divide by zero
+else:
+    print(f"Result is {result:.1f}")
+
+print(careful_divide(0, 5))      # 0.0
+</pre>
+                    <div class="Note">Returning <code>None</code> is fine when "nothing" is a normal, expected
+                        answer, like <code>dict.get()</code> for a missing key. Raise an exception when the situation
+                        is truly an error the caller must handle.</div>
+                </section>
+                <section id="Closures_and_Scope">
+                    <h2 class="Section_Title">Closures and Variable Scope</h2>
+                    <div class="Definitions">
+                        When Python looks up a name, it searches four scopes in order, known as the
+                        <strong>LEGB</strong> rule:
+                        <ol>
+                            <li><strong>L</strong>ocal: names assigned inside the current function.</li>
+                            <li><strong>E</strong>nclosing: names in any outer function that contains the current
+                                one.</li>
+                            <li><strong>G</strong>lobal: names defined at the top level of the module.</li>
+                            <li><strong>B</strong>uilt-in: names Python provides, like <code>len</code> and
+                                <code>print</code>.</li>
+                        </ol>
+                        If the name is not found anywhere, a <code>NameError</code> is raised.
+                    </div>
+                    <pre class="prettyprint python Code">
+x = "global"
+
+def outer():
+    x = "enclosing"
+    def inner():
+        print(x)        # not local, so Python finds it in the enclosing scope
+    inner()
+
+outer()                 # enclosing
+print(len("abc"))       # 3  (len comes from the built-in scope)
+</pre>
+                    <div class="Definitions">
+                        A <strong>closure</strong> is an inner function that remembers variables from the enclosing
+                        function, even after the outer function has finished running. This lets you create small,
+                        configurable functions on the fly:
+                    </div>
+                    <pre class="prettyprint python Code">
+def make_multiplier(factor):
+    def multiply(value):
+        return value * factor    # 'factor' is remembered by the closure
+    return multiply
+
+double = make_multiplier(2)
+triple = make_multiplier(3)
+print(double(10))  # 20
+print(triple(10))  # 30
+</pre>
+                    <div class="Definitions">
+                        Closures are also useful as <code>key</code> functions. Here a closure sorts a list so that
+                        "priority" items come first, and also records whether any of them were seen:
+                    </div>
+                    <pre class="prettyprint python Code">
+def sort_priority(values, group):
+    found = False
+    def helper(x):
+        if x in group:
+            found = True        # BUG: this creates a NEW local variable
+            return (0, x)
+        return (1, x)
+    values.sort(key=helper)
+    return found
+
+numbers = [8, 3, 1, 2, 5, 4, 7, 6]
+print(sort_priority(numbers, {2, 3, 5, 7}))  # False  (expected True!)
+print(numbers)                               # [2, 3, 5, 7, 1, 4, 6, 8]
+</pre>
+                    <div class="Definitions">
+                        The sorting worked, but <code>found</code> is still <code>False</code>. Why? Reading a variable
+                        follows the LEGB rule, but <strong>assigning</strong> to a variable inside a function always
+                        makes it local to that function, unless you say otherwise. So <code>found = True</code>
+                        created a separate local <code>found</code> inside <code>helper</code>. <br>
+                        The <code>nonlocal</code> statement tells Python that assignments should go to the variable in
+                        the enclosing scope:
+                    </div>
+                    <pre class="prettyprint python Code">
+def sort_priority(values, group):
+    found = False
+    def helper(x):
+        nonlocal found          # assign to the enclosing 'found'
+        if x in group:
+            found = True
+            return (0, x)
+        return (1, x)
+    values.sort(key=helper)
+    return found
+
+numbers = [8, 3, 1, 2, 5, 4, 7, 6]
+print(sort_priority(numbers, {2, 3, 5, 7}))  # True
+</pre>
+                    <div class="Definitions">
+                        Similarly, the <code>global</code> statement lets a function assign to a module-level
+                        variable. Both should be used sparingly: in long functions it gets hard to follow where a
+                        variable is being changed. If your state becomes complex, wrap it in a small class with a
+                        <code>__call__</code> method instead.
+                    </div>
+                    <pre class="prettyprint python Code">
+class Sorter:
+    def __init__(self, group):
+        self.group = group
+        self.found = False
+
+    def __call__(self, x):
+        if x in self.group:
+            self.found = True
+            return (0, x)
+        return (1, x)
+
+sorter = Sorter({2, 3, 5, 7})
+numbers = [8, 3, 1, 2, 5, 4, 7, 6]
+numbers.sort(key=sorter)
+print(sorter.found)  # True
+print(numbers)       # [2, 3, 5, 7, 1, 4, 6, 8]
+</pre>
+                    <div class="Warning">Closures capture <strong>variables</strong>, not values. Functions created
+                        in a loop all see the loop variable's <em>final</em> value:
+                        <code>[lambda: i for i in range(3)]</code> gives three functions that all return
+                        <code>2</code>. Use a default argument (<code>lambda i=i: i</code>) to capture the current
+                        value.</div>
+                </section>
+                <section id="Variable_Positional_Arguments">
+                    <h2 class="Section_Title">Variable Positional Arguments (*args)</h2>
+                    <div class="Definitions">
+                        Putting <code>*</code> before a parameter name lets a function accept <strong>any number of
+                            positional arguments</strong>. Inside the function, they arrive packed in a tuple. By
+                        convention this parameter is called <code>*args</code>, but a descriptive name is often
+                        better. This removes noise for callers: they no longer need to wrap values in a list.
+                    </div>
+                    <pre class="prettyprint python Code">
+def log(message, *values):
+    if not values:
+        print(message)
+    else:
+        values_str = ", ".join(str(v) for v in values)
+        print(f"{message}: {values_str}")
+
+log("My numbers are", 1, 2)   # My numbers are: 1, 2
+log("Hi there")               # Hi there
+</pre>
+                    <div class="Definitions">
+                        If you already have a sequence, put <code>*</code> in front of it in the <em>call</em> to
+                        spread its items out as separate positional arguments:
+                    </div>
+                    <pre class="prettyprint python Code">
+def log(message, *values):
+    print(message, values)
+
+favorites = [7, 33, 99]
+log("Favorite colors", *favorites)   # Favorite colors (7, 33, 99)
+</pre>
+                    <h3 class="Subsection_Title">Pitfalls of *args</h3>
+                    <div class="Definitions">
+                        <ol>
+                            <li><strong>Everything is converted to a tuple first.</strong> If a caller passes a
+                                generator with <code>*</code>, Python must consume the whole generator to build the
+                                tuple. For a huge or infinite generator this can use a lot of memory or never finish.
+                                Only use <code>*args</code> when you expect a small number of inputs.</li>
+                            <li><strong>Adding new positional parameters later is risky.</strong> Old calls will shift
+                                their arguments into the wrong parameter without any error.</li>
+                        </ol>
+                    </div>
+                    <pre class="prettyprint python Code">
+def my_generator():
+    for i in range(5):
+        yield i
+
+def show(*args):
+    print(args)
+
+show(*my_generator())  # (0, 1, 2, 3, 4)  the whole generator was consumed
+</pre>
+                    <pre class="prettyprint python Code">
+# Version 2 adds a 'sequence' parameter before *values
+def log(sequence, message, *values):
+    if not values:
+        print(f"{sequence} - {message}")
+    else:
+        values_str = ", ".join(str(v) for v in values)
+        print(f"{sequence} - {message}: {values_str}")
+
+log(1, "Favorites", 7, 33)    # 1 - Favorites: 7, 33   (new style call, correct)
+log("Favorite numbers", 7, 33)  # Favorite numbers - 7: 33   (old style call, silently wrong!)
+</pre>
+                    <div class="Note">To extend a function that takes <code>*args</code> safely, add new options as
+                        <strong>keyword-only</strong> arguments (see below) instead of new positional parameters.</div>
+                </section>
+                <section id="Keyword_Arguments">
+                    <h2 class="Section_Title">Keyword Arguments and Default Values</h2>
+                    <div class="Definitions">
+                        Any Python function can be called with arguments passed <strong>by keyword</strong>,
+                        <code>name=value</code>, in any order. Keyword arguments must come after all positional ones,
+                        and each parameter can be given only once.
+                    </div>
+                    <pre class="prettyprint python Code">
+def remainder(number, divisor):
+    return number % divisor
+
+print(remainder(20, 7))                 # 6
+print(remainder(20, divisor=7))         # 6
+print(remainder(number=20, divisor=7))  # 6
+print(remainder(divisor=7, number=20))  # 6
+</pre>
+                    <pre class="prettyprint python Code">
+def remainder(number, divisor):
+    return number % divisor
+
+remainder(number=20, 7)
+# SyntaxError: positional argument follows keyword argument
+</pre>
+                    <pre class="prettyprint python Code">
+def remainder(number, divisor):
+    return number % divisor
+
+remainder(20, number=7)
+# TypeError: remainder() got multiple values for argument 'number'
+</pre>
+                    <div class="Definitions">
+                        Keyword arguments give three main benefits:
+                        <ol>
+                            <li><strong>Clarity</strong>: <code>connect(timeout=5)</code> is much easier to read than
+                                <code>connect(5)</code>.</li>
+                            <li><strong>Default values</strong>: parameters with defaults can be skipped, so the
+                                common case stays short.</li>
+                            <li><strong>Backward compatibility</strong>: you can add new parameters with defaults
+                                without breaking existing callers.</li>
+                        </ol>
+                    </div>
+                    <pre class="prettyprint python Code">
+def flow_rate(weight_diff, time_diff, period=1, units_per_kg=1):
+    return (weight_diff * units_per_kg) / time_diff * period
+
+weight_diff = 0.5
+time_diff = 3
+print(flow_rate(weight_diff, time_diff))                    # 0.16666666666666666 (kg per second)
+print(flow_rate(weight_diff, time_diff, period=3600))       # 600.0 (kg per hour)
+print(flow_rate(weight_diff, time_diff, units_per_kg=2.2))  # 0.3666666666666667 (pounds per second)
+</pre>
+                    <div class="Definitions">
+                        The <code>**</code> operator works for keywords the way <code>*</code> works for positions. In
+                        a call, <code>**my_dict</code> passes each key as a keyword argument. In a definition,
+                        <code>**kwargs</code> collects any extra keyword arguments into a dictionary.
+                    </div>
+                    <pre class="prettyprint python Code">
+def remainder(number, divisor):
+    return number % divisor
+
+my_kwargs = {"number": 20, "divisor": 7}
+print(remainder(**my_kwargs))  # 6
+
+def print_parameters(**kwargs):
+    for key, value in kwargs.items():
+        print(f"{key} = {value}")
+
+print_parameters(alpha=1.5, beta=9, gamma=4)
+# Output:
+# alpha = 1.5
+# beta = 9
+# gamma = 4
+</pre>
+                </section>
+                <section id="None_Dynamic_Defaults">
+                    <h2 class="Section_Title">Using None for Dynamic Default Arguments</h2>
+                    <div class="Definitions">
+                        A default argument value is evaluated <strong>only once</strong>: when the <code>def</code>
+                        statement runs (usually when the module is loaded), not each time the function is called. This
+                        surprises people when the default should be "fresh" on every call.
+                    </div>
+                    <pre class="prettyprint python Code">
+from datetime import datetime
+from time import sleep
+
+def log(message, when=datetime.now()):   # evaluated once, at definition time!
+    print(f"{when:%H:%M:%S.%f}: {message}")
+
+log("Hi there!")
+sleep(0.1)
+log("Hello again!")   # prints the SAME timestamp as the first call
+</pre>
+                    <div class="Definitions">
+                        The fix is to use <code>None</code> as the default and compute the real value inside the
+                        function body, where it runs on every call. Document this behaviour in the docstring.
+                    </div>
+                    <pre class="prettyprint python Code">
+from datetime import datetime
+
+def log(message, when=None):
+    """Log a message with a timestamp.
+
+    Args:
+        message: Message to print.
+        when: datetime of when the message occurred.
+            Defaults to the present time.
+    """
+    if when is None:
+        when = datetime.now()
+    print(f"{when:%H:%M:%S.%f}: {message}")
+</pre>
+                    <h3 class="Subsection_Title">The mutable default pitfall</h3>
+                    <div class="Definitions">
+                        Because the default is created only once, a mutable default such as a list or dictionary is
+                        <strong>shared by every call</strong> that uses it. Changes made during one call are still
+                        there in the next one.
+                    </div>
+                    <pre class="prettyprint python Code">
+def add_item(item, basket=[]):     # one list shared by all calls!
+    basket.append(item)
+    return basket
+
+first = add_item("apple")
+second = add_item("banana")
+print(first)            # ['apple', 'banana']
+print(second)           # ['apple', 'banana']
+print(first is second)  # True  (both are the same default list)
+</pre>
+                    <pre class="prettyprint python Code">
+def add_item(item, basket=None):
+    if basket is None:
+        basket = []                # a brand-new list on every call
+    basket.append(item)
+    return basket
+
+first = add_item("apple")
+second = add_item("banana")
+print(first)   # ['apple']
+print(second)  # ['banana']
+</pre>
+                    <div class="Warning">Never use a mutable object (<code>[]</code>, <code>{}</code>,
+                        <code>set()</code>, or an instance of your own class) as a default argument value. Use
+                        <code>None</code> and create the object inside the function. Linters such as Pylint and Ruff
+                        will warn you about this mistake.</div>
+                </section>
+                <section id="Keyword_Only_Positional_Only">
+                    <h2 class="Section_Title">Keyword-Only and Positional-Only Arguments</h2>
+                    <div class="Definitions">
+                        Some arguments are easy to confuse when passed by position, especially boolean flags. Look at
+                        this call: <code>safe_division(1, 0, False, True)</code>. Which flag is which? It is
+                        impossible to tell without reading the function definition. <br>
+                        Python lets you control <strong>how</strong> each argument may be passed using two special
+                        markers in the parameter list:
+                        <ul>
+                            <li>Parameters after a bare <code>*</code> are <strong>keyword-only</strong>: callers must
+                                use <code>name=value</code>.</li>
+                            <li>Parameters before a <code>/</code> are <strong>positional-only</strong>: callers can't
+                                use their names.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+def safe_division(numerator, denominator, /, *,
+                  ignore_overflow=False, ignore_zero_division=False):
+    try:
+        return numerator / denominator
+    except OverflowError:
+        if ignore_overflow:
+            return 0
+        raise
+    except ZeroDivisionError:
+        if ignore_zero_division:
+            return float("inf")
+        raise
+
+print(safe_division(1, 0, ignore_zero_division=True))  # inf
+print(safe_division(1.0, 10**500, ignore_overflow=True))  # 0
+</pre>
+                    <pre class="prettyprint python Code">
+def safe_division(numerator, denominator, /, *,
+                  ignore_overflow=False, ignore_zero_division=False):
+    return numerator / denominator
+
+safe_division(1, 0, False, True)
+# TypeError: safe_division() takes 2 positional arguments but 4 were given
+</pre>
+                    <pre class="prettyprint python Code">
+def safe_division(numerator, denominator, /, *,
+                  ignore_overflow=False, ignore_zero_division=False):
+    return numerator / denominator
+
+safe_division(numerator=2, denominator=5)
+# TypeError: safe_division() got some positional-only arguments passed as keyword arguments: 'numerator, denominator'
+</pre>
+                    <div class="Definitions">
+                        Why would you want positional-only parameters? Their names become an
+                        <strong>implementation detail</strong>. You are free to rename <code>numerator</code> to
+                        <code>dividend</code> later without breaking anyone's code, because nobody was allowed to
+                        call the function using that name. Many built-ins work this way, for example
+                        <code>len(obj)</code> and <code>pow(base, exp, mod=None)</code>. <br>
+                        Keyword-only parameters, on the other hand, make calls <strong>self-documenting</strong> and
+                        let you add new options later without disturbing the positional ones. <br>
+                        Parameters between <code>/</code> and <code>*</code> can be passed either way:
+                    </div>
+                    <pre class="prettyprint python Code">
+def describe(a, b, /, c, *, d):
+    return f"a={a} b={b} c={c} d={d}"
+
+print(describe(1, 2, 3, d=4))    # a=1 b=2 c=3 d=4
+print(describe(1, 2, c=3, d=4))  # a=1 b=2 c=3 d=4
+</pre>
+                    <div class="Note">Combining both markers with <code>*args</code> works naturally too: in
+                        <code>def log(message, *values, sep=", ")</code> the parameter <code>sep</code> is keyword-only
+                        because it comes after <code>*values</code>.</div>
+                </section>
+                <section id="Type_Hints">
+                    <h2 class="Section_Title">Type Hints for Functions</h2>
+                    <div class="Definitions">
+                        <strong>Type hints</strong> (annotations) describe what types a function expects and returns.
+                        Python itself does <strong>not</strong> enforce them at runtime; they are documentation that
+                        tools can check. Editors use them for autocompletion, and static checkers like
+                        <code>mypy</code> or <code>pyright</code> use them to catch bugs before you run the code.
+                    </div>
+                    <pre class="prettyprint python Code">
+def greet(name: str, times: int = 1) -&gt; str:
+    return ", ".join([f"Hello {name}"] * times)
+
+print(greet("Ada", 2))      # Hello Ada, Hello Ada
+print(greet.__annotations__)
+# {'name': &lt;class 'str'&gt;, 'times': &lt;class 'int'&gt;, 'return': &lt;class 'str'&gt;}
+
+print(greet(42))            # Hello 42  (no runtime error: hints are not enforced)
+</pre>
+                    <div class="Definitions">
+                        Modern Python (3.9+) lets you use built-in collection types directly in hints, and 3.10+ adds
+                        the <code>|</code> operator for "either type". Here are the most common forms:
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections.abc import Callable, Iterable
+
+def total_length(words: list[str]) -&gt; int:
+    return sum(len(w) for w in words)
+
+def find_user(users: dict[int, str], user_id: int) -&gt; str | None:
+    return users.get(user_id)          # may return None, and the hint says so
+
+def apply(func: Callable[[int], int], values: Iterable[int]) -&gt; list[int]:
+    return [func(v) for v in values]
+
+def first[T](items: list[T]) -&gt; T:    # generic function (Python 3.12 syntax)
+    return items[0]
+
+print(total_length(["hi", "there"]))   # 7
+print(find_user({1: "Ada"}, 2))        # None
+print(apply(lambda x: x * x, (1, 2, 3)))  # [1, 4, 9]
+print(first(["a", "b"]))               # a
+</pre>
+                    <div class="Definitions">
+                        Some practical guidelines:
+                        <ul>
+                            <li>Accept general types (<code>Iterable</code>, <code>Sequence</code>,
+                                <code>Mapping</code>) and return specific ones (<code>list</code>,
+                                <code>dict</code>). This keeps your function flexible for callers.</li>
+                            <li>Annotate <code>*args</code> and <code>**kwargs</code> with the type of
+                                <em>each item</em>: <code>*args: int</code> means every positional argument is an
+                                <code>int</code>.</li>
+                            <li>Use <code>-&gt; None</code> for functions that don't return anything.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+def average(*values: float, round_to: int | None = None) -&gt; float:
+    result = sum(values) / len(values)
+    return round(result, round_to) if round_to is not None else result
+
+print(average(1, 2, 4))              # 2.3333333333333335
+print(average(1, 2, 4, round_to=2))  # 2.33
+</pre>
+                    <div class="Warning">Type hints are not validation. If your function receives data from users or
+                        files, you still need to check it explicitly; hints only help you catch mistakes in your own
+                        code.</div>
+                </section>
+                <section id="Decorators">
+                    <h2 class="Section_Title">Decorators and functools.wraps</h2>
+                    <div class="Definitions">
+                        A <strong>decorator</strong> is a function that takes another function and returns a new
+                        function, usually one that runs some extra code before or after the original. It is built on
+                        closures. Writing <code>@decorator</code> above a <code>def</code> is just shorthand for
+                        <code>func = decorator(func)</code>. <br>
+                        Decorators are perfect for cross-cutting concerns that you want to apply to many functions:
+                        logging, timing, caching, access checks, retries and so on.
+                    </div>
+                    <pre class="prettyprint python Code">
+def trace(func):
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        print(f"{func.__name__}({args!r}, {kwargs!r}) -&gt; {result!r}")
+        return result
+    return wrapper
+
+@trace                      # same as: add = trace(add)
+def add(a, b):
+    """Return the sum of a and b."""
+    return a + b
+
+add(2, 3)        # add((2, 3), {}) -&gt; 5
+add(2, b=10)     # add((2,), {'b': 10}) -&gt; 12
+</pre>
+                    <div class="Definitions">
+                        Notice that <code>wrapper</code> uses <code>*args</code> and <code>**kwargs</code> so it can
+                        forward <em>any</em> arguments to the original function. <br>
+                        There is a hidden problem, though: the decorated name now refers to <code>wrapper</code>, not
+                        to <code>add</code>. The function's name, docstring and other metadata are lost, which
+                        confuses <code>help()</code>, debuggers, and tools like <code>pickle</code>:
+                    </div>
+                    <pre class="prettyprint python Code">
+def trace(func):
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
+
+@trace
+def add(a, b):
+    """Return the sum of a and b."""
+    return a + b
+
+print(add.__name__)  # wrapper
+print(add.__doc__)   # None
+</pre>
+                    <div class="Definitions">
+                        The fix is to decorate the wrapper with <code>functools.wraps</code>. It copies the important
+                        metadata (<code>__name__</code>, <code>__doc__</code>, <code>__module__</code>,
+                        <code>__qualname__</code>, ...) from the original function to the wrapper, and stores the
+                        original in <code>__wrapped__</code>. Always use it when writing decorators.
+                    </div>
+                    <pre class="prettyprint python Code">
+from functools import wraps
+
+def trace(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
+
+@trace
+def add(a, b):
+    """Return the sum of a and b."""
+    return a + b
+
+print(add.__name__)              # add
+print(add.__doc__)               # Return the sum of a and b.
+print(add.__wrapped__(1, 2))     # 3  (call the undecorated original)
+</pre>
+                    <h3 class="Subsection_Title">Decorators that take arguments</h3>
+                    <div class="Definitions">
+                        To configure a decorator, add one more layer: a function that receives the options and
+                        returns the actual decorator.
+                    </div>
+                    <pre class="prettyprint python Code">
+from functools import wraps
+
+def repeat(times):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return [func(*args, **kwargs) for _ in range(times)]
+        return wrapper
+    return decorator
+
+@repeat(times=3)            # same as: greet = repeat(times=3)(greet)
+def greet(name):
+    return f"Hi {name}"
+
+print(greet("Ada"))  # ['Hi Ada', 'Hi Ada', 'Hi Ada']
+</pre>
+                    <div class="Note">The standard library ships useful ready-made decorators, such as
+                        <code>@functools.cache</code> / <code>@functools.lru_cache</code> for memoization,
+                        <code>@property</code>, <code>@staticmethod</code>, <code>@classmethod</code> and
+                        <code>@dataclasses.dataclass</code>.</div>
+                    <pre class="prettyprint python Code">
+from functools import cache
+
+@cache
+def fibonacci(n):
+    return n if n &lt; 2 else fibonacci(n - 1) + fibonacci(n - 2)
+
+print(fibonacci(80))  # 23416728348467685  (instant, thanks to caching)
+</pre>
+                </section>
+            </div>
+        </div>
+    </main>
 
 </body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 
 </html>

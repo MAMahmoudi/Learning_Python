@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
     <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
-    <title>Intermediate</title>
+    <title>Lists and Dictionaries</title>
 </head>
 
 <body>
@@ -80,7 +80,7 @@ slice_out_of_bounds2 = my_list[-10:3]  # [0, 1, 2]
 </pre>
                     <div class="Definitions">
                         The result of slicing a list is a whole new list. References to the
-                        objects from the original list are maintained. Modifying the result of
+                        objects from the original list are maintained. Replacing an item in the result of
                         slicing won't affect the original list:</div>
                     <pre class="prettyprint python Code">
 original_list = [1, 2, 3, 4, 5]
@@ -89,6 +89,11 @@ sliced_list[0] = 99
 print(original_list)  # Output: [1, 2, 3, 4, 5]
 print(sliced_list)    # Output: [99, 3, 4]
 </pre>
+                    <div class="Note">
+                        A slice is a <em>shallow</em> copy: the new list holds the very same element objects. If an
+                        element is itself mutable (for example a nested list) and you mutate it in place, the change
+                        is visible through both lists. See the section on shallow vs deep copies below.
+                    </div>
                     <div class="Definitions">
                         When used in assignments, slices replace the specified range
                         in the original list. For example:
@@ -102,10 +107,10 @@ my_list[2:4] = [20, 21, 22, 23]
 print(my_list)  # Output: [0, 10, 20, 21, 22, 23, 4, 5]
 # If the assigned list has fewer elements, the original list will shrink
 my_list[1:5] = [99]
-print(my_list)  # Output: [0, 99, 22, 23, 4, 5]
+print(my_list)  # Output: [0, 99, 23, 4, 5]
 # If the assigned list is empty, the specified slice will be removed
 my_list[2:4] = []
-print(my_list)  # Output: [0, 99, 4, 5]
+print(my_list)  # Output: [0, 99, 5]
 </pre>
                     <div class="Definitions">
                         <strong>Things to Remember</strong>
@@ -152,18 +157,29 @@ print(last)   # Output: 5
                         This approach is more concise and makes it clear that you're separating the first element from
                         the
                         rest of the list. It also works well with tuples and other iterable types. <br>
-                        However, to unpack assignments that contain a starred expression,
-                        you must have at least one required part, or else you'll get a
-                        SyntaxError. You can't use a catch-all expression on its own. <br>
-                        Similarly, you can't have more than one
-                        starred expression in the same assignment. <br>
-                        Starred expressions become list instances in all cases.
+                        However, a starred target can't stand on its own: it must be part of a tuple or list of
+                        targets, otherwise you'll get a SyntaxError. Adding a trailing comma (which makes the
+                        target a one-element tuple) is enough to make it legal, although it is rarely clearer than
+                        simply calling <code>list(my_list)</code>. <br>
+                        You also can't have more than one starred expression in the same assignment, because Python
+                        would have no way to decide how to split the leftover items between them. <br>
+                        Starred expressions become list instances in all cases, even when the value being unpacked
+                        is a tuple or a string, and even when they capture nothing (they become an empty list).
                     </div>
                     <pre class="prettyprint python Code">
-# This will raise a SyntaxError
+# This will raise a SyntaxError: starred assignment target must be in a list or tuple
 *rest = my_list
-# This will also raise a SyntaxError
+# This will also raise a SyntaxError: multiple starred expressions in assignment
 first, *middle, *last = my_list
+</pre>
+                    <pre class="prettyprint python Code">
+my_list = [1, 2, 3, 4, 5]
+*rest, = my_list      # Legal: the trailing comma makes a one-element tuple of targets
+print(rest)           # [1, 2, 3, 4, 5]
+first, *rest = "ab"
+print(rest)           # ['b']
+a, b, *rest = (1, 2)
+print(rest)           # []
 </pre>
                 </section>
                 <section id="Sort_by_Complex_Criteria">
@@ -171,32 +187,845 @@ first, *middle, *last = my_list
                     <div class="Definitions">
                         In Python, you can sort a list of items based on complex criteria by using the <code>key</code>
                         parameter of the <code>sort()</code> method or the <code>sorted()</code> function. The
-                        <code>key</code>
-                        parameter allows you to specify a function that returns a value to be used for sorting.
-
+                        <code>key</code> parameter allows you to specify a function that receives one item and returns
+                        the value that should be compared in its place. <br>
                         For example, suppose you have a list of tuples representing people with their names and ages,
-                        and you
-                        want to sort them by age:
-                        <pre class="prettyprint python Code">
+                        and you want to sort them by age:
+                    </div>
+                    <pre class="prettyprint python Code">
 people = [("Alice", 30), ("Bob", 25), ("Charlie", 35)]
 # Sort by age using the key parameter
 people.sort(key=lambda person: person[1])
+print(people)  # [('Bob', 25), ('Alice', 30), ('Charlie', 35)]
 </pre>
+                    <div class="Definitions">
                         In this example, the <code>lambda</code> function extracts the age (the second element of each
-                        tuple)
-                        to be used as the sorting key. After sorting, the <code>people</code> list will be ordered by
-                        age:
-
-                        <pre class="prettyprint python Code">
-[("Bob", 25), ("Alice", 30), ("Charlie", 35)]
-</pre>
+                        tuple) to be used as the sorting key. <br>
                         You can also use more complex criteria by defining a separate function:
-                        <pre class="prettyprint python Code">
+                    </div>
+                    <pre class="prettyprint python Code">
 def sort_by_name_length(person):
     return len(person[0])
+
 people.sort(key=sort_by_name_length)
+print(people)  # [('Bob', 25), ('Alice', 30), ('Charlie', 35)]
 </pre>
-                        In this case, the list will be sorted by the length of the names.
+                    <div class="Definitions">
+                        In this case, the list is sorted by the length of the names. <br>
+                        A few details are worth knowing:
+                        <ul>
+                            <li><code>list.sort()</code> sorts the list <strong>in place</strong> and returns
+                                <code>None</code>; <code>sorted()</code> accepts any iterable and returns a
+                                <strong>new list</strong>, leaving the original untouched. A common bug is writing
+                                <code>items = items.sort()</code>, which replaces your list with <code>None</code>.</li>
+                            <li>The key function is called exactly <strong>once per item</strong>, not once per
+                                comparison, so it is fine to do a little work inside it.</li>
+                            <li>Strings compare by code point, so all uppercase letters come before all lowercase
+                                ones. Use <code>key=str.lower</code> (or <code>str.casefold</code>) for a
+                                case-insensitive order.</li>
+                            <li><code>min()</code> and <code>max()</code> accept the same <code>key</code>
+                                parameter.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+ages = [30, 25, 35]
+result = ages.sort()
+print(result)  # None
+print(ages)    # [25, 30, 35]
+
+names = ("Charlie", "alice", "Bob")
+print(sorted(names))                 # ['Bob', 'Charlie', 'alice']
+print(sorted(names, key=str.lower))  # ['alice', 'Bob', 'Charlie']
+print(names)                         # ('Charlie', 'alice', 'Bob')
+print(max(names, key=len))           # Charlie
+</pre>
+                    <div class="Definitions">
+                        Objects of your own classes usually don't define an ordering, so sorting them without a
+                        <code>key</code> fails. Rather than adding comparison methods just to sort one way, pass a key
+                        that pulls out the attribute you care about:
+                    </div>
+                    <pre class="prettyprint python Code">
+class Employee:
+    def __init__(self, name, department, salary):
+        self.name = name
+        self.department = department
+        self.salary = salary
+
+    def __repr__(self):
+        return f"Employee({self.name!r}, {self.department!r}, {self.salary})"
+
+
+staff = [
+    Employee("Dana", "Sales", 52000),
+    Employee("Ali", "IT", 61000),
+    Employee("Chen", "Sales", 58000),
+    Employee("Bea", "IT", 61000),
+]
+try:
+    staff.sort()
+except TypeError as e:
+    print(e)  # '&lt;' not supported between instances of 'Employee' and 'Employee'
+
+staff.sort(key=lambda e: e.salary)
+print([e.name for e in staff])  # ['Dana', 'Chen', 'Ali', 'Bea']
+</pre>
+                    <h3 class="Subsection_Title">Sorting by Multiple Criteria with Tuples</h3>
+                    <div class="Definitions">
+                        Tuples are compared item by item: the first items are compared, and only if they are equal
+                        does Python look at the second items, and so on. That makes a tuple the natural key when you
+                        need a primary criterion and one or more tie-breakers. Every value in the tuple must be
+                        comparable with the corresponding value of the other tuples.
+                    </div>
+                    <pre class="prettyprint python Code">
+print((1, "b") &lt; (1, "c"))  # True  (first items tie, so the second items decide)
+print((2, "a") &lt; (1, "z"))  # False (first items differ, second items are never looked at)
+
+# Department first, then salary, then name
+staff.sort(key=lambda e: (e.department, e.salary, e.name))
+print(staff)
+# [Employee('Ali', 'IT', 61000), Employee('Bea', 'IT', 61000),
+#  Employee('Dana', 'Sales', 52000), Employee('Chen', 'Sales', 58000)]
+</pre>
+                    <h3 class="Subsection_Title">Mixing Ascending and Descending Order</h3>
+                    <div class="Definitions">
+                        The <code>reverse=True</code> argument flips the <strong>whole</strong> key, so it can't express
+                        "department ascending but salary descending". When the criterion you want to reverse is a
+                        number, the usual trick is to negate it inside the key tuple:
+                    </div>
+                    <pre class="prettyprint python Code">
+# Department A-Z, then highest salary first, then name A-Z
+staff.sort(key=lambda e: (e.department, -e.salary, e.name))
+print([e.name for e in staff])  # ['Ali', 'Bea', 'Chen', 'Dana']
+</pre>
+                    <div class="Definitions">
+                        Negation only works for numbers. Strings, dates and most other types can't be negated:
+                    </div>
+                    <pre class="prettyprint python Code">
+try:
+    staff.sort(key=lambda e: (-e.department, e.name))
+except TypeError as e:
+    print(e)  # bad operand type for unary -: 'str'
+</pre>
+                    <div class="Definitions">
+                        For those cases, rely on the fact that Python's sort is <strong>stable</strong> (see the next
+                        subsection) and sort several times, from the <strong>least</strong> important criterion to the
+                        <strong>most</strong> important one, using <code>reverse</code> independently on each pass:
+                    </div>
+                    <pre class="prettyprint python Code">
+# Goal: department Z-A, then name A-Z
+staff.sort(key=lambda e: e.name)                     # least important criterion first
+staff.sort(key=lambda e: e.department, reverse=True)  # most important criterion last
+print([(e.department, e.name) for e in staff])
+# [('Sales', 'Chen'), ('Sales', 'Dana'), ('IT', 'Ali'), ('IT', 'Bea')]
+</pre>
+                    <div class="Note">
+                        Prefer a single sort with a tuple key whenever you can: it is shorter and does the work in one
+                        pass. Reach for multiple passes only when some criterion can't be negated.
+                    </div>
+                    <h3 class="Subsection_Title">Sort Stability</h3>
+                    <div class="Definitions">
+                        A sort is <strong>stable</strong> when items whose keys compare equal keep the relative order
+                        they had before sorting. Both <code>list.sort()</code> and <code>sorted()</code> are guaranteed
+                        to be stable, and this remains true with <code>reverse=True</code>: equal items are
+                        <em>not</em> flipped. That guarantee is exactly what makes the multi-pass technique above work.
+                    </div>
+                    <pre class="prettyprint python Code">
+orders = [("pen", 2), ("ink", 1), ("cap", 2), ("nib", 1)]
+print(sorted(orders, key=lambda o: o[1]))
+# [('ink', 1), ('nib', 1), ('pen', 2), ('cap', 2)]  ink before nib, pen before cap: original order kept
+print(sorted(orders, key=lambda o: o[1], reverse=True))
+# [('pen', 2), ('cap', 2), ('ink', 1), ('nib', 1)]  ties are still in their original order
+</pre>
+                    <h3 class="Subsection_Title">operator.itemgetter and operator.attrgetter</h3>
+                    <div class="Definitions">
+                        Lambdas that only fetch an item or an attribute are so common that the <code>operator</code>
+                        module provides ready-made factories for them:
+                        <ul>
+                            <li><code>itemgetter(i)</code> returns a function that does <code>obj[i]</code>. It works
+                                with tuples, lists and dictionaries alike.</li>
+                            <li><code>attrgetter("name")</code> returns a function that does <code>obj.name</code>.
+                                Dotted names such as <code>"address.city"</code> are allowed.</li>
+                            <li>Given several arguments, both return a <strong>tuple</strong>, which gives you
+                                multi-criteria sorting for free.</li>
+                        </ul>
+                        They are implemented in C, so they are typically a bit faster than the equivalent lambda,
+                        and their names make the intent obvious. They can't negate values, though, so mixed
+                        directions still need a lambda or multiple passes.
+                    </div>
+                    <pre class="prettyprint python Code">
+from operator import itemgetter, attrgetter
+
+rows = [("Alice", 30, "Paris"), ("Bob", 25, "Oslo"), ("Cleo", 30, "Lima")]
+print(sorted(rows, key=itemgetter(1)))
+# [('Bob', 25, 'Oslo'), ('Alice', 30, 'Paris'), ('Cleo', 30, 'Lima')]
+print(sorted(rows, key=itemgetter(1, 2)))
+# [('Bob', 25, 'Oslo'), ('Cleo', 30, 'Lima'), ('Alice', 30, 'Paris')]
+
+records = [{"user": "kim", "score": 88}, {"user": "lee", "score": 95}]
+print(max(records, key=itemgetter("score")))  # {'user': 'lee', 'score': 95}
+
+by_dept_then_name = attrgetter("department", "name")
+print(by_dept_then_name(staff[0]))  # ('Sales', 'Chen')
+staff.sort(key=by_dept_then_name)
+print([e.name for e in staff])  # ['Ali', 'Bea', 'Chen', 'Dana']
+</pre>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>The <code>key</code> parameter maps each item to the value that is actually compared;
+                                it lets you sort objects that have no natural order.</li>
+                            <li>Return a tuple from the key function to sort by several criteria at once.</li>
+                            <li>Negate numeric parts of the key to reverse just those criteria; for non-numeric
+                                criteria, sort in several passes from least to most important.</li>
+                            <li>Python's sort is stable, even with <code>reverse=True</code>.</li>
+                            <li><code>operator.itemgetter</code> and <code>operator.attrgetter</code> are clear,
+                                fast replacements for simple lambdas.</li>
+                        </ul>
+                    </div>
+                </section>
+                <section id="Dict_Insertion_Ordering">
+                    <h2 class="Section_Title">Be Cautious When Relying on dict Insertion Ordering</h2>
+                    <div class="Definitions">
+                        Since Python 3.7 the language guarantees that a <code>dict</code> remembers the order in which
+                        keys were inserted, and iterating over it (or over <code>keys()</code>, <code>values()</code>,
+                        <code>items()</code>) follows that order. Before that, the order was arbitrary and could even
+                        change between runs. Several features build on this guarantee: keyword arguments arrive in
+                        <code>**kwargs</code> in the order they were passed, and <code>popitem()</code> removes the
+                        most recently inserted pair.
+                    </div>
+                    <pre class="prettyprint python Code">
+stock = {"apples": 5, "pears": 2}
+stock["kiwis"] = 9
+print(list(stock))     # ['apples', 'pears', 'kiwis']
+
+stock["apples"] = 7    # updating a value keeps the key where it was
+print(list(stock))     # ['apples', 'pears', 'kiwis']
+
+del stock["pears"]
+stock["pears"] = 1     # deleting and re-inserting moves the key to the end
+print(list(stock))     # ['apples', 'kiwis', 'pears']
+
+print(stock.popitem())  # ('pears', 1)
+
+def show(**kwargs):
+    return list(kwargs)
+
+print(show(z=1, a=2))  # ['z', 'a']
+</pre>
+                    <div class="Definitions">
+                        The guarantee is real, but it is easy to rely on it in places where it doesn't hold or where it
+                        hides a bug:
+                        <ul>
+                            <li><strong>Equality ignores order.</strong> Two dicts with the same pairs are equal no
+                                matter how they were built. If order is part of the meaning of your data, a plain
+                                <code>==</code> won't catch the difference (<code>collections.OrderedDict</code>
+                                compares order-sensitively against another <code>OrderedDict</code>).</li>
+                            <li><strong>Not every mapping is a dict.</strong> Code that accepts "something
+                                dictionary-like" may receive a custom mapping class whose iteration order is
+                                different (sorted, random, by access time...). Python's duck typing won't stop it.</li>
+                            <li><strong>Insertion order is not a ranking.</strong> If the first key is supposed to be
+                                "the winner", that is a property of how some other code filled the dict, not of the
+                                data. It breaks as soon as someone inserts in a different order.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import OrderedDict
+
+print({"a": 1, "b": 2} == {"b": 2, "a": 1})                          # True
+print(OrderedDict(a=1, b=2) == OrderedDict(b=2, a=1))                # False
+print(OrderedDict(a=1, b=2) == {"b": 2, "a": 1})                     # True (a plain dict is involved)
+</pre>
+                    <div class="Definitions">
+                        Here is how the "first key is the winner" assumption goes wrong. The function works with plain
+                        dicts filled in score order, but silently gives a wrong answer for a mapping that iterates in
+                        alphabetical order:
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections.abc import MutableMapping
+
+
+class SortedKeysDict(MutableMapping):
+    """A mapping that always iterates its keys alphabetically."""
+
+    def __init__(self):
+        self._data = {}
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
+    def __delitem__(self, key):
+        del self._data[key]
+
+    def __iter__(self):
+        return iter(sorted(self._data))
+
+    def __len__(self):
+        return len(self._data)
+
+
+def winner_fragile(scores):
+    return next(iter(scores))          # assumes the best score was inserted first
+
+
+def winner_robust(scores):
+    return max(scores, key=scores.get)  # looks at the values instead
+
+
+plain = {"zoe": 91, "max": 78}
+custom = SortedKeysDict()
+custom["zoe"] = 91
+custom["max"] = 78
+
+print(winner_fragile(plain))   # zoe
+print(winner_fragile(custom))  # max   (wrong!)
+print(winner_robust(custom))   # zoe
+</pre>
+                    <div class="Definitions">
+                        To protect yourself, either write code that doesn't depend on iteration order (as
+                        <code>winner_robust</code> does), check the type explicitly
+                        (<code>isinstance(scores, dict)</code>) and fail early, or annotate the parameter as
+                        <code>dict[str, int]</code> so a static type checker such as mypy flags other mappings.
+                    </div>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>Since Python 3.7, iterating a <code>dict</code> follows insertion order; updating a
+                                value keeps a key's position, deleting and re-inserting moves it to the end.</li>
+                            <li>Dict equality ignores order; <code>OrderedDict</code> equality between two
+                                <code>OrderedDict</code>s doesn't.</li>
+                            <li>Mapping-like objects that aren't <code>dict</code> may iterate in any order. Don't
+                                encode meaning (such as a ranking) in insertion order; sort or compute it
+                                explicitly.</li>
+                        </ul>
+                    </div>
+                </section>
+                <section id="Prefer_Get_For_Missing_Keys">
+                    <h2 class="Section_Title">Prefer get Over in and KeyError to Handle Missing Dictionary Keys</h2>
+                    <div class="Definitions">
+                        Reading a key that isn't in a dictionary with <code>d[key]</code> raises
+                        <code>KeyError</code>. There are three common ways to deal with that. Suppose we count votes
+                        for favourite fruits:
+                    </div>
+                    <pre class="prettyprint python Code">
+votes = {"mango": 3, "plum": 1}
+fruit = "kiwi"
+
+# 1. Check with `in` first: two lookups, and the key appears three times
+if fruit in votes:
+    count = votes[fruit]
+else:
+    count = 0
+votes[fruit] = count + 1
+
+# 2. Try it and catch KeyError: one lookup on the happy path, but four lines of ceremony
+try:
+    count = votes[fruit]
+except KeyError:
+    count = 0
+votes[fruit] = count + 1
+
+# 3. dict.get(key, default): one expression, one lookup
+votes[fruit] = votes.get(fruit, 0) + 1
+print(votes)  # {'mango': 3, 'plum': 1, 'kiwi': 3}  (each of the 3 approaches added one vote)
+</pre>
+                    <div class="Definitions">
+                        For simple values such as counters, <code>get</code> is the shortest and clearest choice
+                        (and for counting specifically, <code>collections.Counter</code>, covered below, is even
+                        better). <br>
+                        When the stored value is a container you want to append to, the walrus operator
+                        (<code>:=</code>) lets <code>get</code> stay compact without an extra lookup:
+                    </div>
+                    <pre class="prettyprint python Code">
+voters = {"mango": ["ana"]}
+
+def add_vote(fruit, person):
+    if (names := voters.get(fruit)) is None:
+        voters[fruit] = names = []
+    names.append(person)
+
+add_vote("mango", "raj")
+add_vote("kiwi", "li")
+print(voters)  # {'mango': ['ana', 'raj'], 'kiwi': ['li']}
+</pre>
+                    <div class="Warning">
+                        <code>get</code> without a default returns <code>None</code>, so you can't tell "missing" from
+                        "present with the value None". Also avoid <code>d.get(key) or fallback</code>: it treats
+                        legitimate falsy values such as <code>0</code>, <code>""</code> or <code>[]</code> as missing.
+                    </div>
+                    <pre class="prettyprint python Code">
+settings = {"retries": 0, "proxy": None}
+print(settings.get("retries") or 3)    # 3     (wrong: 0 was a real value)
+print(settings.get("retries", 3))      # 0
+print(settings.get("proxy"))           # None  (present, value is None)
+print(settings.get("timeout"))         # None  (missing!)
+
+_MISSING = object()                    # a unique sentinel nobody else can store
+print(settings.get("proxy", _MISSING) is _MISSING)    # False
+print(settings.get("timeout", _MISSING) is _MISSING)  # True
+</pre>
+                    <div class="Definitions">
+                        Remember too that the default argument of <code>get</code> is evaluated <strong>every
+                        time</strong>, even when the key exists. If building the default is expensive, use an explicit
+                        check instead. When the "missing" case is genuinely an error, plain <code>d[key]</code> and
+                        letting <code>KeyError</code> propagate is the right call: don't paper over bugs with a
+                        default.
+                    </div>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>Checking with <code>in</code>, catching <code>KeyError</code>, and calling
+                                <code>get</code> all handle missing keys; <code>get</code> is usually the most concise
+                                for simple values.</li>
+                            <li>Combine <code>get</code> with an assignment expression when the value is a container
+                                to create on demand.</li>
+                            <li>Use a sentinel object when <code>None</code> is a valid stored value, and don't use
+                                <code>or</code> to supply defaults for values that may be falsy.</li>
+                        </ul>
+                    </div>
+                </section>
+                <section id="Prefer_Defaultdict">
+                    <h2 class="Section_Title">Prefer defaultdict Over setdefault to Handle Missing Items</h2>
+                    <div class="Definitions">
+                        <code>dict.setdefault(key, default)</code> returns the value for <code>key</code> if it exists;
+                        otherwise it stores <code>default</code> under that key and returns it. It can shorten the
+                        "append to a list stored in a dict" pattern to one line:
+                    </div>
+                    <pre class="prettyprint python Code">
+visits = {}
+for city, person in [("Rome", "ana"), ("Oslo", "li"), ("Rome", "raj")]:
+    visits.setdefault(city, []).append(person)
+print(visits)  # {'Rome': ['ana', 'raj'], 'Oslo': ['li']}
+</pre>
+                    <div class="Definitions">
+                        It works, but it has drawbacks:
+                        <ul>
+                            <li>The name doesn't say what it does: it <em>gets</em> a value far more often than it
+                                <em>sets</em> one, which makes code harder to read.</li>
+                            <li>The default object is built on <strong>every call</strong>, even when the key already
+                                exists. In the loop above a new empty list is created and thrown away for every
+                                existing city.</li>
+                            <li>The default is stored <strong>as is</strong>, not copied. Passing a shared object as
+                                the default leads to several keys pointing at the same list.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+empty = []
+groups = {}
+groups.setdefault("a", empty).append(1)
+groups.setdefault("b", empty).append(2)
+print(groups)  # {'a': [1, 2], 'b': [1, 2]}  both keys share one list!
+</pre>
+                    <div class="Definitions">
+                        When you control how the dictionary is created, <code>collections.defaultdict</code> is the
+                        cleaner tool. You give it a <strong>default factory</strong>, a callable with no arguments,
+                        and it calls that factory only when a missing key is read with <code>d[key]</code>, storing
+                        the result under the key:
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import defaultdict
+
+visits = defaultdict(list)
+for city, person in [("Rome", "ana"), ("Oslo", "li"), ("Rome", "raj")]:
+    visits[city].append(person)
+print(visits)        # defaultdict(&lt;class 'list'&gt;, {'Rome': ['ana', 'raj'], 'Oslo': ['li']})
+print(dict(visits))  # {'Rome': ['ana', 'raj'], 'Oslo': ['li']}
+
+letters = defaultdict(int)  # int() returns 0, perfect for counting
+for ch in "banana":
+    letters[ch] += 1
+print(dict(letters))  # {'b': 1, 'a': 3, 'n': 2}
+
+tags = defaultdict(set)
+tags["post1"].add("python")
+tags["post1"].add("python")
+print(dict(tags))  # {'post1': {'python'}}
+</pre>
+                    <div class="Warning">
+                        Simply <em>reading</em> a missing key with <code>d[key]</code> inserts it. That can silently
+                        grow the dictionary when you only meant to look. Use <code>key in d</code> or
+                        <code>d.get(key)</code> to check without inserting: neither one calls the factory.
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import defaultdict
+
+inventory = defaultdict(int, {"bolts": 4})
+print(inventory["nuts"])     # 0
+print(dict(inventory))       # {'bolts': 4, 'nuts': 0}  'nuts' was added just by reading it
+print("screws" in inventory)  # False
+print(inventory.get("screws"))  # None
+print(dict(inventory))       # {'bolts': 4, 'nuts': 0}  unchanged
+</pre>
+                    <div class="Definitions">
+                        <code>setdefault</code> still has its place: when you receive a dictionary you didn't create
+                        (for example, from <code>json.loads</code>) and the default is cheap to build, it avoids
+                        converting the whole thing.
+                    </div>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li><code>setdefault</code> builds its default argument on every call and stores that exact
+                                object, which is wasteful and can cause accidental sharing.</li>
+                            <li><code>defaultdict(factory)</code> creates a fresh default only when a missing key is
+                                read, which makes grouping and counting code short and efficient.</li>
+                            <li>Reading a missing key of a <code>defaultdict</code> inserts it; use <code>in</code> or
+                                <code>get</code> to look without side effects, and convert with <code>dict()</code>
+                                before showing or serialising it.</li>
+                        </ul>
+                    </div>
+                </section>
+                <section id="Missing_Method">
+                    <h2 class="Section_Title">Know How to Construct Key-Dependent Default Values with __missing__</h2>
+                    <div class="Definitions">
+                        The factory passed to <code>defaultdict</code> receives <strong>no arguments</strong>, so the
+                        default can't depend on which key was missing. Trying to pass a function that expects the key
+                        fails at lookup time:
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import defaultdict
+
+shouting = defaultdict(lambda key: key.upper())
+try:
+    shouting["hello"]
+except TypeError as e:
+    print(e)  # &lt;lambda&gt;() missing 1 required positional argument: 'key'
+</pre>
+                    <div class="Definitions">
+                        For key-dependent defaults, subclass <code>dict</code> and define the special method
+                        <code>__missing__(self, key)</code>. When <code>d[key]</code> doesn't find the key,
+                        <code>dict.__getitem__</code> calls <code>__missing__</code> and returns whatever it returns.
+                        If you also store the value inside <code>__missing__</code>, the expensive work happens only
+                        once per key: a handy lazy cache.
+                    </div>
+                    <pre class="prettyprint python Code">
+def load_profile(user_id):
+    print(f"loading {user_id}...")       # pretend this is a slow database query
+    return {"id": user_id, "name": f"user{user_id}"}
+
+
+class ProfileCache(dict):
+    def __missing__(self, user_id):
+        profile = load_profile(user_id)  # the default depends on the key
+        self[user_id] = profile          # store it so the next lookup is a plain hit
+        return profile
+
+
+cache = ProfileCache()
+print(cache[7]["name"])   # loading 7...  then  user7
+print(cache[7]["name"])   # user7  (no second load)
+print(len(cache))         # 1
+</pre>
+                    <div class="Definitions">
+                        Some details to keep in mind:
+                        <ul>
+                            <li><code>__missing__</code> is only triggered by <code>d[key]</code>. The
+                                <code>get()</code> method, the <code>in</code> operator and iteration never call
+                                it.</li>
+                            <li>If <code>__missing__</code> doesn't store the value, it runs again on every lookup of
+                                that key, which may be what you want for computed views but is usually a
+                                surprise.</li>
+                            <li>If the key is invalid, raising <code>KeyError</code> from <code>__missing__</code>
+                                keeps the normal dictionary behaviour.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+print(cache.get(8))  # None  (get() does not call __missing__)
+print(8 in cache)    # False
+
+
+class Squares(dict):
+    def __missing__(self, n):
+        if not isinstance(n, int):
+            raise KeyError(n)
+        return n * n                     # not stored: recomputed on each lookup
+
+
+squares = Squares()
+print(squares[12])   # 144
+print(len(squares))  # 0
+try:
+    squares["x"]
+except KeyError as e:
+    print(repr(e))   # KeyError('x')
+</pre>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li><code>defaultdict</code> factories take no arguments, so they can't build a default
+                                from the missing key.</li>
+                            <li>A <code>dict</code> subclass with <code>__missing__</code> can compute (and
+                                optionally store) a value based on the key.</li>
+                            <li><code>__missing__</code> runs only for <code>d[key]</code>, never for
+                                <code>get</code> or <code>in</code>.</li>
+                        </ul>
+                    </div>
+                </section>
+                <section id="Merging_Dictionaries">
+                    <h2 class="Section_Title">Merging Dictionaries (| and |=, ** unpacking)</h2>
+                    <div class="Definitions">
+                        Python offers several ways to combine dictionaries. In all of them, when the same key appears
+                        more than once, <strong>the right-most value wins</strong>, while the key keeps the position
+                        where it first appeared.
+                        <ul>
+                            <li><code>a | b</code> (Python 3.9+) returns a <strong>new</strong> dict; both operands
+                                are left unchanged.</li>
+                            <li><code>a |= b</code> (Python 3.9+) updates <code>a</code> <strong>in place</strong>,
+                                just like <code>a.update(b)</code>.</li>
+                            <li><code>{**a, **b}</code> unpacks both into a new dict literal. It works on older
+                                versions and lets you mix in extra keys inline.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+defaults = {"theme": "light", "lang": "en", "size": 12}
+user = {"size": 14, "beta": True}
+
+merged = defaults | user
+print(merged)    # {'theme': 'light', 'lang': 'en', 'size': 14, 'beta': True}
+print(defaults)  # {'theme': 'light', 'lang': 'en', 'size': 12}  unchanged
+
+print({**defaults, **user, "lang": "fr"})
+# {'theme': 'light', 'lang': 'fr', 'size': 14, 'beta': True}
+
+config = dict(defaults)
+config |= user                 # same as config.update(user)
+print(config)    # {'theme': 'light', 'lang': 'en', 'size': 14, 'beta': True}
+</pre>
+                    <div class="Definitions">
+                        The operators differ slightly in what they accept. <code>|</code> requires a dict (or dict
+                        subclass) on both sides, but <code>|=</code>, like <code>update()</code>, also accepts any
+                        mapping or an iterable of key/value pairs:
+                    </div>
+                    <pre class="prettyprint python Code">
+settings = {"a": 1}
+settings |= [("b", 2)]         # fine
+print(settings)                # {'a': 1, 'b': 2}
+try:
+    settings | [("c", 3)]
+except TypeError as e:
+    print(e)  # unsupported operand type(s) for |: 'dict' and 'list'
+</pre>
+                    <div class="Warning">
+                        All of these merges are <strong>shallow</strong>. Nested dictionaries are not merged
+                        recursively: the right-hand nested dict replaces the left one entirely, and the merged result
+                        shares the nested objects with its sources.
+                    </div>
+                    <pre class="prettyprint python Code">
+base = {"db": {"host": "localhost", "port": 5432}}
+override = {"db": {"port": 6543}}
+result = base | override
+print(result)  # {'db': {'port': 6543}}  'host' is gone
+
+shared = base | {}
+shared["db"]["port"] = 1
+print(base["db"]["port"])  # 1  the nested dict is the same object
+</pre>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>Use <code>a | b</code> for a new merged dict and <code>a |= b</code> to update in
+                                place; <code>{**a, **b}</code> works everywhere and allows extra inline keys.</li>
+                            <li>On duplicate keys the right-most value wins.</li>
+                            <li>Merges are shallow; nested dicts are replaced, not combined, and remain shared.</li>
+                        </ul>
+                    </div>
+                </section>
+                <section id="Counting_With_Counter">
+                    <h2 class="Section_Title">Counting with collections.Counter</h2>
+                    <div class="Definitions">
+                        <code>collections.Counter</code> is a <code>dict</code> subclass specialised for counting
+                        hashable items. You can build it from any iterable, and a missing key simply reports a count
+                        of <code>0</code> instead of raising <code>KeyError</code>, <strong>without</strong> inserting
+                        the key (unlike <code>defaultdict</code>).
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import Counter
+
+words = "the cat and the hat and the bat".split()
+counts = Counter(words)
+print(counts)                 # Counter({'the': 3, 'and': 2, 'cat': 1, 'hat': 1, 'bat': 1})
+print(counts["the"])          # 3
+print(counts["dog"])          # 0
+print("dog" in counts)        # False  (reading did not insert it)
+print(counts.most_common(2))  # [('the', 3), ('and', 2)]
+print(counts.total())         # 8  (Python 3.10+)
+
+print(Counter("mississippi"))  # Counter({'i': 4, 's': 4, 'p': 2, 'm': 1})
+</pre>
+                    <div class="Definitions">
+                        Counts can be adjusted after creation:
+                        <ul>
+                            <li><code>update(iterable)</code> <strong>adds</strong> counts (unlike
+                                <code>dict.update</code>, which would replace them).</li>
+                            <li><code>subtract(iterable)</code> removes counts and may leave zero or negative
+                                values.</li>
+                            <li>Ties in <code>most_common()</code> are listed in the order the items were first
+                                encountered.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import Counter
+
+stock = Counter(apples=3, pears=1)
+stock.update(["apples", "kiwis"])
+print(stock)  # Counter({'apples': 4, 'pears': 1, 'kiwis': 1})
+stock.subtract({"pears": 2})
+print(stock)  # Counter({'apples': 4, 'kiwis': 1, 'pears': -1})
+print(sorted(stock.elements()))  # ['apples', 'apples', 'apples', 'apples', 'kiwis']  (non-positive counts skipped)
+</pre>
+                    <div class="Definitions">
+                        Counters also support arithmetic. <code>+</code> adds counts, <code>-</code> subtracts,
+                        <code>&amp;</code> keeps the minimum of each count and <code>|</code> keeps the maximum.
+                        These operators <strong>drop</strong> any result that is zero or negative, which is a
+                        different rule from <code>subtract()</code>:
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import Counter
+
+a = Counter(x=3, y=1)
+b = Counter(x=1, y=2)
+print(a + b)  # Counter({'x': 4, 'y': 3})
+print(a - b)  # Counter({'x': 2})          y would be -1, so it is dropped
+print(a &amp; b)  # Counter({'x': 1, 'y': 1})
+print(a | b)  # Counter({'x': 3, 'y': 2})
+</pre>
+                    <div class="Note">
+                        For counters, <code>|</code> means "maximum of the counts", not "merge with the right side
+                        winning" as it does for plain dicts.
+                    </div>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li><code>Counter(iterable)</code> counts items in one step; missing items report
+                                <code>0</code> without being added.</li>
+                            <li><code>most_common(n)</code> gives the top items; <code>update</code> adds counts
+                                rather than replacing them.</li>
+                            <li>Arithmetic operators discard non-positive results, while <code>subtract()</code> keeps
+                                them.</li>
+                        </ul>
+                    </div>
+                </section>
+                <section id="Shallow_vs_Deep_Copies">
+                    <h2 class="Section_Title">Copying: Shallow vs Deep Copies</h2>
+                    <div class="Definitions">
+                        Assignment in Python never copies anything. <code>b = a</code> makes <code>b</code> a second
+                        name for the <strong>same object</strong> (an <em>alias</em>), so mutating it through either
+                        name is visible through both. The <code>is</code> operator tells you whether two names refer to
+                        the same object.
+                    </div>
+                    <pre class="prettyprint python Code">
+a = [1, 2, 3]
+b = a            # alias, not a copy
+b.append(4)
+print(a)         # [1, 2, 3, 4]
+print(a is b)    # True
+</pre>
+                    <h3 class="Subsection_Title">Shallow Copies</h3>
+                    <div class="Definitions">
+                        A <strong>shallow copy</strong> creates a new outer container but fills it with references to
+                        the same inner objects. All of these make shallow copies:
+                        <code>list(x)</code>, <code>x[:]</code>, <code>x.copy()</code>, <code>dict(d)</code>,
+                        <code>d.copy()</code>, <code>set(s)</code> and <code>copy.copy(obj)</code>. Changing the
+                        <em>outer</em> container is independent, but mutating a <em>nested</em> object shows up in both.
+                    </div>
+                    <pre class="prettyprint python Code">
+import copy
+
+grid = [[1, 2], [3, 4]]
+shallow = copy.copy(grid)        # same as grid.copy() or grid[:]
+shallow.append([5, 6])           # outer list: independent
+shallow[0].append(99)            # inner list: shared!
+print(grid)                      # [[1, 2, 99], [3, 4]]
+print(shallow)                   # [[1, 2, 99], [3, 4], [5, 6]]
+print(shallow is grid, shallow[0] is grid[0])  # False True
+</pre>
+                    <h3 class="Subsection_Title">Deep Copies</h3>
+                    <div class="Definitions">
+                        <code>copy.deepcopy(obj)</code> recursively copies the object and everything it contains, so
+                        the result shares no mutable state with the original. It keeps a memo of objects already
+                        copied, which means shared references inside the structure stay shared in the copy and
+                        self-referencing (cyclic) structures don't cause infinite recursion. <br>
+                        Deep copies are slower and use more memory, so use them only when you really need an
+                        independent snapshot of nested data. Immutable objects such as ints and strings are never
+                        duplicated, since they can't change anyway.
+                    </div>
+                    <pre class="prettyprint python Code">
+import copy
+
+grid = [[1, 2], [3, 4]]
+deep = copy.deepcopy(grid)
+deep[0].append(99)
+print(grid)  # [[1, 2], [3, 4]]
+print(deep)  # [[1, 2, 99], [3, 4]]
+
+row = [0]
+pair = [row, row]                 # the same list twice
+pair_copy = copy.deepcopy(pair)
+print(pair_copy[0] is pair_copy[1])  # True   sharing is preserved inside the copy
+print(pair_copy[0] is row)           # False  but it is a new list
+
+loop = [1]
+loop.append(loop)                 # a list that contains itself
+print(copy.deepcopy(loop))        # [1, [...]]
+</pre>
+                    <h3 class="Subsection_Title">Common Aliasing Pitfalls</h3>
+                    <div class="Definitions">
+                        <ul>
+                            <li><strong>Multiplying a list of lists</strong> repeats references, not copies. Use a
+                                comprehension to build independent rows.</li>
+                            <li><strong>Mutable default arguments</strong> are created once, when the function is
+                                defined, and shared by every call. Use <code>None</code> as the default and create the
+                                object inside the function.</li>
+                            <li><strong>Copying a tuple</strong> doesn't protect lists stored in it: the tuple is
+                                immutable, but its elements may not be.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+board = [[0] * 3] * 3            # three references to ONE row
+board[0][0] = "X"
+print(board)                     # [['X', 0, 0], ['X', 0, 0], ['X', 0, 0]]
+
+board = [[0] * 3 for _ in range(3)]  # three separate rows
+board[0][0] = "X"
+print(board)                     # [['X', 0, 0], [0, 0, 0], [0, 0, 0]]
+
+
+def add_item_bad(item, bucket=[]):
+    bucket.append(item)
+    return bucket
+
+
+print(add_item_bad(1))  # [1]
+print(add_item_bad(2))  # [1, 2]  the same default list is reused
+
+
+def add_item(item, bucket=None):
+    if bucket is None:
+        bucket = []
+    bucket.append(item)
+    return bucket
+
+
+print(add_item(1))  # [1]
+print(add_item(2))  # [2]
+
+frozen = ([1, 2], "label")
+frozen[0].append(3)
+print(frozen)       # ([1, 2, 3], 'label')
+</pre>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>Assignment creates aliases; use <code>is</code> to check whether two names refer to
+                                the same object.</li>
+                            <li>Slicing, <code>.copy()</code>, constructors such as <code>list()</code>/<code>dict()</code>
+                                and <code>copy.copy</code> are shallow: nested mutable objects remain shared.</li>
+                            <li><code>copy.deepcopy</code> makes a fully independent copy, handling shared references
+                                and cycles, at a higher cost.</li>
+                            <li>Watch out for <code>[[...]] * n</code> and mutable default arguments, two classic
+                                sources of accidental sharing.</li>
+                        </ul>
                     </div>
                 </section>
             </div>
@@ -204,7 +1033,7 @@ people.sort(key=sort_by_name_length)
     </main>
 </body>
 <script src="../assets/JS/Nav_Bar.js" type="module"></script>
-<script src="../assets/JS/Side_Bar.js"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
 <script
     src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 

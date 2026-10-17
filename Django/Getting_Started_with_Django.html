@@ -28,7 +28,7 @@
                         and
                         create a virtual environment.
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 # Create a virtual environment
 python -m venv UniversityPlatformEnv 
 
@@ -44,7 +44,7 @@ source UniversityPlatformEnv/bin/activate
                     <div class="Definitions">
                         With your virtual environment activated, install Django using pip, the Python package manager.
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 pip install django
             </pre>
                 </section>
@@ -54,7 +54,7 @@ pip install django
                         Use the django-admin command-line tool to create a new Django project called
                         University_Platform.
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 django-admin startproject University_Platform .
             </pre>
                     <div class="Definitions">
@@ -96,7 +96,7 @@ django-admin startproject University_Platform .
                         SQLite, a lightweight database that is easy to set up and requires no additional configuration.
                         To create the database, run the following command:
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 python manage.py migrate
             </pre>
                     <div class="Definitions">
@@ -114,7 +114,7 @@ python manage.py migrate
                         Django includes a lightweight web server for development purposes. To start the server, run the
                         following command:
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 python manage.py runserver
             </pre>
                     <div class="Definitions">
@@ -127,7 +127,7 @@ python manage.py runserver
                         different port by entering python manage.py runserver 8001 and cycle through higher
                         numbers until you find an open port. For example:
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 python manage.py runserver 8001
             </pre>
                 </section>
@@ -146,7 +146,7 @@ python manage.py runserver 8001
                         directory that contains manage.py. Activate the virtual environment, and
                         then run the startapp command:
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 python manage.py startapp Home
             </pre>
                     <div class="Definitions">
@@ -205,7 +205,7 @@ from django.contrib import admin
 from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", include('Home.urls')),,  # Include Home app URLs
+    path("", include('Home.urls')),  # Include Home app URLs
 ]
         </pre>
                     <div class="Definitions">

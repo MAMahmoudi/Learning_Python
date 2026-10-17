@@ -145,7 +145,7 @@ class User(AbstractUser):
                         Next, we can define profile models for students and teachers that extend the User model. <br>
                         Create a new app:
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 python manage.py startapp profiles
                     </pre>
                     <div class="Definitions">
@@ -300,7 +300,7 @@ AUTH_USER_MODEL = "Accounts.User"
                     <div class="Definitions">
                         You can check that Django has recognized your models by running the following command:
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 python manage.py check
             </pre>
                     <div class="Definitions">
@@ -320,7 +320,7 @@ python manage.py check
                         migrations, run the following commands (Run this from the same directory where manage.py is
                         located):
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 python manage.py makemigrations
 python manage.py migrate
             </pre>
@@ -341,7 +341,7 @@ python manage.py migrate
                         interface.
                         To use the admin site, you need to create a superuser account. Run the following command:
                     </div>
-                    <pre class="prettyprint python Code">
+                    <pre class="prettyprint Code">
 python manage.py createsuperuser
             </pre>
                     <div class="Definitions">
@@ -668,7 +668,7 @@ def register_view(request):
                     <pre class="prettyprint python Code">
 def login_view(request):
     if request.method == "POST":
-    form = LoginForm(request.POST)
+        form = LoginForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']

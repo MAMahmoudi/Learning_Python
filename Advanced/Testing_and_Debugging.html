@@ -4,11 +4,1269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Testing and Debugging</title>
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
+    <title>Advanced Testing and Debugging</title>
 </head>
 
 <body>
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Advanced Testing and Debugging</h1>
+            <div class="Sections_Area">
+                <section id="Pytest_Fixtures">
+                    <h2 class="Section_Title">pytest Fixtures</h2>
+                    <div class="Definitions">
+                        The Intermediate chapter used <code>setUp()</code> to give every test a fresh object. pytest
+                        replaces that idea with <strong>fixtures</strong>: functions decorated with
+                        <code>@pytest.fixture</code> that build something a test needs. A test asks for a fixture
+                        simply by naming it as a parameter, and pytest calls the fixture and passes in the result.
+                        <br><br>
+                        Why is this better than <code>setUp()</code>? Each test declares exactly what it needs (nothing
+                        more is built), fixtures can depend on other fixtures, they can be shared across many files,
+                        and you can control how often they are created.
+                    </div>
+                    <pre class="prettyprint python Code">
+# inventory.py
+import json
+
+
+class Inventory:
+    def __init__(self):
+        self.stock = {}
+
+    def add(self, item, quantity):
+        if quantity &lt;= 0:
+            raise ValueError("quantity must be positive")
+        self.stock[item] = self.stock.get(item, 0) + quantity
+
+    def save(self, path):
+        path.write_text(json.dumps(self.stock), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path):
+        inventory = cls()
+        inventory.stock = json.loads(path.read_text(encoding="utf-8"))
+        return inventory
+</pre>
+                    <pre class="prettyprint python Code">
+# test_inventory.py
+import pytest
+
+from inventory import Inventory
+
+
+@pytest.fixture
+def inventory():
+    """A fresh Inventory with some stock, rebuilt for every test."""
+    inv = Inventory()
+    inv.add("apple", 10)
+    inv.add("pear", 3)
+    return inv
+
+
+def test_add_existing_item(inventory):
+    inventory.add("apple", 5)
+    assert inventory.stock["apple"] == 15
+
+
+def test_each_test_gets_a_fresh_inventory(inventory):
+    assert inventory.stock["apple"] == 10      # not 15!
+
+
+def test_rejects_zero_quantity(inventory):
+    with pytest.raises(ValueError):
+        inventory.add("kiwi", 0)
+
+
+def test_save_and_load_round_trip(inventory, tmp_path):
+    file = tmp_path / "stock.json"
+    inventory.save(file)
+    assert file.exists()
+    loaded = Inventory.load(file)
+    assert loaded.stock == {"apple": 10, "pear": 3}
+</pre>
+                    <h3 class="Subsection_Title">tmp_path: a built-in fixture</h3>
+                    <div class="Definitions">
+                        The last test also requests <code>tmp_path</code>, one of pytest's built-in fixtures. It is a
+                        <code>pathlib.Path</code> pointing to a brand-new, empty directory that is unique to that test.
+                        Tests that write files should always use it instead of writing into the project folder: two
+                        tests can never overwrite each other's files, and no junk is left in your working tree. (pytest
+                        keeps only the last few runs' temporary directories and removes older ones automatically.)
+                        Other useful built-ins include <code>capsys</code> (capture printed output),
+                        <code>monkeypatch</code> (temporarily change attributes or environment variables) and
+                        <code>caplog</code> (inspect log messages).
+                    </div>
+                    <h3 class="Subsection_Title">Teardown with yield, and fixture scope</h3>
+                    <div class="Definitions">
+                        If a fixture needs cleaning up, use <code>yield</code> instead of <code>return</code>.
+                        Everything before the <code>yield</code> is set-up; the yielded value goes to the test; the
+                        code after <code>yield</code> runs once the test has finished, <strong>even if it
+                        failed</strong>.
+                        <br><br>
+                        By default a fixture is created again for every test (<code>scope="function"</code>). For
+                        expensive resources you can widen the scope so a single instance is shared:
+                        <table>
+                            <tr>
+                                <th>scope</th>
+                                <th>The fixture is created once per...</th>
+                            </tr>
+                            <tr>
+                                <td><code>"function"</code> (default)</td>
+                                <td>test</td>
+                            </tr>
+                            <tr>
+                                <td><code>"class"</code></td>
+                                <td>test class</td>
+                            </tr>
+                            <tr>
+                                <td><code>"module"</code></td>
+                                <td>test file</td>
+                            </tr>
+                            <tr>
+                                <td><code>"package"</code></td>
+                                <td>package (folder) of tests</td>
+                            </tr>
+                            <tr>
+                                <td><code>"session"</code></td>
+                                <td>whole pytest run</td>
+                            </tr>
+                        </table>
+                        Fixtures defined in a file named <code>conftest.py</code> are automatically available to every
+                        test file in that folder and below, with no import needed. Below, a session-scoped database
+                        connection is opened once, and a function-scoped fixture built on top of it empties the table
+                        after each test so that tests stay independent:
+                    </div>
+                    <pre class="prettyprint python Code">
+# conftest.py
+import sqlite3
+
+import pytest
+
+
+@pytest.fixture(scope="session")
+def database():
+    print("\n[session] opening database")
+    connection = sqlite3.connect(":memory:")
+    connection.execute("CREATE TABLE users (name TEXT)")
+    yield connection                      # tests run here
+    print("\n[session] closing database")
+    connection.close()
+
+
+@pytest.fixture
+def clean_users(database):
+    yield database
+    database.execute("DELETE FROM users")  # undo whatever the test inserted
+</pre>
+                    <pre class="prettyprint python Code">
+# test_users.py
+def test_insert_user(clean_users):
+    clean_users.execute("INSERT INTO users VALUES ('ada')")
+    count = clean_users.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    assert count == 1
+
+
+def test_table_starts_empty(clean_users):
+    count = clean_users.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    assert count == 0
+</pre>
+                    <div class="Definitions">
+                        Running with <code>-s</code> (do not capture output) shows that the session fixture is set up
+                        lazily, the first time a test needs it, and torn down once at the very end:
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; pytest -v -s
+collected 6 items
+
+test_inventory.py::test_add_existing_item PASSED
+test_inventory.py::test_each_test_gets_a_fresh_inventory PASSED
+test_inventory.py::test_rejects_zero_quantity PASSED
+test_inventory.py::test_save_and_load_round_trip PASSED
+test_users.py::test_insert_user
+[session] opening database
+PASSED
+test_users.py::test_table_starts_empty PASSED
+[session] closing database
+
+============================== 6 passed in 0.07s ==============================
+</pre>
+                    <div class="Warning">
+                        A wider scope trades isolation for speed. If one test modifies a session-scoped object (adds a
+                        row, appends to a list), every later test sees that change, and tests start passing or failing
+                        depending on the order they run in. Share only resources that are expensive to create, and
+                        reset their state with a function-scoped fixture as shown above. Note also that a fixture can
+                        only depend on fixtures of the same or <em>wider</em> scope.
+                    </div>
+                    <div class="Note">
+                        <code>pytest --fixtures</code> lists every available fixture with its docstring, and
+                        <code>pytest --fixtures-per-test</code> shows which fixtures each test uses.
+                    </div>
+                </section>
+
+                <section id="Parametrized_Tests">
+                    <h2 class="Section_Title">Parametrized Tests</h2>
+                    <div class="Definitions">
+                        Often you want to run the same check against many inputs. Writing a loop inside one test is
+                        a poor solution: the first failing input stops the loop, and the report only says that "the
+                        test" failed, not which input. <code>@pytest.mark.parametrize</code> instead generates a
+                        <strong>separate test for each set of arguments</strong>, each with its own pass/fail result
+                        and its own ID.
+                    </div>
+                    <pre class="prettyprint python Code">
+import pytest
+
+
+def is_palindrome(text):
+    cleaned = "".join(ch.lower() for ch in text if ch.isalnum())
+    return cleaned == cleaned[::-1]
+
+
+@pytest.mark.parametrize("text", ["racecar", "Never odd or even", "", "a"])
+def test_palindromes(text):
+    assert is_palindrome(text)
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("level", True),
+        ("Level", True),
+        ("python", False),
+        ("A man, a plan, a canal: Panama", True),
+    ],
+)
+def test_is_palindrome(text, expected):
+    assert is_palindrome(text) is expected
+</pre>
+                    <div class="Definitions">
+                        The first argument is a string of comma-separated parameter names; the second is a list of
+                        values (a tuple per case when there are several names). Use <code>pytest.param</code> when a
+                        case needs a readable ID or a mark, for example to record a known failure with
+                        <code>xfail</code> ("expected to fail"):
+                    </div>
+                    <pre class="prettyprint python Code">
+@pytest.mark.parametrize(
+    "a, b, expected",
+    [
+        pytest.param(2, 3, 5, id="small"),
+        pytest.param(-1, 1, 0, id="opposites"),
+        pytest.param(0.1, 0.2, 0.3, id="floats",
+                     marks=pytest.mark.xfail(reason="float rounding")),
+    ],
+)
+def test_add(a, b, expected):
+    assert a + b == expected
+
+
+# Stacked decorators produce every combination: 2 x 2 = 4 tests.
+@pytest.mark.parametrize("x", [1, 2])
+@pytest.mark.parametrize("y", ["a", "b"])
+def test_combinations(x, y):
+    assert len(str(x) + y) == 2
+</pre>
+                    <pre class="prettyprint Code">
+&gt; pytest -v
+collected 15 items
+
+test_params.py::test_palindromes[racecar] PASSED                         [  6%]
+test_params.py::test_palindromes[Never odd or even] PASSED               [ 13%]
+test_params.py::test_palindromes[] PASSED                                [ 20%]
+test_params.py::test_palindromes[a] PASSED                               [ 26%]
+test_params.py::test_is_palindrome[level-True] PASSED                    [ 33%]
+test_params.py::test_is_palindrome[Level-True] PASSED                    [ 40%]
+test_params.py::test_is_palindrome[python-False] PASSED                  [ 46%]
+test_params.py::test_is_palindrome[A man, a plan, a canal: Panama-True] PASSED [ 53%]
+test_params.py::test_add[small] PASSED                                   [ 60%]
+test_params.py::test_add[opposites] PASSED                               [ 66%]
+test_params.py::test_add[floats] XFAIL (float rounding)                  [ 73%]
+test_params.py::test_combinations[a-1] PASSED                            [ 80%]
+test_params.py::test_combinations[a-2] PASSED                            [ 86%]
+test_params.py::test_combinations[b-1] PASSED                            [ 93%]
+test_params.py::test_combinations[b-2] PASSED                            [100%]
+
+======================== 14 passed, 1 xfailed in 0.09s ========================
+</pre>
+                    <div class="Definitions">
+                        Each case can be run on its own by its ID, e.g.
+                        <code>pytest "test_params.py::test_add[small]"</code>.
+                        If you use <code>unittest</code>, the closest equivalent is <code>self.subTest()</code>: inside
+                        a loop, <code>with self.subTest(text=text):</code> reports every failing input separately
+                        instead of stopping at the first one.
+                    </div>
+                    <div class="Warning">
+                        Parametrize values are evaluated once, when the module is imported. Do not pass mutable
+                        objects (a list or dict) that a test modifies; the change would leak into other cases that share
+                        the same object. Create such objects inside the test or in a fixture instead.
+                    </div>
+                </section>
+
+                <section id="Mocking">
+                    <h2 class="Section_Title">Mocking with unittest.mock</h2>
+                    <div class="Definitions">
+                        Real code talks to things that are slow, unreliable or have side effects: web services,
+                        databases, the clock, email servers. A unit test should not depend on them. A test that calls
+                        a real weather API fails when the network is down and can never test "it is freezing today" on
+                        demand. The solution is to replace the collaborator with a <strong>mock</strong>: a stand-in
+                        object that you control and that records how it was used.
+                        <br><br>
+                        The standard library's <code>unittest.mock</code> module provides <code>Mock</code> (and its
+                        subclass <code>MagicMock</code>, which also supports magic methods such as
+                        <code>__len__</code>). A mock accepts any attribute access and any call; you configure what
+                        calls return and then make assertions about how it was called:
+                    </div>
+                    <pre class="prettyprint python Code">
+from unittest.mock import Mock
+
+# A Mock accepts any attribute access and any call.
+fake_api = Mock()
+fake_api.get_price.return_value = 19.99
+
+print(fake_api.get_price("book"))       # 19.99
+print(fake_api.get_price.called)        # True
+print(fake_api.get_price.call_count)    # 1
+print(fake_api.get_price.call_args)     # call('book')
+
+fake_api.get_price.assert_called_once_with("book")   # passes silently
+
+# side_effect as an exception: simulate a failure
+fake_api.connect.side_effect = ConnectionError("server down")
+try:
+    fake_api.connect()
+except ConnectionError as error:
+    print("Caught:", error)            # Caught: server down
+
+# side_effect as an iterable: a different result on each call
+fake_api.next_id.side_effect = [101, 102, 103]
+print(fake_api.next_id(), fake_api.next_id())   # 101 102
+
+# side_effect as a function: compute the result from the arguments
+fake_api.double.side_effect = lambda n: n * 2
+print(fake_api.double(21))              # 42
+</pre>
+                    <div class="Definitions">
+                        <table>
+                            <tr>
+                                <th>Attribute / method</th>
+                                <th>Purpose</th>
+                            </tr>
+                            <tr>
+                                <td><code>return_value</code></td>
+                                <td>What calling the mock returns</td>
+                            </tr>
+                            <tr>
+                                <td><code>side_effect</code></td>
+                                <td>An exception to raise, an iterable of successive results, or a function to call</td>
+                            </tr>
+                            <tr>
+                                <td><code>assert_called_with(...)</code></td>
+                                <td>The <em>most recent</em> call used these arguments</td>
+                            </tr>
+                            <tr>
+                                <td><code>assert_called_once_with(...)</code></td>
+                                <td>Called exactly once, with these arguments</td>
+                            </tr>
+                            <tr>
+                                <td><code>assert_any_call(...)</code></td>
+                                <td>At least one call used these arguments</td>
+                            </tr>
+                            <tr>
+                                <td><code>assert_not_called()</code></td>
+                                <td>Never called</td>
+                            </tr>
+                            <tr>
+                                <td><code>call_count</code>, <code>call_args</code>, <code>call_args_list</code></td>
+                                <td>Inspect calls manually</td>
+                            </tr>
+                        </table>
+                        When an assertion fails, the message shows what was expected and what actually happened:
+                    </div>
+                    <pre class="prettyprint Code">
+AssertionError: expected call not found.
+Expected: save('other')
+Actual: save('data')
+</pre>
+                    <h3 class="Subsection_Title">Replacing real code with patch</h3>
+                    <div class="Definitions">
+                        Usually the code under test does not receive the collaborator as an argument; it imports it.
+                        <code>patch()</code> temporarily replaces a name in a module with a mock and restores the
+                        original afterwards. Consider:
+                    </div>
+                    <pre class="prettyprint python Code">
+# weather.py
+import json
+from urllib.request import urlopen
+
+
+def fetch_temperature(city):
+    """Ask a (pretend) web service for the current temperature."""
+    with urlopen(f"https://api.example.com/weather?city={city}") as response:
+        return json.load(response)["temp_c"]
+</pre>
+                    <pre class="prettyprint python Code">
+# advisor.py
+from weather import fetch_temperature
+
+
+def clothing_advice(city):
+    try:
+        temp = fetch_temperature(city)
+    except OSError:
+        return "Weather unavailable, bring a jacket just in case."
+    if temp &lt; 10:
+        return "Wear a coat."
+    if temp &lt; 20:
+        return "A sweater will do."
+    return "T-shirt weather!"
+</pre>
+                    <div class="Definitions">
+                        <code>patch</code> works as a decorator (the mock is passed as an extra argument) or as a
+                        context manager (the mock is the <code>as</code> target). Keyword arguments such as
+                        <code>return_value</code> and <code>side_effect</code> configure the mock directly:
+                    </div>
+                    <pre class="prettyprint python Code">
+# test_advisor.py
+import unittest
+from unittest.mock import patch
+
+from advisor import clothing_advice
+
+
+class TestClothingAdvice(unittest.TestCase):
+
+    # Patch the name where advisor LOOKS IT UP, not where it was defined.
+    @patch("advisor.fetch_temperature")
+    def test_cold_day(self, mock_fetch):
+        mock_fetch.return_value = 3
+        self.assertEqual(clothing_advice("Oslo"), "Wear a coat.")
+        mock_fetch.assert_called_once_with("Oslo")
+
+    def test_warm_day(self):
+        with patch("advisor.fetch_temperature", return_value=27) as mock_fetch:
+            self.assertEqual(clothing_advice("Algiers"), "T-shirt weather!")
+        mock_fetch.assert_called_once_with("Algiers")
+
+    @patch("advisor.fetch_temperature", side_effect=OSError("no network"))
+    def test_network_failure(self, mock_fetch):
+        self.assertIn("unavailable", clothing_advice("Paris"))
+
+
+if __name__ == "__main__":
+    unittest.main()
+</pre>
+                    <pre class="prettyprint Code">
+&gt; python -m unittest -v test_advisor
+test_cold_day (test_advisor.TestClothingAdvice.test_cold_day) ... ok
+test_network_failure (test_advisor.TestClothingAdvice.test_network_failure) ... ok
+test_warm_day (test_advisor.TestClothingAdvice.test_warm_day) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+OK
+</pre>
+                    <div class="Warning">
+                        <strong>Patch where the name is used, not where it is defined.</strong>
+                        <code>from weather import fetch_temperature</code> copies a reference to the function into the
+                        <code>advisor</code> module. Patching <code>"weather.fetch_temperature"</code> replaces the
+                        name in <code>weather</code>, but <code>advisor</code> still holds the original, so the real
+                        network code runs. In our example the test does not even crash; it silently gets
+                        <code>"Weather unavailable, ..."</code> instead of <code>"Wear a coat."</code>. The correct
+                        target is <code>"advisor.fetch_temperature"</code>. (If <code>advisor</code> had used
+                        <code>import weather</code> and called <code>weather.fetch_temperature()</code>, then
+                        patching <code>"weather.fetch_temperature"</code> would be correct.)
+                    </div>
+                    <h3 class="Subsection_Title">autospec: mocks that respect the real signature</h3>
+                    <div class="Definitions">
+                        A plain mock accepts <em>anything</em>. If you rename a function's parameter or change how it
+                        is called, tests using a plain mock keep passing while the real code is broken. Creating the
+                        mock with <code>autospec=True</code> (or <code>create_autospec()</code>) copies the real
+                        object's signature and attributes, so wrong calls fail the test just like they would in
+                        production:
+                    </div>
+                    <pre class="prettyprint python Code">
+from unittest.mock import create_autospec, patch
+
+from weather import fetch_temperature
+
+loose = patch("advisor.fetch_temperature").start()
+print(loose("Oslo", "extra", units="F"))   # &lt;MagicMock name='fetch_temperature()' id='...'&gt;
+patch.stopall()                             # the wrong call was accepted without complaint
+
+strict = create_autospec(fetch_temperature, return_value=12)
+print(strict("Oslo"))                       # 12
+try:
+    strict("Oslo", "extra", units="F")
+except TypeError as error:
+    print("TypeError:", error)              # TypeError: too many positional arguments
+
+with patch("advisor.fetch_temperature", autospec=True) as mock_fetch:
+    mock_fetch.return_value = 15
+    import advisor
+    print(advisor.clothing_advice("Rome"))  # A sweater will do.
+</pre>
+                    <div class="Warning">
+                        Typos are a classic mocking pitfall. <code>mock.sav("data")</code> on a plain mock just creates
+                        a new child mock named <code>sav</code>, and an attribute misspelled in your test, such as
+                        <code>mock_fetch.retrun_value = 3</code>, silently sets a meaningless attribute instead of
+                        configuring the return value. <code>autospec</code> catches the first kind of mistake, because
+                        the real object has no <code>sav</code> attribute. (For assertion methods Python helps too:
+                        names starting with <code>assert</code>, <code>assret</code> and similar misspellings raise
+                        <code>AttributeError</code> instead of passing silently.)
+                    </div>
+                    <div class="Note">
+                        Mock only the boundaries of your system (network, files, time, randomness), not every function.
+                        Tests that mock everything mostly check that the code calls what it calls, and they break
+                        whenever you refactor.
+                    </div>
+                </section>
+
+                <section id="Dependency_Injection">
+                    <h2 class="Section_Title">Encapsulating Dependencies to Make Mocking Easier</h2>
+                    <div class="Definitions">
+                        <code>patch()</code> is powerful, but needing it is often a sign of <strong>hidden
+                        dependencies</strong>: the function reaches out and grabs something (the clock, a database, a
+                        module-level client) instead of being given it. Patching then requires knowing string paths to
+                        internal names, and tests break when you move code around.
+                        <br><br>
+                        The alternative is <strong>dependency injection</strong>: pass collaborators in as parameters
+                        (or constructor arguments). Production code passes the real thing, tests pass a fake, and no
+                        patching is required. Compare these two versions:
+                    </div>
+                    <pre class="prettyprint python Code">
+# Hard to test: depends on the real clock.
+from datetime import datetime
+
+
+def greeting():
+    hour = datetime.now().hour          # hidden dependency
+    if hour &lt; 12:
+        return "Good morning"
+    return "Good afternoon"
+</pre>
+                    <pre class="prettyprint python Code">
+# Easy to test: the current time can be injected.
+from datetime import datetime
+
+
+def greeting(now=None):
+    if now is None:                     # production callers pass nothing
+        now = datetime.now()
+    if now.hour &lt; 12:
+        return "Good morning"
+    return "Good afternoon"
+</pre>
+                    <div class="Definitions">
+                        Testing the first version in the afternoon can never exercise the morning branch without
+                        patching <code>datetime</code>. The second version is tested with plain values:
+                    </div>
+                    <pre class="prettyprint python Code">
+from datetime import datetime
+
+from greet import greeting
+
+
+def test_morning():
+    assert greeting(now=datetime(2024, 5, 1, 9, 0)) == "Good morning"
+
+
+def test_afternoon():
+    assert greeting(now=datetime(2024, 5, 1, 15, 30)) == "Good afternoon"
+</pre>
+                    <div class="Note">
+                        Use <code>None</code> as the default and create the real value inside the function. Writing
+                        <code>def greeting(now=datetime.now())</code> would evaluate <code>datetime.now()</code> once,
+                        when the function is defined, so every later call would see the same stale time.
+                    </div>
+                    <h3 class="Subsection_Title">Injecting collaborators into a class</h3>
+                    <div class="Definitions">
+                        For larger components, pass collaborators to <code>__init__</code>. The class below does not
+                        know or care whether it talks to a real database and a real mail server; it only needs objects
+                        with the right methods:
+                    </div>
+                    <pre class="prettyprint python Code">
+# reminders.py
+class ReminderService:
+    def __init__(self, repository, sender):
+        # Collaborators are handed in instead of being created inside.
+        self.repository = repository
+        self.sender = sender
+
+    def send_due_reminders(self, today):
+        sent = 0
+        for user in self.repository.users_with_due_tasks(today):
+            self.sender.send(user["email"], f"You have tasks due on {today}")
+            sent += 1
+        return sent
+</pre>
+                    <div class="Definitions">
+                        In tests you can pass <code>Mock</code> objects, or a small hand-written <strong>fake</strong>
+                        that behaves like the real thing in a simplified way. Fakes are often more readable than mocks
+                        because you check the resulting <em>state</em> (what ended up in the outbox) rather than a list
+                        of calls:
+                    </div>
+                    <pre class="prettyprint python Code">
+from datetime import date
+from unittest.mock import Mock
+
+from reminders import ReminderService
+
+
+def test_send_due_reminders():
+    repository = Mock()
+    repository.users_with_due_tasks.return_value = [
+        {"email": "ada@example.com"},
+        {"email": "alan@example.com"},
+    ]
+    sender = Mock()
+    service = ReminderService(repository, sender)
+
+    count = service.send_due_reminders(date(2024, 5, 1))
+
+    assert count == 2
+    repository.users_with_due_tasks.assert_called_once_with(date(2024, 5, 1))
+    sender.send.assert_any_call("ada@example.com", "You have tasks due on 2024-05-01")
+    assert sender.send.call_count == 2
+
+
+class FakeSender:
+    """A hand-written test double that records messages instead of emailing."""
+
+    def __init__(self):
+        self.outbox = []
+
+    def send(self, address, message):
+        self.outbox.append((address, message))
+
+
+def test_with_a_fake():
+    repository = Mock()
+    repository.users_with_due_tasks.return_value = [{"email": "ada@example.com"}]
+    sender = FakeSender()
+    ReminderService(repository, sender).send_due_reminders(date(2024, 5, 1))
+    assert sender.outbox == [("ada@example.com", "You have tasks due on 2024-05-01")]
+</pre>
+                    <div class="Definitions">
+                        Notice that <code>today</code> is also a parameter rather than being read from the clock inside
+                        the method, which is the same idea applied once more. Code designed this way is not only easier
+                        to test; it is also easier to reuse (send reminders over SMS by passing a different sender) and
+                        to understand, because every dependency is visible in the signature.
+                    </div>
+                </section>
+
+                <section id="Isolating_Tests">
+                    <h2 class="Section_Title">Isolating Tests with setUpModule/setUpClass</h2>
+                    <div class="Definitions">
+                        <code>setUp()</code> runs before every test, which is perfect for cheap objects. Some resources,
+                        however, are too expensive to rebuild for each test: starting a database server, loading a
+                        large data file, compiling a template set. <code>unittest</code> offers two wider hooks, the
+                        counterparts of pytest's module and class fixture scopes:
+                        <ul>
+                            <li><code>setUpModule()</code> / <code>tearDownModule()</code>: plain functions at module
+                                level, run once before the first and after the last test in the file.</li>
+                            <li><code>setUpClass(cls)</code> / <code>tearDownClass(cls)</code>: class methods (they
+                                need the <code>@classmethod</code> decorator), run once per <code>TestCase</code>
+                                class.</li>
+                        </ul>
+                        The following example prints from every hook so you can see the exact order:
+                    </div>
+                    <pre class="prettyprint python Code">
+# test_lifecycle.py
+import unittest
+
+
+def setUpModule():
+    print("setUpModule: start the test database server")
+
+
+def tearDownModule():
+    print("tearDownModule: stop the test database server")
+
+
+class TestUsers(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        print("  setUpClass: load the large sample dataset once")
+        cls.dataset = list(range(1000))
+
+    @classmethod
+    def tearDownClass(cls):
+        print("  tearDownClass: release the dataset")
+
+    def setUp(self):
+        print("    setUp")
+
+    def tearDown(self):
+        print("    tearDown")
+
+    def test_dataset_size(self):
+        print("      test_dataset_size")
+        self.assertEqual(len(self.dataset), 1000)
+
+    def test_dataset_starts_at_zero(self):
+        print("      test_dataset_starts_at_zero")
+        self.assertEqual(self.dataset[0], 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
+</pre>
+                    <pre class="prettyprint Code">
+&gt; python -m unittest test_lifecycle
+setUpModule: start the test database server
+  setUpClass: load the large sample dataset once
+    setUp
+      test_dataset_size
+    tearDown
+    setUp
+      test_dataset_starts_at_zero
+    tearDown
+  tearDownClass: release the dataset
+tearDownModule: stop the test database server
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK
+</pre>
+                    <div class="Definitions">
+                        (The progress dots are written to stderr and the prints to stdout, so in your terminal they may
+                        appear interleaved differently.)
+                        <br><br>
+                        The golden rule: <strong>share expensive, read-only resources; isolate everything a test
+                        changes.</strong> Put the costly part in <code>setUpClass</code> and give each test its own
+                        mutable state in <code>setUp</code>. The cleanup helpers <code>addClassCleanup()</code> and
+                        <code>addCleanup()</code> register undo actions right next to the code that creates the
+                        resource; they run in reverse order even if a later part of the set-up raises an exception,
+                        something a <code>tearDown</code> method cannot guarantee:
+                    </div>
+                    <pre class="prettyprint python Code">
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+
+
+class TestReports(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.folder = Path(tempfile.mkdtemp())
+        # Registered cleanups run even if a later line in setUpClass fails.
+        cls.addClassCleanup(shutil.rmtree, cls.folder)
+        (cls.folder / "template.txt").write_text("Hello {name}")
+
+    def setUp(self):
+        # Each test gets its own output file, so tests cannot interfere.
+        self.output = self.folder / f"{self.id()}.txt"
+        self.addCleanup(self.output.unlink, missing_ok=True)
+
+    def test_render(self):
+        template = (self.folder / "template.txt").read_text()
+        self.output.write_text(template.format(name="Ada"))
+        self.assertEqual(self.output.read_text(), "Hello Ada")
+
+
+if __name__ == "__main__":
+    unittest.main()
+</pre>
+                    <div class="Warning">
+                        If <code>setUpClass</code> raises an exception, none of the tests in the class run and
+                        <code>tearDownClass</code> is <strong>not</strong> called, so any resource opened before the
+                        error leaks. That is exactly why <code>addClassCleanup()</code> exists. The same applies to
+                        <code>setUpModule</code> with <code>unittest.addModuleCleanup()</code>.
+                    </div>
+                    <div class="Warning">
+                        Attributes stored on <code>cls</code> in <code>setUpClass</code> are shared by every test in
+                        the class. If one test appends to <code>self.dataset</code>, the next test sees the modified
+                        list. Treat class-level data as read-only.
+                    </div>
+                </section>
+
+                <section id="Test_Coverage">
+                    <h2 class="Section_Title">Test Coverage</h2>
+                    <div class="Definitions">
+                        How do you know whether your tests exercise all of your code? <strong>Coverage</strong> tools
+                        record which lines run while the test suite executes and report the ones that never did. Those
+                        unexecuted lines are code that no test has ever checked. The standard tool is
+                        <code>coverage.py</code>:
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; python -m pip install coverage
+</pre>
+                    <div class="Definitions">
+                        Take this function, which has several branches, and a test file that checks only two of them:
+                    </div>
+                    <pre class="prettyprint python Code">
+# shipping.py
+def shipping_cost(weight_kg, express=False):
+    if weight_kg &lt;= 0:
+        raise ValueError("weight must be positive")
+    if weight_kg &lt; 1:
+        cost = 4.0
+    elif weight_kg &lt; 5:
+        cost = 9.5
+    else:
+        cost = 9.5 + (weight_kg - 5) * 1.2
+    if express:
+        cost *= 2
+    return round(cost, 2)
+</pre>
+                    <pre class="prettyprint python Code">
+# test_shipping.py
+from shipping import shipping_cost
+
+
+def test_light_parcel():
+    assert shipping_cost(0.5) == 4.0
+
+
+def test_medium_parcel():
+    assert shipping_cost(3) == 9.5
+</pre>
+                    <div class="Definitions">
+                        Instead of <code>python -m pytest</code> (or <code>python -m unittest</code>), run the tests
+                        through <code>coverage run -m</code>, then ask for a report. The <code>-m</code> option of
+                        <code>report</code> adds the "Missing" column listing the line numbers that never ran:
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; coverage run -m pytest
+2 passed in 0.02s
+&gt; coverage report -m
+Name               Stmts   Miss  Cover   Missing
+------------------------------------------------
+shipping.py           11      3    73%   3, 9, 11
+test_shipping.py       5      0   100%
+------------------------------------------------
+TOTAL                 16      3    81%
+</pre>
+                    <div class="Definitions">
+                        Lines 3, 9 and 11 are the error case, the heavy-parcel formula and the express surcharge:
+                        exactly the behaviors we forgot to test. <code>coverage html</code> writes an
+                        <code>htmlcov/index.html</code> report in which every file is shown with the missed lines
+                        highlighted, which is the most convenient way to explore the results.
+                    </div>
+                    <h3 class="Subsection_Title">Branch coverage</h3>
+                    <div class="Definitions">
+                        Line coverage can be misleading. In the function below a single test executes every line, yet
+                        the case where the <code>if</code> is <em>false</em> was never tried:
+                    </div>
+                    <pre class="prettyprint python Code">
+# pricing.py
+def final_price(price, coupon=None):
+    if coupon == "SAVE5":
+        price -= 5
+    return max(price, 0)
+
+
+# test_pricing.py
+from pricing import final_price
+
+
+def test_coupon_applied():
+    assert final_price(20, "SAVE5") == 15
+</pre>
+                    <div class="Definitions">
+                        Adding <code>--branch</code> makes coverage track every possible jump. <code>2-&gt;4</code>
+                        means "the jump from line 2 straight to line 4 (the condition being false) never happened":
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; coverage run -m pytest
+&gt; coverage report -m --include=pricing.py
+Name         Stmts   Miss  Cover   Missing
+------------------------------------------
+pricing.py       4      0   100%
+------------------------------------------
+TOTAL            4      0   100%
+
+&gt; coverage run --branch -m pytest
+&gt; coverage report -m --include=pricing.py
+Name         Stmts   Miss Branch BrPart  Cover   Missing
+--------------------------------------------------------
+pricing.py       4      0      2      1    83%   2-&gt;4
+--------------------------------------------------------
+TOTAL            4      0      2      1    83%
+</pre>
+                    <div class="Definitions">
+                        Settings can be stored in a <code>.coveragerc</code> file (or in <code>pyproject.toml</code>
+                        under <code>[tool.coverage.run]</code> and <code>[tool.coverage.report]</code>) so you do not
+                        have to repeat them. With <code>fail_under</code>, <code>coverage report</code> exits with an
+                        error status when coverage drops below the threshold, which lets a CI pipeline reject changes
+                        that remove tests:
+                    </div>
+                    <pre class="prettyprint Code">
+# .coveragerc
+[run]
+branch = True
+omit = test_*.py
+
+[report]
+show_missing = True
+fail_under = 90
+</pre>
+                    <pre class="prettyprint Code">
+&gt; coverage run -m pytest
+&gt; coverage report
+Name         Stmts   Miss Branch BrPart  Cover   Missing
+--------------------------------------------------------
+pricing.py       4      0      2      1    83%   2-&gt;4
+--------------------------------------------------------
+TOTAL            4      0      2      1    83%
+Coverage failure: total of 83 is less than fail-under=90
+</pre>
+                    <div class="Warning">
+                        100% coverage does not mean the code is correct. Coverage only proves a line was
+                        <em>executed</em>, not that any assertion checked its result: a test that calls every function
+                        and asserts nothing scores 100%. Use coverage to find untested code, not as a goal in itself.
+                    </div>
+                    <div class="Note">
+                        If you use pytest, the <code>pytest-cov</code> plugin wraps the same engine:
+                        <code>pytest --cov=shipping --cov-report=term-missing</code>.
+                    </div>
+                </section>
+
+                <section id="Post_Mortem_Debugging">
+                    <h2 class="Section_Title">Post-Mortem Debugging</h2>
+                    <div class="Definitions">
+                        Placing a <code>breakpoint()</code> requires knowing in advance where to stop. When a program
+                        crashes with an exception you did not expect, it is often more useful to do
+                        <strong>post-mortem debugging</strong>: open the debugger <em>at the moment of the crash</em>,
+                        with every local variable of every frame still available for inspection. Instead of reading
+                        a traceback and guessing, you can look at the exact data that caused the failure.
+                    </div>
+                    <pre class="prettyprint python Code">
+# invoice.py
+def unit_price(line):
+    return line["total"] / line["quantity"]
+
+
+def summarize(lines):
+    return [round(unit_price(line), 2) for line in lines]
+
+
+orders = [
+    {"product": "pen", "total": 6.0, "quantity": 3},
+    {"product": "gift card", "total": 25.0, "quantity": 0},
+]
+print(summarize(orders))
+</pre>
+                    <h3 class="Subsection_Title">python -m pdb script.py</h3>
+                    <div class="Definitions">
+                        Running a script under <code>python -m pdb</code> starts it paused on the first line. Type
+                        <code>c</code> to run it normally; if it raises an uncaught exception, pdb automatically
+                        enters post-mortem mode at the line that failed. Use <code>u</code> (up) to move to the
+                        calling frame and inspect its variables:
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; python -m pdb invoice.py
+&gt; invoice.py(1)&lt;module&gt;()
+-&gt; def unit_price(line):
+(Pdb) c
+Traceback (most recent call last):
+  ...
+  File "invoice.py", line 2, in unit_price
+    return line["total"] / line["quantity"]
+           ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+ZeroDivisionError: float division by zero
+Uncaught exception. Entering post mortem debugging
+Running 'cont' or 'step' will restart the program
+&gt; invoice.py(2)unit_price()
+-&gt; return line["total"] / line["quantity"]
+(Pdb) p line
+{'product': 'gift card', 'total': 25.0, 'quantity': 0}
+(Pdb) u
+&gt; invoice.py(6)summarize()
+-&gt; return [round(unit_price(line), 2) for line in lines]
+(Pdb) p lines
+[{'product': 'pen', 'total': 6.0, 'quantity': 3}, {'product': 'gift card', 'total': 25.0, 'quantity': 0}]
+(Pdb) q
+</pre>
+                    <div class="Definitions">
+                        In seconds we learn that the culprit is a gift card with a quantity of zero. After the
+                        post-mortem session, pdb offers to restart the program; type <code>q</code> again to exit.
+                    </div>
+                    <h3 class="Subsection_Title">pdb.pm() in the interactive interpreter</h3>
+                    <div class="Definitions">
+                        If you ran the script with <code>python -i invoice.py</code> (which drops into the interactive
+                        prompt after the program ends or crashes), or you hit an exception while experimenting in the
+                        REPL, call <code>pdb.pm()</code>. It opens the debugger on the last unhandled exception, which
+                        Python stores in <code>sys.last_exc</code> (new in 3.12; older versions use
+                        <code>sys.last_traceback</code>):
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; python -i invoice.py
+Traceback (most recent call last):
+  ...
+ZeroDivisionError: float division by zero
+&gt;&gt;&gt; import pdb
+&gt;&gt;&gt; pdb.pm()
+&gt; invoice.py(2)unit_price()
+-&gt; return line["total"] / line["quantity"]
+(Pdb) p line["product"]
+'gift card'
+</pre>
+                    <h3 class="Subsection_Title">pdb.post_mortem() inside your code</h3>
+                    <div class="Definitions">
+                        To debug an exception that your program catches, call <code>pdb.post_mortem()</code> inside the
+                        <code>except</code> block. Without arguments it uses the exception currently being handled:
+                    </div>
+                    <pre class="prettyprint python Code">
+import pdb
+
+
+def risky(data):
+    return data["missing"]
+
+
+try:
+    risky({"present": 1})
+except Exception:
+    print("Something went wrong, opening the debugger...")
+    pdb.post_mortem()            # uses the exception currently being handled
+</pre>
+                    <pre class="prettyprint Code">
+Something went wrong, opening the debugger...
+&gt; pm_except.py(5)risky()
+-&gt; return data["missing"]
+(Pdb) p data
+{'present': 1}
+</pre>
+                    <div class="Note">
+                        pytest has the same feature built in: <code>pytest --pdb</code> opens the debugger at the point
+                        of every failing test (combine it with <code>-x</code> to stop after the first one), and
+                        <code>pytest --trace</code> stops at the start of each test.
+                    </div>
+                    <div class="Warning">
+                        Never leave <code>pdb.post_mortem()</code> in code that runs unattended (a server, a scheduled
+                        job): the process will hang forever waiting for keyboard input. Log the exception with
+                        <code>logger.exception()</code> instead.
+                    </div>
+                </section>
+
+                <section id="Tracemalloc">
+                    <h2 class="Section_Title">Finding Memory Leaks with tracemalloc</h2>
+                    <div class="Definitions">
+                        Python frees memory automatically once nothing refers to an object anymore. A "memory leak" in
+                        Python therefore almost always means that something <strong>still holds a reference</strong> to
+                        objects you no longer need: a cache that only grows, a list of callbacks that is never cleared,
+                        a global collection of results. The program's memory use creeps up until it slows down or
+                        crashes.
+                        <br><br>
+                        The standard <code>tracemalloc</code> module records the source line responsible for each
+                        memory allocation. The usual technique is to take a <strong>snapshot</strong> before and after
+                        the suspicious work and compare them; the lines whose memory grew the most are your suspects:
+                    </div>
+                    <pre class="prettyprint python Code">
+import tracemalloc
+
+_cache = []                       # module-level list that is never cleared
+
+
+def process_request(request_id):
+    payload = "x" * 10_000        # about 10 KB of data per request
+    _cache.append(payload)        # BUG: every payload is kept forever
+    return len(payload)
+
+
+tracemalloc.start()
+before = tracemalloc.take_snapshot()
+
+for request_id in range(1_000):
+    process_request(request_id)
+
+after = tracemalloc.take_snapshot()
+top_stats = after.compare_to(before, "lineno")
+
+print("Top 3 memory differences:")
+for stat in top_stats[:3]:
+    print(stat)
+
+current, peak = tracemalloc.get_traced_memory()
+print(f"Current: {current / 1024:.0f} KiB, peak: {peak / 1024:.0f} KiB")
+tracemalloc.stop()
+</pre>
+                    <pre class="prettyprint Code">
+Top 3 memory differences:
+leak.py:7: size=9806 KiB (+9806 KiB), count=1000 (+1000), average=10041 B
+leak.py:8: size=8800 B (+8800 B), count=1 (+1), average=8800 B
+C:\Python312\Lib\tracemalloc.py:560: size=312 B (+312 B), count=2 (+2), average=156 B
+</pre>
+                    <div class="Definitions">
+                        The report is unambiguous: line 7 allocated about 9.8 MB in 1000 blocks that are still alive
+                        after the loop. The strings were created there, but they survive because line 8 stores them in
+                        <code>_cache</code>. Fixing the leak means removing that reference, bounding the cache (for
+                        example with <code>functools.lru_cache(maxsize=...)</code> or a <code>collections.deque</code>
+                        with <code>maxlen</code>), or clearing it periodically.
+                    </div>
+                    <h3 class="Subsection_Title">Seeing the full call path</h3>
+                    <div class="Definitions">
+                        Knowing the line that allocated memory is not always enough: a helper such as
+                        <code>load_row()</code> may be called from many places, and you need to know which caller keeps
+                        the results alive. Pass a number of frames to <code>tracemalloc.start()</code> and group
+                        statistics by <code>"traceback"</code>:
+                    </div>
+                    <pre class="prettyprint python Code">
+import tracemalloc
+
+tracemalloc.start(10)              # remember up to 10 frames per allocation
+
+_cache = []
+
+
+def load_row(i):
+    return {"id": i, "data": str(i) * 1_000}
+
+
+def remember(i):
+    _cache.append(load_row(i))
+
+
+for i in range(500):
+    remember(i)
+
+snapshot = tracemalloc.take_snapshot()
+biggest = snapshot.statistics("traceback")[0]
+print(f"{biggest.count} blocks, {biggest.size / 1024:.1f} KiB")
+for line in biggest.traceback.format():
+    print(line)
+</pre>
+                    <pre class="prettyprint Code">
+1473 blocks, 1464.6 KiB
+  File "leak_tb.py", line 17
+    remember(i)
+  File "leak_tb.py", line 13
+    _cache.append(load_row(i))
+  File "leak_tb.py", line 9
+    return {"id": i, "data": str(i) * 1_000}
+</pre>
+                    <div class="Warning">
+                        Tracing every allocation makes the program noticeably slower and uses extra memory itself, and
+                        storing more frames costs more. Enable <code>tracemalloc</code> while investigating, not
+                        permanently in production. Also, it only sees memory allocated through Python's allocator;
+                        memory used internally by C extensions may not appear.
+                    </div>
+                    <div class="Note">
+                        You can also enable tracing for a whole program without editing it:
+                        <code>python -X tracemalloc=10 app.py</code> (or set the <code>PYTHONTRACEMALLOC</code>
+                        environment variable). A related trick: <code>gc.get_referrers(obj)</code> lists the objects
+                        that refer to <code>obj</code>, which helps when you know what is leaking but not who is
+                        holding it.
+                    </div>
+                </section>
+
+                <section id="Doctest">
+                    <h2 class="Section_Title">Doctest</h2>
+                    <div class="Definitions">
+                        Examples in documentation are wonderfully helpful and notoriously prone to going stale: the
+                        code changes and nobody updates the docstring. The standard <code>doctest</code> module solves
+                        this by treating examples written like an interactive session, lines starting with
+                        <code>&gt;&gt;&gt;</code> followed by the expected output, as tests. It runs each example and
+                        compares the printed result with what the docstring claims.
+                    </div>
+                    <pre class="prettyprint python Code">
+# stats.py
+def mean(values):
+    """Return the arithmetic mean of a non-empty list of numbers.
+
+    &gt;&gt;&gt; mean([1, 2, 3, 4])
+    2.5
+    &gt;&gt;&gt; mean([10])
+    10.0
+    &gt;&gt;&gt; mean([])
+    Traceback (most recent call last):
+        ...
+    ValueError: mean() requires at least one value
+    """
+    if not values:
+        raise ValueError("mean() requires at least one value")
+    return sum(values) / len(values)
+
+
+def describe(values):
+    """Summarize a list of numbers.
+
+    &gt;&gt;&gt; summary = describe([3, 1, 2])
+    &gt;&gt;&gt; summary["min"], summary["max"]
+    (1, 3)
+    &gt;&gt;&gt; sorted(summary)
+    ['max', 'mean', 'min']
+    &gt;&gt;&gt; describe(list(range(100)))  # doctest: +ELLIPSIS
+    {'min': 0, 'max': 99, 'mean': 49.5...}
+    """
+    return {"min": min(values), "max": max(values), "mean": mean(values)}
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
+</pre>
+                    <div class="Definitions">
+                        A few rules to notice: the expected output is exactly what the REPL would display (the
+                        <code>repr()</code> of the value), an expected exception needs only the
+                        <code>Traceback</code> header and the final line (the middle can be <code>...</code>), and the
+                        <code>+ELLIPSIS</code> directive lets <code>...</code> in the expected output match any text.
+                        There are several ways to run the examples. Doctest is silent when everything passes, so add
+                        <code>-v</code> to see details:
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; python stats.py                 # runs doctest.testmod(); no output means success
+&gt; python -m doctest stats.py      # no need for the __main__ block
+&gt; python -m doctest -v stats.py
+...
+1 items had no tests:
+    stats
+2 items passed all tests:
+   4 tests in stats.describe
+   3 tests in stats.mean
+7 tests in 3 items.
+7 passed and 0 failed.
+Test passed.
+
+&gt; pytest --doctest-modules stats.py
+2 passed in 0.06s
+</pre>
+                    <div class="Definitions">
+                        When an example is wrong, doctest shows what it expected and what it actually got:
+                    </div>
+                    <pre class="prettyprint Code">
+**********************************************************************
+File "stats_bad.py", line 5, in stats_bad.mean
+Failed example:
+    mean([1, 2, 3, 4])
+Expected:
+    2
+Got:
+    2.5
+**********************************************************************
+1 items had failures:
+   1 of   2 in stats_bad.mean
+***Test Failed*** 1 failures.
+</pre>
+                    <div class="Warning">
+                        Doctest compares <strong>text</strong>, not values. Output that varies between runs breaks it:
+                        memory addresses (<code>&lt;object at 0x...&gt;</code>), timestamps, set ordering, and long
+                        float results such as <code>0.30000000000000004</code>. Make such examples deterministic, for
+                        example by printing <code>sorted(...)</code>, rounding numbers, or using
+                        <code>+ELLIPSIS</code>. Trailing whitespace in the expected output also causes confusing
+                        failures.
+                    </div>
+                    <div class="Note">
+                        Doctests are best for keeping documentation honest and showing typical usage. They are a poor
+                        fit for thorough testing with many edge cases, set-up, or mocks; keep those in your
+                        <code>unittest</code> or <code>pytest</code> suite and let the two complement each other.
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
 
 </body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 
 </html>

@@ -1,4 +1,4 @@
-@import url("https://fonts.cdnfonts.com/css/century-schoolbook");
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Code+Pro:wght@400;600&display=swap");
 
 * {
   margin: 0;
@@ -7,7 +7,7 @@
 }
 
 body {
-  font-family: "Source Sans Pro";
+  font-family: "Source Sans 3", "Source Sans Pro", sans-serif;
   background-color: #e5e1de;
   margin: 0;
   padding: 0;
@@ -27,11 +27,77 @@ main {
 }
 
 .Code {
+  font-family: "Source Code Pro", Consolas, monospace;
   font-size: 1rem;
   font-weight: bold;
-  width: 50vw;
-  //transform: translateX(-50%);
-  //position: relative;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 15px !important;
+  margin: 15px 0;
+  border-radius: 8px;
+}
+
+.Definitions code {
+  font-family: "Source Code Pro", Consolas, monospace;
+  background-color: rgba(83, 175, 50, 0.15);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.Definitions {
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.Definitions ul,
+.Definitions ol {
+  margin: 10px 0 10px 40px;
+}
+
+.Note,
+.Warning {
+  font-size: 1.3em;
+  background-color: #fff;
+  border-left: 6px solid #53af32;
+  border-radius: 6px;
+  padding: 15px 20px;
+  margin: 20px 0;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.Warning {
+  border-left-color: #d9822b;
+}
+
+.Note::before {
+  content: "Note: ";
+  font-weight: bold;
+  color: #53af32;
+}
+
+.Warning::before {
+  content: "Warning: ";
+  font-weight: bold;
+  color: #d9822b;
+}
+
+.Definitions table {
+  border-collapse: collapse;
+  margin: 15px 0;
+  font-size: 0.85em;
+}
+
+.Definitions th,
+.Definitions td {
+  border: 1px solid #b9b5b0;
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.Definitions th {
+  background-color: #53af32;
+  color: #fff;
 }
 
 .Chapter_Title {
@@ -48,6 +114,7 @@ main {
 }
 
 .Section_Title {
+  scroll-margin-top: 20px;
   color: #53af32;
   font-size: 3rem;
   font-weight: bold;
@@ -67,20 +134,20 @@ main {
 .Sections_Tab {
   width: 15vw;
   background-color: #53af32;
-  left: 0;
-  top: 60vh;
-  margin: 0;
+  align-self: flex-start;
+  margin: calc(70vh - 40px) 0 0 0;
   padding: 0;
-  position: relative;
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
 .Content_Area {
   width: 80vw;
-  left: 0vw;
-  top: 60vh;
-  margin: 0;
+  margin: calc(70vh - 40px) 0 0 0;
   padding: 0vh 5vw;
   position: relative;
 }
@@ -98,6 +165,11 @@ main {
   text-align: center;
   border-bottom: 1px solid white;
   cursor: pointer;
+  text-decoration: none;
+}
+
+.Side_Bar_Menu_Item:hover {
+  background-color: #3d8a22;
 }
 
 .Cover_Image {
@@ -152,4 +224,47 @@ main {
   height: auto;
   margin: 5% 25% 5% 25%;
   border: 3px solid green;
+}
+
+.Solution_Link {
+  font-size: 1.3rem;
+  margin: 20px;
+}
+
+.Solution_Link a {
+  color: #53af32;
+  font-weight: bold;
+}
+
+@media screen and (max-width: 850px) {
+  .Chapter_Title {
+    font-size: 3rem;
+  }
+
+  .Section_Title {
+    font-size: 2rem;
+  }
+
+  .Subsection_Title {
+    font-size: 1.5rem;
+    margin-left: 0;
+  }
+
+  .Definitions {
+    font-size: 1.15em;
+  }
+
+  .Sections_Tab {
+    display: none;
+  }
+
+  .Content_Area {
+    width: 100%;
+    padding: 0 16px;
+  }
+
+  .Smaller_Image {
+    width: 90%;
+    margin: 5%;
+  }
 }

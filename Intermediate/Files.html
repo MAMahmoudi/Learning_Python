@@ -18,58 +18,821 @@
             <div class="Sections_Area">
                 <section id="Reading_File">
                     <h2 class="Section_Title">Reading from a File</h2>
-                    <h2 class="Subsection_Title">Reading an Entire File</h2>
                     <div class="Definitions">
-                        The open() function needs one argument: the name of the file you want to open. Python looks for
-                        this file in the directory where the program that's currently being executed is stored. <br>
-                        
+                        Variables only live while your program is running. As soon as the program ends, everything
+                        stored in memory is gone. Files are how a program keeps information between runs and how it
+                        exchanges data with other programs: configuration files, logs, reports, data sets and so on.
+                        <br>
+                        Working with a file always follows the same three steps:
+                        <ol>
+                            <li><strong>Open</strong> the file with the built-in <code>open()</code> function. This
+                                gives you a <em>file object</em>.</li>
+                            <li><strong>Read</strong> from it or <strong>write</strong> to it using the file object's
+                                methods.</li>
+                            <li><strong>Close</strong> the file so the operating system can release it and any
+                                buffered data is actually saved to disk.</li>
+                        </ol>
+                        The examples in this section use a small text file called <code>pi_digits.txt</code>, saved in
+                        the same folder as the program. It contains the first 30 decimal places of pi spread over
+                        three lines:
+                    </div>
+                    <pre class="prettyprint Code">
+3.1415926535
+  8979323846
+  2643383279
+</pre>
+                    <h3 class="Subsection_Title">Reading an Entire File</h3>
+                    <div class="Definitions">
+                        The <code>open()</code> function needs one argument: the name of the file you want to open.
+                        When you give it a plain file name, Python looks for the file in the <strong>current working
+                        directory</strong>, which is usually the folder you ran the program from (in an IDE like
+                        PyCharm, it is normally the project folder). <br>
+                        The <code>with</code> keyword creates a block that automatically closes the file when the
+                        block ends, even if an error happens inside it. You could call <code>open()</code> and
+                        <code>close()</code> yourself, but if your program crashes between the two calls the file is
+                        never closed, and if you close it too early you can no longer use it. Letting
+                        <code>with</code> handle it removes both problems. <br>
+                        The <code>read()</code> method returns the whole content of the file as a single string.
                     </div>
                     <pre class="prettyprint python Code">
 with open('pi_digits.txt') as file_object:
     contents = file_object.read()
-    print(contents)
-                    </pre>
-                    <h2 class="Subsection_Title">File Paths</h2>
-                    <div class="Definitions">
 
-                    </div>
-                    <pre class="prettyprint python Code"></pre>
-                    <h2 class="Subsection_Title">Reading Line by Line</h2>
+print(contents)
+</pre>
                     <div class="Definitions">
-
+                        Output:
                     </div>
-                    <pre class="prettyprint python Code"></pre>
-                    <h2 class="Subsection_Title">Making a List of Lines from a File</h2>
+                    <pre class="prettyprint Code">
+3.1415926535
+  8979323846
+  2643383279
+
+</pre>
                     <div class="Definitions">
-
+                        Notice the blank line at the end of the output. The file itself ends with a newline character
+                        (<code>\n</code>), so <code>contents</code> ends with one, and <code>print()</code> then adds
+                        its own newline. To remove whitespace (spaces, tabs and newlines) from the end of a string,
+                        use <code>rstrip()</code>:
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+with open('pi_digits.txt') as file_object:
+    contents = file_object.read()
+
+print(contents.rstrip())
+print(repr(contents[-3:]))  # '79\n'  the newline is really there
+</pre>
+                    <div class="Note">
+                        <code>read()</code> loads the whole file into memory at once. That is perfect for small and
+                        medium files, but for very large files (hundreds of megabytes) prefer reading line by line, as
+                        shown below.
+                    </div>
+                    <div class="Note">
+                        From the next example on, we pass <code>encoding='utf-8'</code> to <code>open()</code>. The
+                        <a href="#File_Encodings">Encodings</a> section explains why this is a good habit.
+                    </div>
+
+                    <h3 class="Subsection_Title">File Paths</h3>
+                    <div class="Definitions">
+                        Often the file you need is not next to your program. You then give <code>open()</code> a
+                        <strong>path</strong> instead of a bare file name. There are two kinds of paths:
+                        <ul>
+                            <li><strong>Relative path</strong>: starts from the current working directory. For
+                                example <code>'text_files/notes.txt'</code> means "the file <code>notes.txt</code>
+                                inside the folder <code>text_files</code>, which is inside the current directory".
+                                <code>'../data.txt'</code> means "one folder up".</li>
+                            <li><strong>Absolute path</strong>: the full location starting from the root of the
+                                drive, such as <code>'C:/Users/Amine/Documents/notes.txt'</code> on Windows or
+                                <code>'/home/amine/notes.txt'</code> on Linux and macOS. It works no matter where the
+                                program is run from, but it ties your code to one machine.</li>
+                        </ul>
+                        Python accepts forward slashes (<code>/</code>) on every operating system, including Windows,
+                        so they are the safest choice in string paths.
+                    </div>
+                    <pre class="prettyprint python Code">
+import os
+
+os.makedirs('text_files', exist_ok=True)  # create the folder if it doesn't exist
+
+# Relative path: the folder text_files inside the current working directory
+with open('text_files/notes.txt', 'w', encoding='utf-8') as file:
+    file.write('Notes stored in a subfolder.\n')
+
+with open('text_files/notes.txt', encoding='utf-8') as file:
+    print(file.read().rstrip())  # Notes stored in a subfolder.
+
+print(os.getcwd())  # shows the current working directory relative paths start from
+</pre>
+                    <div class="Warning">
+                        Be careful with backslashes in Windows paths. Inside a normal string, a backslash starts an
+                        escape sequence: <code>\n</code> is a newline and <code>\t</code> is a tab. The path below is
+                        silently corrupted:
+                    </div>
+                    <pre class="prettyprint python Code">
+bad_path = 'C:\new_folder\table.txt'
+print(bad_path)
+# Output:
+# C:
+# ew_folder	able.txt
+
+good_path = r'C:\new_folder\table.txt'   # raw string: backslashes are kept as-is
+also_good = 'C:/new_folder/table.txt'    # forward slashes work on Windows too
+print(good_path)  # C:\new_folder\table.txt
+</pre>
+                    <div class="Definitions">
+                        Use forward slashes, a raw string (<code>r'...'</code>), or better, the
+                        <code>pathlib</code> module described in <a href="#Pathlib">its own section</a>. Since
+                        Python 3.12, unknown escape sequences such as <code>'\d'</code> also produce a
+                        <code>SyntaxWarning</code>, which is a hint that you probably meant a raw string.
+                    </div>
+
+                    <h3 class="Subsection_Title">Reading Line by Line</h3>
+                    <div class="Definitions">
+                        A file object is <strong>iterable</strong>: looping over it with <code>for</code> gives you
+                        one line at a time. This is the most memory-friendly way to read a file, because Python only
+                        keeps the current line in memory, so it works even for files larger than your RAM. <br>
+                        Each line keeps its own newline character at the end, and <code>print()</code> adds another,
+                        which is why lines appear double spaced unless you strip them.
+                    </div>
+                    <pre class="prettyprint python Code">
+filename = 'pi_digits.txt'
+
+with open(filename, encoding='utf-8') as file_object:
+    for line in file_object:
+        print(line)
+# Output (extra blank lines):
+# 3.1415926535
+#
+#   8979323846
+#
+#   2643383279
+#
+
+with open(filename, encoding='utf-8') as file_object:
+    for line in file_object:
+        print(line.rstrip())
+# Output:
+# 3.1415926535
+#   8979323846
+#   2643383279
+</pre>
+                    <div class="Definitions">
+                        If you need line numbers, combine the loop with <code>enumerate()</code>:
+                    </div>
+                    <pre class="prettyprint python Code">
+with open('pi_digits.txt', encoding='utf-8') as file_object:
+    for number, line in enumerate(file_object, start=1):
+        print(f"{number}: {line.strip()}")
+# Output:
+# 1: 3.1415926535
+# 2: 8979323846
+# 3: 2643383279
+</pre>
+
+                    <h3 class="Subsection_Title">Making a List of Lines from a File</h3>
+                    <div class="Definitions">
+                        The file object is only usable inside the <code>with</code> block, because the file is closed
+                        when the block ends. If you want to work with the lines later, store them in a list first.
+                        <ul>
+                            <li><code>readlines()</code> returns a list of lines, each still ending with
+                                <code>\n</code>.</li>
+                            <li><code>read().splitlines()</code> returns a list of lines <em>without</em> the newline
+                                characters, which is usually what you want.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+with open('pi_digits.txt', encoding='utf-8') as file_object:
+    lines = file_object.readlines()
+
+print(lines)  # ['3.1415926535\n', '  8979323846\n', '  2643383279\n']
+
+# The file is closed now, but the list is still available
+pi_string = ''
+for line in lines:
+    pi_string += line.strip()
+
+print(pi_string)       # 3.141592653589793238462643383279
+print(len(pi_string))  # 32
+
+# Everything read from a text file is a string; convert it to use it as a number
+pi_value = float(pi_string)
+print(pi_value)        # 3.141592653589793
+</pre>
+                    <div class="Warning">
+                        Text files always give you strings. If a file contains numbers, convert them with
+                        <code>int()</code> or <code>float()</code> before doing arithmetic, otherwise
+                        <code>'2' + '3'</code> gives <code>'23'</code> instead of <code>5</code>.
+                    </div>
                 </section>
+
+                <section id="File_Modes">
+                    <h2 class="Section_Title">File Modes</h2>
+                    <div class="Definitions">
+                        The second argument of <code>open()</code> is the <strong>mode</strong>. It tells Python what
+                        you intend to do with the file. If you leave it out, the file is opened in read mode
+                        (<code>'r'</code>).
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Mode</th>
+                                    <th>Meaning</th>
+                                    <th>If the file exists</th>
+                                    <th>If it does not exist</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>'r'</code></td>
+                                    <td>Read (default)</td>
+                                    <td>Opens it for reading</td>
+                                    <td><code>FileNotFoundError</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>'w'</code></td>
+                                    <td>Write</td>
+                                    <td><strong>Erases</strong> its contents first</td>
+                                    <td>Creates it</td>
+                                </tr>
+                                <tr>
+                                    <td><code>'a'</code></td>
+                                    <td>Append</td>
+                                    <td>Adds new data at the end</td>
+                                    <td>Creates it</td>
+                                </tr>
+                                <tr>
+                                    <td><code>'x'</code></td>
+                                    <td>Exclusive creation</td>
+                                    <td><code>FileExistsError</code></td>
+                                    <td>Creates it</td>
+                                </tr>
+                                <tr>
+                                    <td><code>'r+'</code></td>
+                                    <td>Read and write</td>
+                                    <td>Opens it without erasing</td>
+                                    <td><code>FileNotFoundError</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>'b'</code></td>
+                                    <td>Binary (combined with another mode: <code>'rb'</code>, <code>'wb'</code>,
+                                        <code>'ab'</code>)</td>
+                                    <td colspan="2">Reads and writes <code>bytes</code> instead of <code>str</code>;
+                                        used for images, audio, zip files, etc.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        Text mode (<code>'t'</code>) is the default, so <code>'r'</code> is the same as
+                        <code>'rt'</code>. In text mode Python decodes bytes into characters and translates line
+                        endings; in binary mode you get the raw bytes untouched.
+                    </div>
+                    <pre class="prettyprint python Code">
+# 'x' protects you from accidentally overwriting an existing file
+with open('report.txt', 'w', encoding='utf-8') as file:
+    file.write('First version\n')
+
+try:
+    with open('report.txt', 'x', encoding='utf-8') as file:
+        file.write('Second version\n')
+except FileExistsError:
+    print('report.txt already exists, not overwriting it.')
+
+# Binary mode returns bytes, not str
+with open('pi_digits.txt', 'rb') as file:
+    data = file.read(6)
+print(data)        # b'3.1415'
+print(type(data))  # &lt;class 'bytes'&gt;
+</pre>
+                </section>
+
                 <section id="Writing_to_a_File">
                     <h2 class="Section_Title">Writing to a File</h2>
-                    <h2 class="Subsection_Title">Writing to an Empty File</h2>
+                    <h3 class="Subsection_Title">Writing to an Empty File</h3>
                     <div class="Definitions">
-
+                        To write text, open the file in write mode (<code>'w'</code>) and call the
+                        <code>write()</code> method with a string. If the file does not exist, Python creates it. <br>
+                        A few things to know about <code>write()</code>:
+                        <ul>
+                            <li>It only accepts strings. To save a number, convert it first with
+                                <code>str()</code> or use an f-string.</li>
+                            <li>It returns the number of characters written, which you can usually ignore.</li>
+                            <li>The data may sit in a memory buffer until the file is closed, which is one more
+                                reason to use <code>with</code>.</li>
+                        </ul>
                     </div>
-                    <pre class="prettyprint python Code"></pre>
-                    <h2 class="Subsection_Title">Writing Multiple Lines</h2>
+                    <pre class="prettyprint python Code">
+filename = 'programming.txt'
+
+with open(filename, 'w', encoding='utf-8') as file_object:
+    file_object.write("I love programming.")
+
+with open(filename, encoding='utf-8') as file_object:
+    print(file_object.read())  # I love programming.
+
+with open('numbers.txt', 'w', encoding='utf-8') as file_object:
+    file_object.write(str(42))   # file_object.write(42) would raise TypeError
+</pre>
+                    <div class="Warning">
+                        Opening an existing file in <code>'w'</code> mode erases it immediately, before you write
+                        anything, and there is no undo. If you want to keep the old content, use append mode
+                        (<code>'a'</code>); if you want to make sure you never overwrite a file, use
+                        <code>'x'</code>.
+                    </div>
+
+                    <h3 class="Subsection_Title">Writing Multiple Lines</h3>
                     <div class="Definitions">
-
+                        Unlike <code>print()</code>, <code>write()</code> does not add a newline at the end of the
+                        text. If you call it several times without newlines, everything ends up on a single line. Add
+                        <code>\n</code> yourself wherever you want a line break. <br>
+                        To write a whole list of strings, use a loop or <code>writelines()</code>. Note that
+                        <code>writelines()</code> does not add newlines either, despite its name.
                     </div>
-                    <pre class="prettyprint python Code"></pre>
-                    <h2 class="Subsection_Title">Appending to a File</h2>
+                    <pre class="prettyprint python Code">
+filename = 'programming.txt'
+
+with open(filename, 'w', encoding='utf-8') as file_object:
+    file_object.write("I love programming.")
+    file_object.write("I love creating new games.")
+
+with open(filename, encoding='utf-8') as file_object:
+    print(file_object.read())
+# I love programming.I love creating new games.
+
+with open(filename, 'w', encoding='utf-8') as file_object:
+    file_object.write("I love programming.\n")
+    file_object.write("I love creating new games.\n")
+
+languages = ['Python', 'C', 'JavaScript']
+with open('languages.txt', 'w', encoding='utf-8') as file_object:
+    file_object.writelines(lang + '\n' for lang in languages)
+
+with open('languages.txt', encoding='utf-8') as file_object:
+    print(file_object.read().splitlines())  # ['Python', 'C', 'JavaScript']
+</pre>
+                    <div class="Note">
+                        <code>print()</code> can also write to a file through its <code>file</code> argument, and it
+                        adds the newline for you: <code>print('Hello', file=file_object)</code>.
+                    </div>
+
+                    <h3 class="Subsection_Title">Appending to a File</h3>
                     <div class="Definitions">
-
+                        Append mode (<code>'a'</code>) keeps the existing content and adds everything you write at
+                        the end of the file. If the file does not exist yet, it is created. This is exactly what you
+                        want for logs, history files or anything that grows over time.
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+filename = 'programming.txt'
+
+with open(filename, 'a', encoding='utf-8') as file_object:
+    file_object.write("I also love finding meaning in large datasets.\n")
+    file_object.write("I love creating apps that can run in a browser.\n")
+
+with open(filename, encoding='utf-8') as file_object:
+    print(file_object.read().rstrip())
+# Output:
+# I love programming.
+# I love creating new games.
+# I also love finding meaning in large datasets.
+# I love creating apps that can run in a browser.
+</pre>
                 </section>
+
                 <section id="Working_with_Multiple_Files">
                     <h2 class="Section_Title">Working with Multiple Files</h2>
-                    <h2 class="Subsection_Title"></h2>
+                    <h3 class="Subsection_Title">Looping Over a List of Files</h3>
                     <div class="Definitions">
-
+                        Once the logic for one file lives in a function, handling many files is just a loop. The
+                        function below counts the words in a file. If one of the files is missing, it reports the
+                        problem and moves on instead of stopping the whole program (see the
+                        <a href="Exceptions.html">Exceptions</a> chapter for <code>try</code>/<code>except</code>).
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+def count_words(filename):
+    """Count the approximate number of words in a file."""
+    try:
+        with open(filename, encoding='utf-8') as f:
+            contents = f.read()
+    except FileNotFoundError:
+        print(f"Sorry, the file {filename} does not exist.")
+    else:
+        num_words = len(contents.split())
+        print(f"The file {filename} has about {num_words} words.")
+
+# Create two sample files to work with
+with open('story.txt', 'w', encoding='utf-8') as f:
+    f.write("Once upon a time there was a curious programmer.\n")
+with open('poem.txt', 'w', encoding='utf-8') as f:
+    f.write("Roses are red\nViolets are blue\n")
+
+filenames = ['story.txt', 'missing.txt', 'poem.txt']
+for filename in filenames:
+    count_words(filename)
+# Output:
+# The file story.txt has about 9 words.
+# Sorry, the file missing.txt does not exist.
+# The file poem.txt has about 6 words.
+</pre>
+
+                    <h3 class="Subsection_Title">Opening Several Files at Once</h3>
+                    <div class="Definitions">
+                        A single <code>with</code> statement can open several files. This is handy for copying or
+                        transforming data from one file into another. Reading and writing line by line keeps memory
+                        usage low no matter how large the source file is. Since Python 3.10 you can wrap the list of
+                        files in parentheses to spread it over several lines.
+                    </div>
+                    <pre class="prettyprint python Code">
+# Copy pi_digits.txt into a new file, removing the indentation
+with (
+    open('pi_digits.txt', encoding='utf-8') as source,
+    open('pi_clean.txt', 'w', encoding='utf-8') as destination,
+):
+    for line in source:
+        destination.write(line.strip() + '\n')
+
+with open('pi_clean.txt', encoding='utf-8') as f:
+    print(f.read().splitlines())  # ['3.1415926535', '8979323846', '2643383279']
+</pre>
+
+                    <h3 class="Subsection_Title">Merging Files</h3>
+                    <div class="Definitions">
+                        To combine files, open the output once and append the contents of each input file to it.
+                        Opening the output in <code>'w'</code> mode outside the loop means it is emptied only once,
+                        at the start.
+                    </div>
+                    <pre class="prettyprint python Code">
+sources = ['story.txt', 'poem.txt']
+
+with open('combined.txt', 'w', encoding='utf-8') as output:
+    for name in sources:
+        with open(name, encoding='utf-8') as source:
+            output.write(f"--- {name} ---\n")
+            output.write(source.read())
+
+with open('combined.txt', encoding='utf-8') as f:
+    print(f.read().rstrip())
+# Output:
+# --- story.txt ---
+# Once upon a time there was a curious programmer.
+# --- poem.txt ---
+# Roses are red
+# Violets are blue
+</pre>
+                </section>
+
+                <section id="Pathlib">
+                    <h2 class="Section_Title">Working with Paths using pathlib</h2>
+                    <div class="Definitions">
+                        The standard library module <code>pathlib</code> represents paths as <code>Path</code>
+                        objects instead of plain strings. This is the modern, recommended way to work with paths:
+                        <ul>
+                            <li>You join paths with the <code>/</code> operator, and Python uses the correct
+                                separator for the operating system.</li>
+                            <li>Useful information is available as attributes: <code>name</code>,
+                                <code>stem</code>, <code>suffix</code>, <code>parent</code>.</li>
+                            <li>Common tasks are one method call: <code>exists()</code>, <code>read_text()</code>,
+                                <code>write_text()</code>, <code>mkdir()</code>, <code>glob()</code>.</li>
+                        </ul>
+                        Every function that accepts a path string, including <code>open()</code>, also accepts a
+                        <code>Path</code> object.
+                    </div>
+                    <pre class="prettyprint python Code">
+from pathlib import Path
+
+path = Path('text_files') / 'notes.txt'   # the / operator joins path parts
+print(path.name)     # notes.txt
+print(path.stem)     # notes
+print(path.suffix)   # .txt
+print(path.parent)   # text_files
+print(path.exists()) # True (we created it earlier)
+
+print(Path.cwd())    # the current working directory (an absolute path)
+print(path.resolve().is_absolute())  # True: resolve() turns it into an absolute path
+</pre>
+                    <h3 class="Subsection_Title">Reading and Writing with Path</h3>
+                    <div class="Definitions">
+                        <code>read_text()</code> opens the file, reads everything, and closes it for you in one call.
+                        <code>write_text()</code> does the same for writing; like <code>'w'</code> mode, it replaces
+                        any existing content. These are perfect for small files.
+                    </div>
+                    <pre class="prettyprint python Code">
+from pathlib import Path
+
+path = Path('pi_digits.txt')
+contents = path.read_text(encoding='utf-8')
+lines = contents.splitlines()
+pi_string = ''.join(line.strip() for line in lines)
+print(pi_string)  # 3.141592653589793238462643383279
+
+output = Path('reports') / '2024' / 'summary.txt'
+output.parent.mkdir(parents=True, exist_ok=True)  # create reports/2024 if needed
+output.write_text('All tests passed.\n', encoding='utf-8')
+print(output.read_text(encoding='utf-8').rstrip())  # All tests passed.
+
+# Path objects work with open() as well
+with open(output, 'a', encoding='utf-8') as f:
+    f.write('Report generated automatically.\n')
+</pre>
+                    <h3 class="Subsection_Title">Listing Files in a Folder</h3>
+                    <div class="Definitions">
+                        <code>iterdir()</code> yields everything directly inside a folder, and
+                        <code>glob()</code> yields the paths that match a pattern. <code>rglob()</code> searches
+                        subfolders too. They return generators, so wrap them in <code>sorted()</code> or
+                        <code>list()</code> if you need a list.
+                    </div>
+                    <pre class="prettyprint python Code">
+from pathlib import Path
+
+folder = Path('.')
+text_files = sorted(folder.glob('*.txt'))
+for file in text_files[:3]:
+    print(file.name, file.stat().st_size, 'bytes')
+
+print([p.as_posix() for p in Path('reports').rglob('*.txt')])  # ['reports/2024/summary.txt']
+
+# Delete a file (missing_ok avoids an error if it is already gone)
+Path('numbers.txt').unlink(missing_ok=True)
+</pre>
+                </section>
+
+                <section id="File_Encodings">
+                    <h2 class="Section_Title">Encodings</h2>
+                    <div class="Definitions">
+                        On disk, a file is just a sequence of bytes. An <strong>encoding</strong> is the rule that
+                        maps characters to bytes and back. Plain English letters are encoded the same way by almost
+                        every encoding, which is why problems often stay hidden until a file contains an accented
+                        letter, an emoji, or Arabic or Chinese text. <br>
+                        When you do not pass <code>encoding</code>, <code>open()</code> uses your system's default,
+                        which depends on the operating system and its settings: usually UTF-8 on Linux and macOS, but
+                        often <code>cp1252</code> on Windows. A file written on one machine can then be unreadable
+                        or garbled on another. <br>
+                        <strong>UTF-8</strong> can represent every character and is the standard on the web, so
+                        always pass <code>encoding='utf-8'</code> when opening text files. (Python 3.15 is planned to
+                        make UTF-8 the default, but explicit is still better than implicit.)
+                    </div>
+                    <pre class="prettyprint python Code">
+text = 'Café ☕ مرحبا'
+
+with open('greeting.txt', 'w', encoding='utf-8') as f:
+    f.write(text)
+
+with open('greeting.txt', encoding='utf-8') as f:
+    print(f.read())  # Café ☕ مرحبا
+
+print(len(text))                  # 12 characters
+print(len(text.encode('utf-8')))  # 20 bytes: non-ASCII characters take 2 to 4 bytes each
+</pre>
+                    <h3 class="Subsection_Title">What Goes Wrong with the Wrong Encoding</h3>
+                    <div class="Definitions">
+                        Reading a file with a different encoding from the one it was written with either produces
+                        garbled text (called <em>mojibake</em>) or raises a <code>UnicodeDecodeError</code>. The
+                        <code>errors</code> argument lets you choose what happens with bytes that cannot be decoded:
+                        <code>'strict'</code> (the default, raise an error), <code>'replace'</code> (insert
+                        <code>�</code>) or <code>'ignore'</code> (drop them).
+                    </div>
+                    <pre class="prettyprint python Code">
+with open('cafe.txt', 'w', encoding='utf-8') as f:
+    f.write('café')
+
+# UTF-8 bytes read as Latin-1: garbled but no error
+with open('cafe.txt', encoding='latin-1') as f:
+    print(f.read())  # cafÃ©
+
+# Latin-1 bytes read as UTF-8: error
+with open('cafe_latin1.txt', 'w', encoding='latin-1') as f:
+    f.write('café')
+
+try:
+    with open('cafe_latin1.txt', encoding='utf-8') as f:
+        print(f.read())
+except UnicodeDecodeError as e:
+    print('Error:', e)
+# Error: 'utf-8' codec can't decode byte 0xe9 in position 3: unexpected end of data
+
+with open('cafe_latin1.txt', encoding='utf-8', errors='replace') as f:
+    print(f.read())  # caf�
+</pre>
+                    <div class="Note">
+                        Files saved by Excel or Notepad on Windows sometimes start with an invisible "byte order
+                        mark". Opening them with <code>encoding='utf-8-sig'</code> removes it automatically.
+                    </div>
+                </section>
+
+                <section id="JSON">
+                    <h2 class="Section_Title">Storing Data with JSON</h2>
+                    <div class="Definitions">
+                        Writing plain text is fine for notes and logs, but structured data such as lists and
+                        dictionaries would have to be converted to text by hand and parsed back later. The
+                        <code>json</code> module does this for you. <strong>JSON</strong> (JavaScript Object
+                        Notation) is a simple text format understood by practically every programming language,
+                        which makes it the usual choice for saving settings and exchanging data with web services.
+                        <ul>
+                            <li><code>json.dump(data, file)</code> writes a Python object to an open file.</li>
+                            <li><code>json.load(file)</code> reads it back and returns the Python object.</li>
+                            <li><code>json.dumps(data)</code> and <code>json.loads(text)</code> (with an
+                                <strong>s</strong> for "string") do the same with strings instead of files.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+import json
+
+numbers = [2, 3, 5, 7, 11, 13]
+
+with open('numbers.json', 'w', encoding='utf-8') as f:
+    json.dump(numbers, f)
+
+with open('numbers.json', encoding='utf-8') as f:
+    loaded = json.load(f)
+
+print(loaded)        # [2, 3, 5, 7, 11, 13]
+print(type(loaded))  # &lt;class 'list'&gt;  a real list, not a string
+</pre>
+                    <div class="Definitions">
+                        With <code>indent</code>, the output is formatted to be readable by humans:
+                    </div>
+                    <pre class="prettyprint python Code">
+import json
+
+student = {'name': 'Sara', 'age': 21, 'courses': ['Math', 'Physics'], 'graduated': False}
+print(json.dumps(student, indent=4))
+# Output:
+# {
+#     "name": "Sara",
+#     "age": 21,
+#     "courses": [
+#         "Math",
+#         "Physics"
+#     ],
+#     "graduated": false
+# }
+</pre>
+                    <div class="Warning">
+                        JSON has fewer types than Python, so some values change on the round trip: tuples come back
+                        as lists, dictionary keys always become strings (<code>{1: 'a'}</code> comes back as
+                        <code>{'1': 'a'}</code>), and sets, dates and custom objects cannot be saved at all without
+                        converting them first (you get a <code>TypeError</code>). <code>True</code>,
+                        <code>False</code> and <code>None</code> become <code>true</code>, <code>false</code> and
+                        <code>null</code> in the file.
+                    </div>
+                    <h3 class="Subsection_Title">Example: Remembering the User</h3>
+                    <div class="Definitions">
+                        Here is a small program that asks for the user's name the first time it runs, saves it, and
+                        greets the user by name on every later run. It is split into functions that each do one
+                        job, which makes the program easier to read and to change. <code>get_stored_username()</code>
+                        returns <code>None</code> when no name has been saved yet, and the caller reacts to that.
+                    </div>
+                    <pre class="prettyprint python Code">
+import json
+from pathlib import Path
+
+def get_stored_username(path):
+    """Return the stored username if available, otherwise None."""
+    if path.exists():
+        contents = path.read_text(encoding='utf-8')
+        return json.loads(contents)
+    return None
+
+def get_new_username(path):
+    """Ask for a new username and save it."""
+    username = input("What is your name? ")
+    path.write_text(json.dumps(username), encoding='utf-8')
+    return username
+
+def greet_user():
+    """Greet the user by name."""
+    path = Path('username.json')
+    username = get_stored_username(path)
+    if username:
+        print(f"Welcome back, {username}!")
+    else:
+        username = get_new_username(path)
+        print(f"We'll remember you when you come back, {username}!")
+
+greet_user()
+# First run:
+# What is your name? Amine
+# We'll remember you when you come back, Amine!
+# Second run:
+# Welcome back, Amine!
+</pre>
+                    <div class="Note">
+                        If the JSON file can be edited by hand, it may end up corrupted. Wrapping
+                        <code>json.loads()</code> in <code>try</code>/<code>except json.JSONDecodeError</code> lets
+                        the program fall back to asking for the name again instead of crashing.
+                    </div>
+                </section>
+
+                <section id="CSV">
+                    <h2 class="Section_Title">CSV Files</h2>
+                    <div class="Definitions">
+                        <strong>CSV</strong> (Comma-Separated Values) is the simplest format for tables: one row per
+                        line, with the values separated by commas, and usually a first line holding the column names.
+                        Spreadsheets like Excel can open and save CSV files. <br>
+                        Splitting each line on commas yourself breaks as soon as a value contains a comma, such as
+                        <code>"Paris, France"</code>. The <code>csv</code> module handles quoting and these edge cases
+                        correctly.
+                    </div>
+                    <h3 class="Subsection_Title">Writing with csv.writer</h3>
+                    <div class="Definitions">
+                        Create a writer from an open file, then call <code>writerow()</code> for one row or
+                        <code>writerows()</code> for many. Each row is a list of values; non-string values are
+                        converted to strings automatically. <br>
+                        Always open CSV files with <code>newline=''</code>. The <code>csv</code> module writes its
+                        own line endings, and without this argument Windows would add an extra carriage return,
+                        producing a blank line between every row.
+                    </div>
+                    <pre class="prettyprint python Code">
+import csv
+
+rows = [
+    ['name', 'city', 'score'],
+    ['Amine', 'Paris, France', 92],
+    ['Sara', 'Algiers', 85],
+    ['Omar', 'Tunis', 78],
+]
+
+with open('scores.csv', 'w', newline='', encoding='utf-8') as f:
+    writer = csv.writer(f)
+    writer.writerows(rows)
+
+with open('scores.csv', encoding='utf-8') as f:
+    print(f.read().rstrip())
+# Output:
+# name,city,score
+# Amine,"Paris, France",92
+# Sara,Algiers,85
+# Omar,Tunis,78
+</pre>
+                    <h3 class="Subsection_Title">Reading with csv.reader</h3>
+                    <div class="Definitions">
+                        <code>csv.reader</code> yields each row as a list of strings. Use <code>next()</code> to
+                        consume the header row before looping over the data.
+                    </div>
+                    <pre class="prettyprint python Code">
+import csv
+
+with open('scores.csv', newline='', encoding='utf-8') as f:
+    reader = csv.reader(f)
+    header = next(reader)          # the first row: column names
+    print(header)                  # ['name', 'city', 'score']
+    total = 0
+    for row in reader:
+        print(row)
+        total += int(row[2])       # values are strings: convert before adding
+# ['Amine', 'Paris, France', '92']
+# ['Sara', 'Algiers', '85']
+# ['Omar', 'Tunis', '78']
+
+print('Total:', total)             # Total: 255
+</pre>
+                    <h3 class="Subsection_Title">Reading with csv.DictReader</h3>
+                    <div class="Definitions">
+                        <code>csv.DictReader</code> uses the header row as keys and gives you each row as a
+                        dictionary. Code like <code>row['score']</code> is much easier to read than
+                        <code>row[2]</code>, and it keeps working if someone reorders the columns.
+                    </div>
+                    <pre class="prettyprint python Code">
+import csv
+
+with open('scores.csv', newline='', encoding='utf-8') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        print(f"{row['name']} from {row['city']} scored {row['score']}")
+# Amine from Paris, France scored 92
+# Sara from Algiers scored 85
+# Omar from Tunis scored 78
+</pre>
+                    <h3 class="Subsection_Title">Writing with csv.DictWriter</h3>
+                    <div class="Definitions">
+                        The matching <code>csv.DictWriter</code> writes dictionaries. You list the column names in
+                        <code>fieldnames</code> and call <code>writeheader()</code> once before writing the rows.
+                    </div>
+                    <pre class="prettyprint python Code">
+import csv
+
+students = [
+    {'name': 'Lina', 'grade': 17},
+    {'name': 'Yacine', 'grade': 14},
+]
+
+with open('grades.csv', 'w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=['name', 'grade'])
+    writer.writeheader()
+    writer.writerows(students)
+
+with open('grades.csv', encoding='utf-8') as f:
+    print(f.read().splitlines())  # ['name,grade', 'Lina,17', 'Yacine,14']
+</pre>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>Use <code>with open(...)</code> so files are always closed, even after an error.</li>
+                            <li>Pass <code>encoding='utf-8'</code> for text files, and <code>newline=''</code> for
+                                CSV files.</li>
+                            <li><code>'w'</code> erases the file immediately; use <code>'a'</code> to add to it and
+                                <code>'x'</code> to refuse to overwrite it.</li>
+                            <li>Everything read from a text or CSV file is a string; convert numbers explicitly.</li>
+                            <li>Prefer <code>pathlib.Path</code> over string paths, and <code>json</code> or
+                                <code>csv</code> over hand-made formats.</li>
+                        </ul>
+                    </div>
                 </section>
             </div>
         </div>

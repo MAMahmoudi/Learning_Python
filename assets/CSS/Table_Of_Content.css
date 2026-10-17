@@ -1,4 +1,4 @@
-// Table_Of_Content.css
+/* Table_Of_Content.css */
 @import url("https://fonts.cdnfonts.com/css/century-schoolbook");
 
 * {
@@ -53,4 +53,49 @@ main {
   margin-top: 20px;
   margin-bottom: 20px;
   margin-left: 40px;
+}
+
+.Chapter_List,
+.Section_List {
+  list-style: none;
+}
+
+.Chapter_List > li {
+  background-color: #fff;
+  border-left: 6px solid #53af32;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.Chapter_List_Element {
+  font-size: 1.8rem;
+  margin-left: 0;
+  text-decoration: none;
+}
+
+.Chapter_Description {
+  color: #2e2d29;
+  font-size: 1.1rem;
+  font-weight: normal;
+  margin: 10px 0;
+}
+
+.Section_List {
+  margin: 10px 0 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+
+.Section_List_Element {
+  font-size: 1.1rem;
+  margin: 0;
+  text-decoration: none;
+}
+
+.Chapter_List_Element:hover,
+.Section_List_Element:hover {
+  text-decoration: underline;
 }

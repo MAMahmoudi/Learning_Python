@@ -4,11 +4,763 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
     <title>Collaboration</title>
 </head>
 
 <body>
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Collaboration</h1>
+            <div class="Sections_Area">
+                <section id="PyPI_And_Pip">
+                    <h2 class="Section_Title">Know Where to Find Community-Built Modules</h2>
+                    <div class="Definitions">
+                        Python's standard library is large ("batteries included"), but the real strength of the
+                        language is its community. The <strong>Python Package Index</strong> (PyPI, at
+                        <a href="https://pypi.org">pypi.org</a>) hosts hundreds of thousands of open-source packages:
+                        <code>requests</code> and <code>httpx</code> for HTTP, <code>numpy</code> and
+                        <code>pandas</code> for data, <code>pytest</code> for testing, <code>django</code> and
+                        <code>fastapi</code> for the web, and many more. Before writing something complicated
+                        yourself, check whether a well-maintained package already solves it. <br>
+                        Packages are installed with <strong>pip</strong>, the package installer that ships with
+                        Python. Running it as <code>python -m pip</code> guarantees that the packages go to the same
+                        interpreter you will run your code with, which avoids the classic "I installed it but Python
+                        can't find it" problem.
+                    </div>
+                    <pre class="prettyprint Code">
+python -m pip install requests            # latest version
+python -m pip install "requests==2.32.3"  # an exact version
+python -m pip install --upgrade requests  # upgrade to the newest version
+python -m pip show requests               # version, location, dependencies
+python -m pip list                        # everything installed
+python -m pip uninstall requests
+</pre>
+                    <div class="Definitions">
+                        How to choose between packages that do similar things:
+                        <ul>
+                            <li>Is it <strong>maintained</strong>? Look at the date of the latest release and recent
+                                activity in its repository.</li>
+                            <li>Is it <strong>popular and documented</strong>? Widely used packages have fewer
+                                surprises and more answers online.</li>
+                            <li>Does its <strong>license</strong> allow your use (MIT, BSD and Apache are permissive;
+                                GPL has stronger conditions)?</li>
+                            <li>How many <strong>dependencies</strong> does it pull in? Each one is code you now rely
+                                on.</li>
+                        </ul>
+                    </div>
+                    <div class="Warning">
+                        Anyone can upload to PyPI. Attackers publish <strong>typosquatting</strong> packages whose names
+                        are one letter away from popular ones (for example <code>reqeusts</code>) and contain malware.
+                        Double-check the spelling and the project page before installing, and never run
+                        <code>pip</code> with administrator rights to install into the system Python.
+                    </div>
+                </section>
+
+                <section id="Virtual_Environments">
+                    <h2 class="Section_Title">Virtual Environments and requirements.txt</h2>
+                    <div class="Definitions">
+                        By default, pip installs packages <strong>globally</strong>, for every program that uses that
+                        Python interpreter. That breaks down quickly: project A needs version 1 of a library, project B
+                        needs version 2, and only one version can be installed at a time. Upgrading for one project
+                        silently breaks the other. <br>
+                        A <strong>virtual environment</strong> is an isolated folder containing its own copy of
+                        <code>python</code>, <code>pip</code> and its own <code>site-packages</code>. Each project gets
+                        its own environment, so their dependencies never collide. The standard library's
+                        <code>venv</code> module creates them.
+                    </div>
+                    <pre class="prettyprint Code">
+# Create an environment in a folder called .venv (inside your project)
+python -m venv .venv
+
+# Activate it
+.venv\Scripts\activate          # Windows (cmd / PowerShell)
+source .venv/bin/activate       # macOS / Linux
+
+# Now "python" and "pip" refer to the environment
+python -m pip install requests
+deactivate                      # return to the global interpreter
+</pre>
+                    <div class="Definitions">
+                        You can check which environment is active from Python itself: inside a virtual environment,
+                        <code>sys.prefix</code> (the environment) differs from <code>sys.base_prefix</code> (the
+                        Python installation it was created from).
+                    </div>
+                    <pre class="prettyprint python Code">
+import sys
+
+in_venv = sys.prefix != sys.base_prefix
+print("Running inside a virtual environment:", in_venv)
+print("Interpreter:", sys.executable)
+</pre>
+                    <h3 class="Subsection_Title">Reproducing an environment with requirements.txt</h3>
+                    <div class="Definitions">
+                        Environments are not copied or committed to version control (add <code>.venv/</code> to your
+                        <code>.gitignore</code>). Instead, you record the list of packages so that a teammate, a
+                        server or your future self can rebuild an identical environment.
+                    </div>
+                    <pre class="prettyprint Code">
+python -m pip freeze &gt; requirements.txt     # save exact versions of everything installed
+python -m pip install -r requirements.txt   # recreate them in a fresh environment
+</pre>
+                    <pre class="prettyprint Code">
+# requirements.txt
+certifi==2024.8.30
+charset-normalizer==3.4.0
+idna==3.10
+requests==2.32.3
+urllib3==2.2.3
+</pre>
+                    <div class="Note">
+                        Pinning exact versions (<code>==</code>) makes deployments reproducible. Libraries meant to be
+                        installed by others should instead declare looser ranges (for example
+                        <code>requests&gt;=2.30</code>) in <code>pyproject.toml</code>, so they don't conflict with
+                        other packages. Tools such as <code>pip-tools</code>, <code>poetry</code> and <code>uv</code>
+                        automate this split between "what I need" and "exactly what got installed".
+                    </div>
+                </section>
+
+                <section id="Docstrings">
+                    <h2 class="Section_Title">Docstrings for Modules, Classes and Functions</h2>
+                    <div class="Definitions">
+                        A <strong>docstring</strong> is a string literal placed as the first statement of a module,
+                        class or function. Unlike a comment, it is kept at run time in the object's
+                        <code>__doc__</code> attribute, so tools can use it: <code>help()</code> in the interactive
+                        prompt, IDE tooltips, and documentation generators such as Sphinx or MkDocs. In a team,
+                        docstrings are the contract between the person who wrote a function and everyone who calls
+                        it. <br>
+                        <strong>PEP 257</strong> describes the conventions:
+                        <ul>
+                            <li>Always use triple double quotes <code>"""..."""</code>.</li>
+                            <li>The first line is a short, one-sentence summary ending with a period.</li>
+                            <li>If more is needed, leave a blank line, then explain the details.</li>
+                            <li>Describe <strong>what</strong> the code does and how to use it (arguments, return
+                                value, exceptions raised), not how it is implemented internally.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+"""Utilities for working with words and vocabulary lists.
+
+This module is used by the quiz generator. The main entry point is
+find_anagrams().
+"""
+
+
+class Vocabulary:
+    """A collection of known words, stored in lowercase.
+
+    Attributes:
+        words: the set of words in the vocabulary.
+    """
+
+    def __init__(self, words):
+        self.words = {w.lower() for w in words}
+
+
+def find_anagrams(word, vocabulary):
+    """Return the words in a vocabulary that are anagrams of a word.
+
+    The comparison ignores case. The word itself is not included.
+
+    Args:
+        word: the word to rearrange.
+        vocabulary: a Vocabulary instance to search.
+
+    Returns:
+        A sorted list of matching words. The list is empty if nothing matches.
+
+    Raises:
+        ValueError: if word is an empty string.
+    """
+    if not word:
+        raise ValueError("word must not be empty")
+    key = sorted(word.lower())
+    return sorted(w for w in vocabulary.words
+                  if w != word.lower() and sorted(w) == key)
+
+
+vocab = Vocabulary(["Listen", "silent", "enlist", "google", "tinsel"])
+print(find_anagrams("listen", vocab))      # ['enlist', 'silent', 'tinsel']
+print(find_anagrams.__doc__.splitlines()[0])
+# Return the words in a vocabulary that are anagrams of a word.
+</pre>
+                    <div class="Note">
+                        The example uses the popular <strong>Google style</strong> (<code>Args:</code>,
+                        <code>Returns:</code>, <code>Raises:</code>). NumPy style and reStructuredText (Sphinx) style
+                        are also common. Which one you pick matters less than using it consistently across the
+                        project. When you use type hints, there is no need to repeat the types in the docstring.
+                    </div>
+                    <div class="Warning">
+                        An out-of-date docstring is worse than none, because readers trust it. Update the docstring in
+                        the same change that modifies the behaviour.
+                    </div>
+                </section>
+
+                <section id="Packages">
+                    <h2 class="Section_Title">Packages to Organize Modules</h2>
+                    <div class="Definitions">
+                        As a program grows, a single module becomes hard to navigate. A <strong>package</strong> is a
+                        directory of modules containing an <code>__init__.py</code> file. Packages give you
+                        <strong>namespaces</strong>: two modules can both be called <code>utils.py</code> as long as
+                        they live in different packages, and imports show clearly where everything comes from.
+                    </div>
+                    <pre class="prettyprint Code">
+shop/
+    __init__.py          # marks "shop" as a package; runs on "import shop"
+    models.py
+    pricing.py
+    payments/
+        __init__.py
+        card.py
+</pre>
+                    <div class="Definitions">
+                        Inside a package, modules can refer to each other with <strong>relative imports</strong>: a
+                        single dot means "the current package", two dots mean "the parent package".
+                    </div>
+                    <pre class="prettyprint python Code">
+# shop/models.py
+class Product:
+    def __init__(self, name, price):
+        self.name = name
+        self.price = price
+</pre>
+                    <pre class="prettyprint python Code">
+# shop/pricing.py
+from .models import Product          # same package
+
+def apply_discount(product: Product, percent: float) -&gt; float:
+    return round(product.price * (1 - percent / 100), 2)
+
+def _round_to_cents(value):          # leading underscore: internal helper
+    return round(value, 2)
+</pre>
+                    <pre class="prettyprint python Code">
+# shop/payments/card.py
+from ..pricing import apply_discount  # parent package
+</pre>
+                    <h3 class="Subsection_Title">Defining a public API with __init__.py and __all__</h3>
+                    <div class="Definitions">
+                        The <code>__init__.py</code> file can re-export the names that users of the package are meant
+                        to use, so they can write <code>from shop import Product</code> without knowing the internal
+                        module layout. You are then free to reorganize the internal modules later without breaking
+                        anyone. <br>
+                        The <code>__all__</code> list declares the public names of a module. It controls what
+                        <code>from module import *</code> imports, and tells readers and tools which names are
+                        supported.
+                    </div>
+                    <pre class="prettyprint python Code">
+# shop/__init__.py
+"""A tiny online shop package."""
+from .models import Product
+from .pricing import apply_discount
+
+__all__ = ["Product", "apply_discount"]
+</pre>
+                    <pre class="prettyprint python Code">
+# main.py (next to the shop/ folder)
+from shop import Product, apply_discount
+
+book = Product("Python Book", 40.0)
+print(apply_discount(book, 25))   # 30.0
+</pre>
+                    <div class="Warning">
+                        <ul>
+                            <li>Relative imports only work inside a package. Running a module directly with
+                                <code>python shop/pricing.py</code> fails with <code>ImportError: attempted relative
+                                import with no known parent package</code>. Run it as a module instead:
+                                <code>python -m shop.pricing</code>.</li>
+                            <li>Don't name your own files after standard library or installed modules
+                                (<code>random.py</code>, <code>json.py</code>, <code>requests.py</code>). Your file
+                                shadows the real one and imports break in confusing ways.</li>
+                            <li>Avoid <code>from module import *</code> in application code: it hides where names come
+                                from and can silently overwrite existing names.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="Root_Exception">
+                    <h2 class="Section_Title">Define a Root Exception to Insulate Callers from APIs</h2>
+                    <div class="Definitions">
+                        When you write a module or package that other people use, the exceptions it raises are part of
+                        its API. If your code raises a mixture of built-in exceptions (<code>ValueError</code>,
+                        <code>KeyError</code>...), callers can't tell apart "you called my API incorrectly" from "there
+                        is a bug inside the library". <br>
+                        A better design is to define a <strong>root exception</strong> for your module, and make every
+                        exception you raise intentionally inherit from it. This gives callers three benefits:
+                        <ol>
+                            <li>They can catch <strong>everything your API raises on purpose</strong> with a single
+                                <code>except</code> clause.</li>
+                            <li>Any exception that is <strong>not</strong> a subclass of your root (for example a
+                                <code>TypeError</code> from a typo in your code) reveals a bug in your library rather
+                                than a misuse, and can be reported separately.</li>
+                            <li>You can add more specific subclasses later without breaking existing callers.</li>
+                        </ol>
+                    </div>
+                    <pre class="prettyprint python Code">
+# --- weather.py: the library -----------------------------------------
+class WeatherError(Exception):
+    """Base class for all errors raised by this module."""
+
+class InvalidCityError(WeatherError):
+    """The requested city name is not valid."""
+
+class ServiceUnavailableError(WeatherError):
+    """The weather service could not be reached."""
+
+_DATA = {"paris": 18, "tokyo": 24}
+
+def temperature(city):
+    if not city.isalpha():
+        raise InvalidCityError(f"invalid city name: {city!r}")
+    if city.lower() == "atlantis":
+        raise ServiceUnavailableError("no station there")
+    return _DATA.get(city.lower(), 20)
+
+# --- the caller ------------------------------------------------------
+import logging
+
+for city in ["Paris", "N3w York", "Atlantis"]:
+    try:
+        print(city, temperature(city))
+    except InvalidCityError as exc:
+        print("bad input:", exc)               # a specific, expected case
+    except WeatherError as exc:
+        print("API problem:", exc)             # anything else the module raises on purpose
+    except Exception:
+        logging.exception("Bug in the weather module!")  # not ours to swallow silently
+        raise
+
+# Paris 18
+# bad input: invalid city name: 'N3w York'
+# API problem: no station there
+</pre>
+                    <div class="Note">
+                        It is fine for specific errors to inherit from both your root and a related built-in, for
+                        example <code>class InvalidCityError(WeatherError, ValueError)</code>, so that code that
+                        already catches <code>ValueError</code> keeps working.
+                    </div>
+                </section>
+
+                <section id="Circular_Dependencies">
+                    <h2 class="Section_Title">Breaking Circular Dependencies</h2>
+                    <div class="Definitions">
+                        A <strong>circular dependency</strong> happens when module A imports module B, and module B
+                        (directly or through other modules) imports module A. It often appears when a team splits a
+                        large program into modules. To understand the error, recall what <code>import a</code>
+                        actually does:
+                        <ol>
+                            <li>Create an empty module object and register it in <code>sys.modules</code>.</li>
+                            <li>Execute the module's code from top to bottom, filling in its attributes.</li>
+                        </ol>
+                        If, during step 2, <code>a</code> imports <code>b</code>, and <code>b</code> does
+                        <code>from a import something</code>, Python finds the <em>half-built</em> module
+                        <code>a</code> in <code>sys.modules</code>, and <code>something</code> has not been defined yet.
+                    </div>
+                    <pre class="prettyprint python Code">
+# dialog.py
+import app
+
+class Dialog:
+    def __init__(self):
+        self.save_dir = app.prefs.save_dir    # needs app's preferences
+
+save_dialog = Dialog()                       # runs at import time!
+</pre>
+                    <pre class="prettyprint python Code">
+# app.py
+import dialog
+
+class Prefs:
+    save_dir = "/tmp"
+
+prefs = Prefs()
+</pre>
+                    <pre class="prettyprint Code">
+&gt; python -c "import app"
+AttributeError: partially initialized module 'app' has no attribute 'prefs' (most likely due to a circular import)
+</pre>
+                    <div class="Definitions">
+                        Ways to fix it, from best to least preferred:
+                        <ol>
+                            <li><strong>Refactor</strong>: move the shared pieces into a third module that both import,
+                                so the dependency graph has no cycle (for example, move <code>Prefs</code> into
+                                <code>config.py</code>). This is usually the cleanest fix, because a cycle is often a
+                                sign that responsibilities are mixed up.</li>
+                            <li><strong>Avoid work at import time</strong>: modules should only <em>define</em>
+                                functions, classes and constants when imported. Do the setup in an explicit
+                                <code>configure()</code> function that the main program calls once everything is
+                                imported.</li>
+                            <li><strong>Dynamic import</strong>: move the <code>import</code> statement inside the
+                                function that needs it. It then runs at call time, when both modules are fully loaded.
+                                It works, but hides dependencies and should be a last resort.</li>
+                        </ol>
+                    </div>
+                    <pre class="prettyprint python Code">
+# dialog.py  (fixed: nothing depends on app at import time)
+import app
+
+class Dialog:
+    def __init__(self):
+        self.save_dir = None
+
+save_dialog = Dialog()
+
+def configure():
+    save_dialog.save_dir = app.prefs.save_dir
+</pre>
+                    <pre class="prettyprint python Code">
+# main.py
+import app
+import dialog
+
+dialog.configure()                  # called after every module is loaded
+print(dialog.save_dialog.save_dir)  # /tmp
+</pre>
+                    <div class="Note">
+                        If the cycle exists only because of type hints, import the module under
+                        <code>if typing.TYPE_CHECKING:</code>. That block is skipped at run time but still read by
+                        type checkers.
+                    </div>
+                </section>
+
+                <section id="Warnings_Deprecation">
+                    <h2 class="Section_Title">Use warnings to Refactor and Migrate Usage</h2>
+                    <div class="Definitions">
+                        Changing a function used by many other people (or many places in a large codebase) is
+                        difficult: if you rename an argument or remove a function overnight, every caller breaks at
+                        once. A gentler approach is a <strong>deprecation period</strong>: keep the old behaviour
+                        working for a while, but emit a <strong>warning</strong> telling callers what to change. <br>
+                        The <code>warnings</code> module does this. Unlike an exception, a warning does not stop the
+                        program; it prints a message (once per location, by default) and execution continues.
+                    </div>
+                    <pre class="prettyprint python Code">
+import warnings
+
+def print_distance(speed, duration, *, speed_units=None, time_units=None):
+    if speed_units is None:
+        warnings.warn(
+            "speed_units will become required in version 3.0; pass it explicitly",
+            DeprecationWarning,
+            stacklevel=2,          # point the warning at the CALLER's line, not this one
+        )
+        speed_units = "mph"
+    if time_units is None:
+        time_units = "hours"
+    print(f"{speed * duration} miles")
+
+print_distance(60, 2)                     # still works, but warns
+print_distance(60, 2, speed_units="mph")  # updated call: no warning
+# Printed to stderr:
+# example.py:15: DeprecationWarning: speed_units will become required in version 3.0; pass it explicitly
+#   print_distance(60, 2)                     # still works, but warns
+# Printed to stdout:
+# 120 miles
+# 120 miles
+</pre>
+                    <div class="Definitions">
+                        The <code>stacklevel=2</code> argument is essential: without it, the warning would report the
+                        line inside <code>print_distance</code>, which is useless to the caller who needs to find
+                        <em>their</em> outdated call.
+                    </div>
+                    <h3 class="Subsection_Title">Controlling warnings</h3>
+                    <div class="Definitions">
+                        By default, <code>DeprecationWarning</code> is only shown when triggered by code in
+                        <code>__main__</code> or in test runners; it is hidden in imported library code so that end
+                        users are not bothered. While migrating, you can make warnings visible, or even turn them into
+                        errors so that a test suite fails on every remaining old-style call:
+                    </div>
+                    <pre class="prettyprint Code">
+python -W error::DeprecationWarning my_script.py   # every DeprecationWarning becomes an exception
+python -W default my_script.py                     # show all warnings once per location
+</pre>
+                    <pre class="prettyprint python Code">
+import warnings
+
+def old_api():
+    warnings.warn("old_api() is deprecated; use new_api()", DeprecationWarning, stacklevel=2)
+    return 42
+
+# Turn warnings into errors inside a block (useful in tests)
+with warnings.catch_warnings():
+    warnings.simplefilter("error", DeprecationWarning)
+    try:
+        old_api()
+    except DeprecationWarning as exc:
+        print("caught:", exc)        # caught: old_api() is deprecated; use new_api()
+
+# Record warnings to check them in a test
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always")
+    old_api()
+print(len(caught), caught[0].category.__name__)   # 1 DeprecationWarning
+</pre>
+                    <div class="Note">
+                        Python 3.13 added the <code>@warnings.deprecated("message")</code> decorator, which emits the
+                        warning at run time and also lets type checkers flag uses of the deprecated function.
+                    </div>
+                </section>
+
+                <section id="Typing_Mypy">
+                    <h2 class="Section_Title">Static Analysis with typing and mypy</h2>
+                    <div class="Definitions">
+                        Python is dynamically typed: a variable can hold any type, and errors like passing a string
+                        where a number is expected are only discovered when that line runs, possibly in production.
+                        <strong>Type hints</strong> let you annotate the expected types of arguments, return values
+                        and variables. Python itself <strong>ignores</strong> them at run time, but
+                        <strong>static type checkers</strong> such as <code>mypy</code> or <code>pyright</code> read
+                        your code without running it and report inconsistencies. <br>
+                        In a team, hints also serve as always-up-to-date documentation, and make IDE autocompletion and
+                        refactoring much more accurate.
+                    </div>
+                    <pre class="prettyprint python Code">
+from dataclasses import dataclass
+from typing import Protocol
+
+
+@dataclass
+class Item:
+    name: str
+    price: float
+    quantity: int = 1
+
+
+def total(items: list[Item], tax_rate: float = 0.0) -&gt; float:
+    subtotal = sum(i.price * i.quantity for i in items)
+    return round(subtotal * (1 + tax_rate), 2)
+
+
+def find(items: list[Item], name: str) -&gt; Item | None:   # may return None
+    for item in items:
+        if item.name == name:
+            return item
+    return None
+
+
+class Greeter(Protocol):            # "anything with a greet() method"
+    def greet(self) -&gt; str: ...
+
+
+def welcome(g: Greeter) -&gt; None:
+    print(g.greet())
+
+
+cart = [Item("pen", 1.5, 4), Item("book", 12.0)]
+print(total(cart, tax_rate=0.2))    # 21.6
+found = find(cart, "pen")
+if found is not None:               # narrowing: mypy now knows found is an Item
+    print(found.price)              # 1.5
+</pre>
+                    <div class="Definitions">
+                        Install mypy in your virtual environment and run it on your code. Suppose someone writes these
+                        lines below the code above:
+                    </div>
+                    <pre class="prettyprint python Code">
+total(cart, tax_rate="20%")         # wrong type
+print(find(cart, "pen").price)      # find() may return None
+</pre>
+                    <pre class="prettyprint Code">
+&gt; python -m pip install mypy
+&gt; python -m mypy shop.py
+shop.py:37: error: Argument "tax_rate" to "total" has incompatible type "str"; expected "float"  [arg-type]
+shop.py:38: error: Item "None" of "Item | None" has no attribute "price"  [union-attr]
+Found 2 errors in 1 file (checked 1 source file)
+</pre>
+                    <div class="Definitions">
+                        Neither bug would have been noticed until the program ran those exact lines. The second one is
+                        especially valuable to catch: forgetting that a function can return <code>None</code> is one
+                        of the most common causes of crashes.
+                    </div>
+                    <div class="Warning">
+                        <ul>
+                            <li>Type hints are <strong>not checked at run time</strong>. <code>total(cart,
+                                tax_rate="20%")</code> still runs (and fails or misbehaves) unless you use a checker.
+                            </li>
+                            <li>Adopt typing <strong>gradually</strong>: unannotated functions are not checked by
+                                default, so start with the most important modules, and use
+                                <code>mypy --strict</code> once a module is fully annotated.</li>
+                            <li>Use <code>Any</code> and <code># type: ignore</code> sparingly; each one switches off
+                                the checker exactly where it might be needed.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="Code_Style_Linters">
+                    <h2 class="Section_Title">Code Style and Linters</h2>
+                    <div class="Definitions">
+                        Code is read far more often than it is written. When everyone on a team formats code the same
+                        way, reviews focus on what the code does instead of on spaces and quotes. <strong>PEP
+                        8</strong> is Python's official style guide. Its most important rules:
+                        <ul>
+                            <li>Indent with 4 spaces; keep lines reasonably short (79 characters in PEP 8, 88 in
+                                black, often up to 100 in teams).</li>
+                            <li><code>snake_case</code> for functions, variables and modules;
+                                <code>PascalCase</code> for classes; <code>UPPER_CASE</code> for constants;
+                                a leading underscore for internal names.</li>
+                            <li>Imports at the top of the file, one per line, grouped as standard library,
+                                third-party, then your own modules.</li>
+                            <li>Compare with <code>None</code> using <code>is</code> / <code>is not</code>; test
+                                emptiness with <code>if not items:</code> rather than <code>if len(items) == 0:</code>.
+                            </li>
+                            <li>Two blank lines around top-level functions and classes, one between methods.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+# Hard to read: works, but breaks many conventions
+import os,sys
+def CalcAvg( L ):
+  if len(L)==0 : return None
+  return sum(L)/len(L)
+</pre>
+                    <pre class="prettyprint python Code">
+# PEP 8 style
+def calculate_average(values):
+    if not values:
+        return None
+    return sum(values) / len(values)
+
+
+print(calculate_average([3, 4, 5]))  # 4.0
+</pre>
+                    <h3 class="Subsection_Title">Let tools do the work: formatters and linters</h3>
+                    <div class="Definitions">
+                        Nobody should enforce style by hand in code reviews. Two kinds of tools automate it:
+                        <ul>
+                            <li>A <strong>formatter</strong> rewrites your code into a consistent layout.
+                                <code>black</code> is "opinionated": it has almost no options, which ends formatting
+                                debates. <code>ruff format</code> is a faster, compatible alternative.</li>
+                            <li>A <strong>linter</strong> analyses code for likely bugs and bad practices: unused
+                                imports and variables, undefined names, mutable default arguments, bare
+                                <code>except</code>... <code>ruff</code> (very fast, written in Rust) has largely
+                                replaced <code>flake8</code>, <code>isort</code> and many plugins.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; python -m pip install ruff
+&gt; ruff check --output-format concise bad_style.py
+bad_style.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+bad_style.py:2:8: F401 [*] `os` imported but unused
+bad_style.py:2:11: F401 [*] `sys` imported but unused
+Found 3 errors.
+[*] 3 fixable with `--fix`.
+&gt; ruff check --fix .         # fix what can be fixed automatically
+&gt; ruff format .              # reformat every file in the project
+</pre>
+                    <div class="Note">
+                        Run the formatter and linter automatically: configure your editor to format on save, and use
+                        a <code>pre-commit</code> hook or a CI job so that unformatted code can't be merged. When a
+                        style rule and readability disagree, PEP 8 itself says to prefer readability and consistency
+                        with the surrounding code.
+                    </div>
+                </section>
+
+                <section id="Project_Layout">
+                    <h2 class="Section_Title">Project Layout and pyproject.toml</h2>
+                    <div class="Definitions">
+                        A predictable project structure helps new contributors find their way and lets tools work
+                        without extra configuration. A widely recommended layout is the <strong>src layout</strong>:
+                    </div>
+                    <pre class="prettyprint Code">
+my_project/
+    pyproject.toml          # project metadata, dependencies and tool settings
+    README.md               # what it is and how to install / use it
+    LICENSE
+    .gitignore              # includes .venv/, __pycache__/, dist/
+    src/
+        my_package/
+            __init__.py
+            core.py
+            cli.py
+    tests/
+        test_core.py
+</pre>
+                    <div class="Definitions">
+                        Why put the package under <code>src/</code>? Because then it cannot be imported by accident
+                        just because you run Python from the project folder. Your tests have to use the
+                        <strong>installed</strong> package, exactly as your users will, which catches packaging
+                        mistakes (such as a missing file) early. <br>
+                        <code>pyproject.toml</code> (PEP 518 / PEP 621) is the single, standard configuration file of a
+                        modern Python project. It replaces the older <code>setup.py</code>, <code>setup.cfg</code>
+                        and many tool-specific config files. It is written in <strong>TOML</strong>, a simple
+                        configuration format.
+                    </div>
+                    <pre class="prettyprint Code">
+[build-system]
+requires = ["setuptools&gt;=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "my-package"
+version = "0.1.0"
+description = "A short description of the project."
+readme = "README.md"
+requires-python = "&gt;=3.10"
+dependencies = [
+    "requests&gt;=2.30",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "mypy", "ruff"]
+
+[project.scripts]
+my-tool = "my_package.cli:main"       # creates a "my-tool" command on install
+
+[tool.ruff]
+line-length = 100
+
+[tool.mypy]
+strict = true
+</pre>
+                    <div class="Definitions">
+                        With this file in place, a new contributor needs only a few commands to get a working
+                        development setup. The <code>-e</code> (editable) flag links the environment to your source
+                        folder, so code changes take effect without reinstalling.
+                    </div>
+                    <pre class="prettyprint Code">
+git clone https://example.com/my_project.git
+cd my_project
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install -e ".[dev]"    # the package itself + development tools
+pytest                               # run the tests
+python -m build                      # (optional) build a wheel to share or upload to PyPI
+</pre>
+                    <div class="Definitions">
+                        Your code can read its own metadata at run time, which avoids writing the version number in
+                        two places:
+                    </div>
+                    <pre class="prettyprint python Code">
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    print(version("pip"))          # e.g. 24.2 (works for any installed package)
+    print(version("my-package"))   # your own package, once it is installed
+except PackageNotFoundError as exc:
+    print("not installed:", exc)
+</pre>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>One virtual environment per project; never commit it.</li>
+                            <li>Write docstrings and type hints for everything other people will call.</li>
+                            <li>Give your package a clear public API (<code>__init__.py</code>, <code>__all__</code>)
+                                and a root exception.</li>
+                            <li>Let formatters, linters and type checkers enforce consistency, ideally on every
+                                commit.</li>
+                            <li>Keep project configuration in <code>pyproject.toml</code>.</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
 
 </body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 
 </html>

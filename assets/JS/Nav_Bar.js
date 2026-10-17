@@ -1,25 +1,9 @@
-import { Menu_Items } from "./Menu_Items.js";
-
-var Open_Dialog_Btn = document.getElementById("Open_Dialog_Btn_ID"),
-  Close_Dialog_Btn = document.getElementById("Close_Btn_ID"),
-  Dialog = document.getElementById("Dialog_ID"),
-  // Menu_Icon_I_ID = document.getElementById("Menu_Icon_I_ID"),
-  Menu_Icon_ID = document.getElementById("Menu_Icon_ID");
+import { Menu_Items, Resolve_Url } from "./Menu_Items.js";
 
 var clicked = false;
 
-if (Open_Dialog_Btn != null) {
-  Open_Dialog_Btn.addEventListener("click", function (event) {
-    event.preventDefault();
-    Dialog.style.display = "block";
-  });
-}
-
-if (Close_Dialog_Btn != null) {
-  Close_Dialog_Btn.addEventListener("click", function (event) {
-    event.preventDefault();
-    Dialog.style.display = "none";
-  });
+function Is_Current_Page(url) {
+  return new URL(url).pathname === window.location.pathname;
 }
 
 function Build_Nav_Bar() {
@@ -30,76 +14,73 @@ function Build_Nav_Bar() {
   Nav_Bar_Items.setAttribute("id", "Nav_Bar_Items_ID");
   Header.appendChild(Nav_Bar_Items);
   body.insertBefore(Header, body.children[0]);
-  //body.appendChild(Nav_Bar_Items);
-  var Nav_Bar_Logo = document.createElement("h1");
+
+  var Nav_Bar_Logo = document.createElement("a");
   Nav_Bar_Logo.setAttribute("class", "Nav_Bar_Logo");
   Nav_Bar_Logo.setAttribute("id", "Nav_Bar_Logo_ID");
-  Nav_Bar_Logo.innerHTML = "Learning Python";
-  var Menu_Icon = document.createElement("div");
+  Nav_Bar_Logo.setAttribute("href", Resolve_Url("index.html"));
+  Nav_Bar_Logo.textContent = "Learning Python";
+
+  var Menu_Icon = document.createElement("button");
   Menu_Icon.setAttribute("class", "Menu_Icon");
   Menu_Icon.setAttribute("id", "Menu_Icon_ID");
-  var Menu_Icon_I_ID = document.createElement("i");
-  Menu_Icon_I_ID.setAttribute("id", "Menu_Icon_I_ID");
-  Menu_Icon.appendChild(Menu_Icon_I_ID);
-  document.getElementById("Nav_Bar_Items_ID").appendChild(Nav_Bar_Logo);
-  document.getElementById("Nav_Bar_Items_ID").appendChild(Menu_Icon);
+  Menu_Icon.setAttribute("aria-label", "Toggle menu");
+  Menu_Icon.setAttribute("aria-expanded", "false");
+  Menu_Icon.textContent = "☰";
+
+  Nav_Bar_Items.appendChild(Nav_Bar_Logo);
+  Nav_Bar_Items.appendChild(Menu_Icon);
+
   var Nav_Bar_Menu = document.createElement("ul");
   Nav_Bar_Menu.setAttribute("id", "Nav_Bar_Menu_ID");
-  Menu_Items.map((item, index) => {
+  Nav_Bar_Menu.className = "Nav_Bar_Menu";
+
+  Menu_Items.forEach((item) => {
     var Nav_Bar_Item = document.createElement("li");
     var Nav_Bar_Item_Link = document.createElement("a");
-    Nav_Bar_Item_Link.setAttribute("href", item.url);
+    var url = Resolve_Url(item.url);
+    Nav_Bar_Item_Link.setAttribute("href", url);
     Nav_Bar_Item_Link.setAttribute("class", item.cName);
-    Nav_Bar_Item_Link.innerHTML = item.title;
+    Nav_Bar_Item_Link.textContent = item.title;
+    Nav_Bar_Item.appendChild(Nav_Bar_Item_Link);
+
+    var Is_Active = Is_Current_Page(url);
     if (item.subMenu != null && item.subMenu.length > 0) {
-      Nav_Bar_Item.setAttribute("id", "Nav_Bar_Item_Sub_Menus_ID");
+      Nav_Bar_Item.setAttribute("class", "Nav_Bar_Item_Sub_Menus");
       var Sub_Menus = document.createElement("ul");
       Sub_Menus.setAttribute("class", "Sub_Menu");
-      Sub_Menus.setAttribute("id", "Sub_Menu_ID");
-      item.subMenu.map((item2, index2) => {
+      item.subMenu.forEach((subItem) => {
         var Sub_Menu_Item = document.createElement("li");
         var Sub_Menu_Item_Link = document.createElement("a");
-        Sub_Menu_Item_Link.setAttribute("href", item2.url);
-        Sub_Menu_Item_Link.setAttribute("class", item2.cName);
-        Sub_Menu_Item_Link.innerHTML = item2.title;
-        Sub_Menu_Item.innerHTML = Sub_Menu_Item_Link.outerHTML;
+        var subUrl = Resolve_Url(subItem.url);
+        Sub_Menu_Item_Link.setAttribute("href", subUrl);
+        Sub_Menu_Item_Link.setAttribute("class", subItem.cName);
+        Sub_Menu_Item_Link.textContent = subItem.title;
+        if (Is_Current_Page(subUrl)) {
+          Sub_Menu_Item_Link.classList.add("Active");
+          Is_Active = true;
+        }
+        Sub_Menu_Item.appendChild(Sub_Menu_Item_Link);
         Sub_Menus.appendChild(Sub_Menu_Item);
-        Nav_Bar_Item.innerHTML = Nav_Bar_Item_Link.outerHTML;
-        Nav_Bar_Item.appendChild(Sub_Menus);
       });
-    } else {
-      Nav_Bar_Item.innerHTML = Nav_Bar_Item_Link.outerHTML;
+      Nav_Bar_Item.appendChild(Sub_Menus);
     }
-    if (item.title == "Settings") {
-      Nav_Bar_Item.setAttribute("id", "Nav_Bar_Item_Settings_ID");
-      var Settings = document.createElement("i");
-      Settings.setAttribute("class", "fa-sharp fa-solid fa-gear fa-lg");
-      Settings.style.color = "#ffffff";
-      Nav_Bar_Item_Link.innerHTML = Settings.outerHTML;
-      Nav_Bar_Item.innerHTML = Nav_Bar_Item_Link.outerHTML;
-    }
+    if (Is_Active) Nav_Bar_Item_Link.classList.add("Active");
     Nav_Bar_Menu.appendChild(Nav_Bar_Item);
-    Nav_Bar_Items.appendChild(Nav_Bar_Menu);
-
-    if (!clicked) {
-      Nav_Bar_Menu.className = "Nav_Bar_Menu";
-      Menu_Icon_I_ID.className = "fas fa-bars";
-    }
   });
+  Nav_Bar_Items.appendChild(Nav_Bar_Menu);
 }
 
 Build_Nav_Bar();
 
 function handle_click() {
   clicked = !clicked;
-  if (!clicked) {
-    document.getElementById("Nav_Bar_Menu_ID").className = "Nav_Bar_Menu";
-    document.getElementById("Menu_Icon_I_ID").className = "fas fa-bars";
-  } else {
-    document.getElementById("Nav_Bar_Menu_ID").className =
-      "Nav_Bar_Menu_Active";
-    document.getElementById("Menu_Icon_I_ID").className = "fas fa-times";
-  }
+  var Menu_Icon = document.getElementById("Menu_Icon_ID");
+  document.getElementById("Nav_Bar_Menu_ID").className = clicked
+    ? "Nav_Bar_Menu_Active"
+    : "Nav_Bar_Menu";
+  Menu_Icon.textContent = clicked ? "✕" : "☰";
+  Menu_Icon.setAttribute("aria-expanded", String(clicked));
 }
 
 document

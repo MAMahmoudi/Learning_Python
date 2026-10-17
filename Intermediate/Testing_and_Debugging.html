@@ -16,11 +16,1024 @@
         <div class="Content_Area">
             <h1 class="Chapter_Title">Testing and Debugging</h1>
             <div class="Sections_Area">
-                <section id="Adding_Forms">
-                    <h2 class="Section_Title"></h2>
+                <section id="Why_Test">
+                    <h2 class="Section_Title">Why Test?</h2>
                     <div class="Definitions">
+                        Python is a dynamic language: there is no compiler that checks your types, and many mistakes
+                        (a misspelled attribute, a wrong argument, a <code>None</code> where a list was expected) only
+                        show up when the faulty line actually runs. That flexibility is great while writing code, but it
+                        means the only way to be confident that a program works is to <strong>run it and check the
+                        results</strong>. A test is simply code that does this for you, automatically and repeatably.
+                        <br><br>
+                        Tests give you several concrete benefits:
+                        <ul>
+                            <li><strong>They catch bugs early</strong>, while the code is fresh in your mind and the
+                                fix is cheap.</li>
+                            <li><strong>They make change safe.</strong> When you refactor or add a feature, re-running
+                                the tests tells you within seconds whether you broke something that used to work (a
+                                <em>regression</em>).</li>
+                            <li><strong>They document behavior.</strong> A test named
+                                <code>test_empty_cart_total_is_zero</code> explains exactly what the code is supposed
+                                to do, and unlike a comment it can never silently become outdated.</li>
+                            <li><strong>They improve design.</strong> Code that is hard to test (functions that do
+                                five things, hidden global state) is usually hard to understand too. Writing tests
+                                nudges you toward small, focused functions.</li>
+                        </ul>
+                        Debugging is the other half of the story: when a test fails (or a user reports a problem),
+                        you need tools to find out <em>why</em>. This chapter covers both: first how to write tests with
+                        <code>assert</code>, <code>unittest</code> and <code>pytest</code>, then how to investigate
+                        problems with <code>print()</code>, <code>repr()</code>, <code>logging</code> and the
+                        interactive debugger <code>pdb</code>.
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <div class="Definitions">
+                        <strong>Kinds of tests</strong>
+                        <table>
+                            <tr>
+                                <th>Kind</th>
+                                <th>What it checks</th>
+                                <th>Example</th>
+                            </tr>
+                            <tr>
+                                <td>Unit test</td>
+                                <td>One small piece (a function or a class) in isolation</td>
+                                <td><code>slugify("Hello World") == "hello-world"</code></td>
+                            </tr>
+                            <tr>
+                                <td>Integration test</td>
+                                <td>Several pieces working together</td>
+                                <td>Saving an order really writes a row to the database</td>
+                            </tr>
+                            <tr>
+                                <td>End-to-end test</td>
+                                <td>The whole program as a user sees it</td>
+                                <td>Running the command-line tool and checking its output</td>
+                            </tr>
+                        </table>
+                        This page focuses on unit tests, which are fast, precise and the foundation of everything else.
+                    </div>
+                </section>
+
+                <section id="Using_Assert">
+                    <h2 class="Section_Title">Using assert</h2>
+                    <div class="Definitions">
+                        The simplest test tool is built into the language: the <code>assert</code> statement. It
+                        evaluates an expression and does nothing if the result is truthy. If the result is falsy it
+                        raises an <code>AssertionError</code>, optionally with a message you supply after a comma:
+                    </div>
+                    <pre class="prettyprint python Code">
+assert condition, "optional message shown when condition is false"
+</pre>
+                    <div class="Definitions">
+                        Here we check a small <code>average()</code> function with a few known inputs and outputs:
+                    </div>
+                    <pre class="prettyprint python Code">
+def average(numbers):
+    return sum(numbers) / len(numbers)
+
+assert average([1, 2, 3]) == 2
+assert average([10]) == 10
+assert average([1, 2]) == 1.5, "average of 1 and 2 should be 1.5"
+print("All checks passed!")  # All checks passed!
+</pre>
+                    <div class="Definitions">
+                        Now imagine someone "optimizes" the function and accidentally uses floor division
+                        <code>//</code>. The assertion fails and the program stops with a traceback pointing straight at
+                        the broken check. Including the actual value in the message makes the failure much easier to
+                        understand:
+                    </div>
+                    <pre class="prettyprint python Code">
+def average(numbers):
+    return sum(numbers) // len(numbers)   # bug: floor division
+
+assert average([1, 2]) == 1.5, f"expected 1.5, got {average([1, 2])}"
+</pre>
+                    <pre class="prettyprint Code">
+Traceback (most recent call last):
+  File "assert_fail.py", line 4, in &lt;module&gt;
+    assert average([1, 2]) == 1.5, f"expected 1.5, got {average([1, 2])}"
+AssertionError: expected 1.5, got 1
+</pre>
+                    <h3 class="Subsection_Title">Comparing floats</h3>
+                    <div class="Definitions">
+                        Floating-point numbers are stored in binary and cannot represent most decimal fractions
+                        exactly, so an exact <code>==</code> comparison can fail even when the math is "right". Compare
+                        floats with a tolerance instead, using <code>math.isclose()</code> (or the equivalents in
+                        <code>unittest</code> and <code>pytest</code> shown later):
+                    </div>
+                    <pre class="prettyprint python Code">
+import math
+print(0.1 + 0.2 == 0.3)               # False
+print(0.1 + 0.2)                      # 0.30000000000000004
+print(math.isclose(0.1 + 0.2, 0.3))   # True
+</pre>
+                    <h3 class="Subsection_Title">Limits of assert</h3>
+                    <div class="Definitions">
+                        Plain <code>assert</code> statements are great for quick checks, but as a testing strategy they
+                        fall short: the first failure stops the whole script, so you never learn whether the other
+                        checks would have passed; there is no report of how many checks ran; and there is no way to
+                        run only some of them. Test frameworks such as <code>unittest</code> and <code>pytest</code>
+                        solve exactly these problems.
+                    </div>
+                    <div class="Warning">
+                        Never put parentheses around the condition and the message together:
+                        <code>assert (x == 10, "x should be 10")</code> asserts a non-empty <strong>tuple</strong>,
+                        which is always truthy, so the assertion can never fail. Python 3.12 prints
+                        <code>SyntaxWarning: assertion is always true, perhaps remove parentheses?</code> to warn you.
+                    </div>
+                    <div class="Warning">
+                        Assertions are removed entirely when Python runs with the <code>-O</code> (optimize) flag. Use
+                        <code>assert</code> for tests and for internal "this can never happen" sanity checks, but never
+                        to validate user input or enforce security rules; raise a proper exception such as
+                        <code>ValueError</code> for that.
+                    </div>
+                </section>
+
+                <section id="Testing_With_Unittest">
+                    <h2 class="Section_Title">Testing a Function with unittest</h2>
+                    <div class="Definitions">
+                        The <code>unittest</code> module ships with Python, so it is always available. Its model is
+                        simple:
+                        <ol>
+                            <li>Create a class that inherits from <code>unittest.TestCase</code>.</li>
+                            <li>Add methods whose names start with <code>test</code>. Each one is an independent
+                                test.</li>
+                            <li>Inside each method, check results with the <code>self.assert...()</code> methods.</li>
+                        </ol>
+                        Unlike a bare <code>assert</code>, a failing check only fails <em>that</em> test; the runner
+                        carries on with the rest and gives you a summary at the end. Let's test a small module,
+                        <code>text_utils.py</code>:
+                    </div>
+                    <pre class="prettyprint python Code">
+# text_utils.py
+def slugify(title):
+    """Turn 'Hello World!' into 'hello-world'."""
+    if not isinstance(title, str):
+        raise TypeError("title must be a string")
+    words = "".join(ch if ch.isalnum() else " " for ch in title).split()
+    return "-".join(word.lower() for word in words)
+
+
+def word_count(text):
+    """Return a dict mapping each word to how many times it appears."""
+    counts = {}
+    for word in text.lower().split():
+        counts[word] = counts.get(word, 0) + 1
+    return counts
+</pre>
+                    <div class="Definitions">
+                        The tests live in a separate file whose name starts with <code>test_</code>. Notice how each
+                        test checks one behavior and has a descriptive name, and how the edge cases (an empty string,
+                        a wrong type) get their own tests:
+                    </div>
+                    <pre class="prettyprint python Code">
+# test_text_utils.py
+import unittest
+
+from text_utils import slugify, word_count
+
+
+class TestSlugify(unittest.TestCase):
+
+    def test_simple_title(self):
+        self.assertEqual(slugify("Hello World"), "hello-world")
+
+    def test_punctuation_is_removed(self):
+        self.assertEqual(slugify("Python: Tips &amp; Tricks!"), "python-tips-tricks")
+
+    def test_result_is_lowercase(self):
+        result = slugify("LOUD TITLE")
+        self.assertTrue(result.islower())
+
+    def test_empty_string(self):
+        self.assertEqual(slugify(""), "")
+
+    def test_non_string_raises_type_error(self):
+        with self.assertRaises(TypeError):
+            slugify(42)
+
+
+class TestWordCount(unittest.TestCase):
+
+    def test_counts_repeated_words(self):
+        counts = word_count("the cat and the hat")
+        self.assertEqual(counts["the"], 2)
+        self.assertIn("hat", counts)
+        self.assertNotIn("dog", counts)
+
+    def test_is_case_insensitive(self):
+        self.assertEqual(word_count("Go go GO"), {"go": 3})
+
+
+if __name__ == "__main__":
+    unittest.main()
+</pre>
+                    <h3 class="Subsection_Title">Running the tests</h3>
+                    <div class="Definitions">
+                        From the folder that contains both files, run <code>python -m unittest</code>. Each dot is a
+                        passing test. Add <code>-v</code> (verbose) to see every test by name. Thanks to the
+                        <code>if __name__ == "__main__"</code> block, <code>python test_text_utils.py</code> works
+                        too.
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; python -m unittest
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.000s
+
+OK
+
+&gt; python -m unittest -v test_text_utils
+test_empty_string (test_text_utils.TestSlugify.test_empty_string) ... ok
+test_non_string_raises_type_error (test_text_utils.TestSlugify.test_non_string_raises_type_error) ... ok
+test_punctuation_is_removed (test_text_utils.TestSlugify.test_punctuation_is_removed) ... ok
+test_result_is_lowercase (test_text_utils.TestSlugify.test_result_is_lowercase) ... ok
+test_simple_title (test_text_utils.TestSlugify.test_simple_title) ... ok
+test_counts_repeated_words (test_text_utils.TestWordCount.test_counts_repeated_words) ... ok
+test_is_case_insensitive (test_text_utils.TestWordCount.test_is_case_insensitive) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.000s
+
+OK
+</pre>
+                    <div class="Definitions">
+                        Now suppose someone removes the <code>.lower()</code> call from <code>slugify()</code>.
+                        Three tests fail, and <code>assertEqual</code> shows exactly how the strings differ (the
+                        <code>^</code> markers point at the differing characters). The other four tests still run and
+                        pass:
+                    </div>
+                    <pre class="prettyprint Code">
+..FFF..
+======================================================================
+FAIL: test_punctuation_is_removed (test_text_utils.TestSlugify.test_punctuation_is_removed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "test_text_utils.py", line 12, in test_punctuation_is_removed
+    self.assertEqual(slugify("Python: Tips &amp; Tricks!"), "python-tips-tricks")
+AssertionError: 'Python-Tips-Tricks' != 'python-tips-tricks'
+- Python-Tips-Tricks
+? ^      ^    ^
++ python-tips-tricks
+? ^      ^    ^
+
+======================================================================
+FAIL: test_result_is_lowercase (test_text_utils.TestSlugify.test_result_is_lowercase)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "test_text_utils.py", line 16, in test_result_is_lowercase
+    self.assertTrue(result.islower())
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_simple_title (test_text_utils.TestSlugify.test_simple_title)
+...
+----------------------------------------------------------------------
+Ran 7 tests in 0.001s
+
+FAILED (failures=3)
+</pre>
+                    <div class="Definitions">
+                        Compare the two failure messages: <code>assertEqual</code> tells you <em>what</em> was
+                        different, while <code>assertTrue</code> can only say "False is not true". That is why you
+                        should always use the most specific assert method available.
+                        <br><br>
+                        <strong>The most useful assert methods</strong>
+                        <table>
+                            <tr>
+                                <th>Method</th>
+                                <th>Checks that</th>
+                            </tr>
+                            <tr>
+                                <td><code>assertEqual(a, b)</code> / <code>assertNotEqual(a, b)</code></td>
+                                <td><code>a == b</code> / <code>a != b</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>assertTrue(x)</code> / <code>assertFalse(x)</code></td>
+                                <td><code>bool(x)</code> is True / False</td>
+                            </tr>
+                            <tr>
+                                <td><code>assertIs(a, b)</code> / <code>assertIsNone(x)</code></td>
+                                <td><code>a is b</code> / <code>x is None</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>assertIn(a, b)</code> / <code>assertNotIn(a, b)</code></td>
+                                <td><code>a in b</code> / <code>a not in b</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>assertIsInstance(obj, cls)</code></td>
+                                <td><code>isinstance(obj, cls)</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>assertAlmostEqual(a, b)</code></td>
+                                <td><code>round(a - b, 7) == 0</code> (safe for floats)</td>
+                            </tr>
+                            <tr>
+                                <td><code>assertRaises(Error)</code></td>
+                                <td>the code inside the <code>with</code> block raises <code>Error</code></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="Note">
+                        Test names should describe behavior, not implementation: <code>test_empty_string</code> or
+                        <code>test_non_string_raises_type_error</code> tell you what broke the moment they fail;
+                        <code>test_1</code> tells you nothing.
+                    </div>
+                    <div class="Warning">
+                        A method that does not start with <code>test</code> (for example <code>check_title</code>) is
+                        silently ignored by the runner. If your test count looks too low, check the method names.
+                    </div>
+                </section>
+
+                <section id="Testing_A_Class">
+                    <h2 class="Section_Title">Testing a Class</h2>
+                    <div class="Definitions">
+                        Testing a class usually means creating an object, putting it into some state, calling a method
+                        and checking the result. When several tests need the same starting object, repeating that
+                        set-up code in every method is tedious and error-prone. <code>unittest</code> solves this with
+                        two special methods:
+                        <ul>
+                            <li><code>setUp()</code> runs <strong>before each</strong> test method. Store whatever the
+                                tests need on <code>self</code>.</li>
+                            <li><code>tearDown()</code> runs <strong>after each</strong> test method, even when the test
+                                failed, so it is the place to release resources (close files, delete temporary
+                                data).</li>
+                        </ul>
+                        Because <code>setUp()</code> runs again for every test, each test receives a <em>brand-new</em>
+                        object. One test can never be affected by changes another test made, which keeps tests
+                        independent and lets them run in any order. Here is a class to test:
+                    </div>
+                    <pre class="prettyprint python Code">
+# cart.py
+class ShoppingCart:
+    def __init__(self):
+        self.items = {}          # name -&gt; (price, quantity)
+
+    def add_item(self, name, price, quantity=1):
+        if price &lt; 0:
+            raise ValueError("price cannot be negative")
+        old_price, old_qty = self.items.get(name, (price, 0))
+        self.items[name] = (price, old_qty + quantity)
+
+    def remove_item(self, name):
+        if name not in self.items:
+            raise KeyError(f"{name!r} is not in the cart")
+        del self.items[name]
+
+    def total(self):
+        return sum(price * qty for price, qty in self.items.values())
+</pre>
+                    <pre class="prettyprint python Code">
+# test_cart.py
+import unittest
+
+from cart import ShoppingCart
+
+
+class TestShoppingCart(unittest.TestCase):
+
+    def setUp(self):
+        # Runs before EVERY test method: each test gets a brand-new cart.
+        self.cart = ShoppingCart()
+        self.cart.add_item("apple", 0.5, quantity=4)
+        self.cart.add_item("bread", 2.25)
+
+    def test_total(self):
+        self.assertEqual(self.cart.total(), 4.25)
+
+    def test_adding_same_item_increases_quantity(self):
+        self.cart.add_item("apple", 0.5, quantity=2)
+        self.assertEqual(self.cart.items["apple"], (0.5, 6))
+
+    def test_remove_item(self):
+        self.cart.remove_item("bread")
+        self.assertNotIn("bread", self.cart.items)
+        self.assertEqual(self.cart.total(), 2.0)
+
+    def test_remove_missing_item_raises(self):
+        with self.assertRaises(KeyError):
+            self.cart.remove_item("milk")
+
+    def test_negative_price_is_rejected(self):
+        with self.assertRaises(ValueError) as context:
+            self.cart.add_item("mystery", -1)
+        self.assertIn("negative", str(context.exception))
+
+    def tearDown(self):
+        # Runs after EVERY test, even if the test failed.
+        self.cart = None
+
+
+if __name__ == "__main__":
+    unittest.main()
+</pre>
+                    <pre class="prettyprint Code">
+&gt; python -m unittest -v test_cart
+test_adding_same_item_increases_quantity (test_cart.TestShoppingCart.test_adding_same_item_increases_quantity) ... ok
+test_negative_price_is_rejected (test_cart.TestShoppingCart.test_negative_price_is_rejected) ... ok
+test_remove_item (test_cart.TestShoppingCart.test_remove_item) ... ok
+test_remove_missing_item_raises (test_cart.TestShoppingCart.test_remove_missing_item_raises) ... ok
+test_total (test_cart.TestShoppingCart.test_total) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+</pre>
+                    <div class="Definitions">
+                        A few things worth noticing:
+                        <ul>
+                            <li><code>test_remove_item</code> deletes the bread, yet <code>test_total</code> still sees
+                                it, because each test got its own cart from <code>setUp()</code>.</li>
+                            <li>Using <code>assertRaises</code> as a context manager with <code>as context</code> gives
+                                you the exception object, so you can also check its message.</li>
+                            <li>Tests run in alphabetical order of their method names, not the order you wrote them.
+                                Never write a test that relies on another test having run first.</li>
+                        </ul>
+                    </div>
+                    <div class="Note">
+                        Test the <strong>public behavior</strong> of a class (what its methods return and which
+                        exceptions they raise) rather than every internal detail. Tests that poke at private
+                        implementation details break whenever you refactor, even if the class still works correctly.
+                    </div>
+                </section>
+
+                <section id="Organizing_Tests">
+                    <h2 class="Section_Title">Organizing Tests and Test Discovery</h2>
+                    <div class="Definitions">
+                        Once a project has more than a couple of modules, keep the tests in their own
+                        <code>tests</code> folder, with one test file per module being tested. A common layout looks
+                        like this:
+                    </div>
+                    <pre class="prettyprint Code">
+shop_project/
+    shop/
+        __init__.py
+        cart.py
+        text_utils.py
+    tests/
+        __init__.py
+        test_cart.py
+        test_text_utils.py
+</pre>
+                    <div class="Definitions">
+                        Inside the test files, import the code through its package name, for example
+                        <code>from shop.cart import ShoppingCart</code>.
+                        <br><br>
+                        When you run <code>python -m unittest</code> with no arguments, it performs <strong>test
+                        discovery</strong>: starting from the current folder, it searches for files that match the
+                        pattern <code>test*.py</code>, imports them, and collects every <code>TestCase</code> class
+                        inside. You can also be more specific:
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; python -m unittest                         # discover and run everything
+&gt; python -m unittest -v                      # same, listing every test
+&gt; python -m unittest discover -s tests -t . -p "test_*.py"   # explicit start dir and pattern
+&gt; python -m unittest tests.test_cart                      # one module
+&gt; python -m unittest tests.test_cart.TestShoppingCart     # one class
+&gt; python -m unittest tests.test_cart.TestShoppingCart.test_total   # one test
+&gt; python -m unittest -k remove               # only tests whose name contains "remove"
+&gt; python -m unittest -f                      # stop at the first failure
+</pre>
+                    <div class="Definitions">
+                        Run these commands from the project root (<code>shop_project</code>), so that both the
+                        <code>shop</code> and <code>tests</code> packages can be imported.
+                    </div>
+                    <div class="Warning">
+                        Discovery only descends into folders that are importable packages. If <code>tests/</code> has
+                        no <code>__init__.py</code> file, <code>python -m unittest</code> run from the project root
+                        quietly reports <code>Ran 0 tests ... NO TESTS RAN</code>. Add an empty
+                        <code>tests/__init__.py</code> to fix it.
+                    </div>
+                    <div class="Warning">
+                        Never name your own file after a module you import. A file called <code>unittest.py</code>,
+                        <code>random.py</code> or <code>test.py</code> in your project shadows the standard library
+                        module and produces very confusing import errors.
+                    </div>
+                    <div class="Note">
+                        Make running the tests a habit: run the whole suite before every commit. A test suite is only
+                        useful if it is fast enough that you actually run it, so keep unit tests free of slow work
+                        such as real network calls.
+                    </div>
+                </section>
+
+                <section id="Introduction_To_Pytest">
+                    <h2 class="Section_Title">Introduction to pytest</h2>
+                    <div class="Definitions">
+                        <code>pytest</code> is a third-party test framework and the most popular choice in the Python
+                        world. It is not part of the standard library, so install it first:
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; python -m pip install pytest
+</pre>
+                    <div class="Definitions">
+                        Its big idea is that a test is just a function whose name starts with <code>test_</code>, and
+                        checks are written with the ordinary <code>assert</code> statement. No class, no
+                        <code>self</code>, no special assert methods to memorize. Here are the
+                        <code>text_utils</code> tests rewritten for pytest:
+                    </div>
+                    <pre class="prettyprint python Code">
+# test_text_utils.py
+import pytest
+
+from text_utils import slugify, word_count
+
+
+def test_simple_title():
+    assert slugify("Hello World") == "hello-world"
+
+
+def test_punctuation_is_removed():
+    assert slugify("Python: Tips &amp; Tricks!") == "python-tips-tricks"
+
+
+def test_non_string_raises_type_error():
+    with pytest.raises(TypeError, match="must be a string"):
+        slugify(42)
+
+
+def test_word_count():
+    counts = word_count("the cat and the hat")
+    assert counts["the"] == 2
+    assert "dog" not in counts
+
+
+def test_float_total():
+    assert 0.1 + 0.2 == pytest.approx(0.3)
+</pre>
+                    <div class="Definitions">
+                        <code>pytest.raises</code> works like <code>assertRaises</code>, and its <code>match</code>
+                        argument also checks the error message (it is a regular expression). <code>pytest.approx</code>
+                        compares floats with a sensible tolerance. Run the tests with the <code>pytest</code> command
+                        (or <code>python -m pytest</code>); <code>-v</code> lists each test:
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; python -m pytest
+============================= test session starts =============================
+platform win32 -- Python 3.12.0, pytest-9.1.1, pluggy-1.7.0
+rootdir: C:\projects\shop
+collected 5 items
+
+test_text_utils.py .....                                                 [100%]
+
+============================== 5 passed in 0.02s ==============================
+
+&gt; python -m pytest -v
+collected 5 items
+
+test_text_utils.py::test_simple_title PASSED                             [ 20%]
+test_text_utils.py::test_punctuation_is_removed PASSED                   [ 40%]
+test_text_utils.py::test_non_string_raises_type_error PASSED             [ 60%]
+test_text_utils.py::test_word_count PASSED                               [ 80%]
+test_text_utils.py::test_float_total PASSED                              [100%]
+
+============================== 5 passed in 0.01s ==============================
+</pre>
+                    <h3 class="Subsection_Title">Readable failures</h3>
+                    <div class="Definitions">
+                        How can a plain <code>assert</code> produce a useful report? pytest rewrites the assert
+                        statements in test files when it imports them, so on failure it can show the values of every
+                        part of the expression. For dictionaries, lists and strings it even shows a diff:
+                    </div>
+                    <pre class="prettyprint python Code">
+# test_broken.py
+from text_utils import word_count
+
+
+def test_word_count_dict():
+    assert word_count("Go go stop") == {"go": 2, "stop": 2}
+</pre>
+                    <pre class="prettyprint Code">
+================================== FAILURES ===================================
+____________________________ test_word_count_dict _____________________________
+
+    def test_word_count_dict():
+&gt;       assert word_count("Go go stop") == {"go": 2, "stop": 2}
+E       AssertionError: assert {'go': 2, 'stop': 1} == {'go': 2, 'stop': 2}
+E
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'stop': 1} != {'stop': 2}
+E         Use -v to get more diff
+
+test_broken.py:5: AssertionError
+=========================== short test summary info ===========================
+FAILED test_broken.py::test_word_count_dict - AssertionError: assert {'go': 2...
+============================== 1 failed in 0.07s ==============================
+</pre>
+                    <div class="Definitions">
+                        (Here the test itself was wrong: "stop" really appears only once. A failing test means
+                        <em>either</em> the code or the test has a bug, so always read the failure before "fixing"
+                        the code.)
+                        <br><br>
+                        <strong>unittest or pytest?</strong>
+                        <table>
+                            <tr>
+                                <th></th>
+                                <th>unittest</th>
+                                <th>pytest</th>
+                            </tr>
+                            <tr>
+                                <td>Installation</td>
+                                <td>Built in</td>
+                                <td><code>pip install pytest</code></td>
+                            </tr>
+                            <tr>
+                                <td>Test style</td>
+                                <td>Methods in a <code>TestCase</code> subclass</td>
+                                <td>Plain functions (classes optional)</td>
+                            </tr>
+                            <tr>
+                                <td>Checks</td>
+                                <td><code>self.assertEqual</code>, <code>self.assertIn</code>, ...</td>
+                                <td>Plain <code>assert</code></td>
+                            </tr>
+                            <tr>
+                                <td>Shared set-up</td>
+                                <td><code>setUp</code> / <code>tearDown</code></td>
+                                <td>Fixtures (covered in the Advanced chapter)</td>
+                            </tr>
+                            <tr>
+                                <td>Run command</td>
+                                <td><code>python -m unittest</code></td>
+                                <td><code>pytest</code> or <code>python -m pytest</code></td>
+                            </tr>
+                        </table>
+                        You do not have to choose once and for all: pytest also discovers and runs
+                        <code>unittest.TestCase</code> classes, so an existing unittest suite can be run with pytest
+                        unchanged and new tests can be written in pytest style alongside it.
+                    </div>
+                    <div class="Note">
+                        pytest discovers files named <code>test_*.py</code> or <code>*_test.py</code>, functions named
+                        <code>test*</code>, and classes named <code>Test*</code> (without an <code>__init__</code>
+                        method). Useful options: <code>-x</code> stops at the first failure, <code>-k word</code>
+                        selects tests by name, and <code>--lf</code> re-runs only the tests that failed last time.
+                    </div>
+                </section>
+
+                <section id="Debugging_With_Print_And_Repr">
+                    <h2 class="Section_Title">Debugging with print() and repr()</h2>
+                    <div class="Definitions">
+                        When a test fails and the reason is not obvious, the quickest first step is often to print the
+                        values involved. There is one trap, though: <code>print()</code> shows the
+                        <strong>human-friendly</strong> form of a value (its <code>str()</code>), which hides exactly the
+                        details that cause many bugs. The string <code>"5"</code> and the integer <code>5</code> print
+                        identically, and trailing spaces or tab characters are invisible.
+                        <br><br>
+                        The built-in <code>repr()</code> returns the <strong>developer-friendly</strong> form instead,
+                        which for built-in types usually looks like the Python code you would write to create the
+                        value. Strings appear with quotes, and special characters are shown as escape sequences:
+                    </div>
+                    <pre class="prettyprint python Code">
+user_input = "5"
+stored_value = 5
+print(user_input, stored_value)              # 5 5   (they look identical!)
+print(repr(user_input), repr(stored_value))  # '5' 5
+print(user_input == stored_value)            # False
+
+name = "Alice "
+print("Name:", name, "|")                    # Name: Alice  |
+print("Name:", repr(name))                   # Name: 'Alice '
+
+line = "first\tsecond\n"
+print(repr(line))                            # 'first\tsecond\n'
+</pre>
+                    <div class="Definitions">
+                        f-strings offer two handy shortcuts. <code>{value!r}</code> inserts <code>repr(value)</code>,
+                        and the "self-documenting" form <code>{expression=}</code> prints the expression's text, an equals
+                        sign, and the repr of its value, so you never have to type the variable name twice:
+                    </div>
+                    <pre class="prettyprint python Code">
+total = 42
+items = ["a", "b"]
+print(f"{total=}, {items=}")     # total=42, items=['a', 'b']
+print(f"{name=}")                # name='Alice '
+print(f"{len(items) * 2 = }")    # len(items) * 2 = 4
+print(f"Got {user_input!r}")     # Got '5'
+</pre>
+                    <div class="Definitions">
+                        For your own classes, define <code>__repr__</code> so that debugging output is informative
+                        instead of the default <code>&lt;__main__.Point object at 0x...&gt;</code>:
+                    </div>
+                    <pre class="prettyprint python Code">
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return f"Point({self.x!r}, {self.y!r})"
+
+
+p = Point(3, "4")
+print(p)            # Point(3, '4')   (the quotes reveal that y is a string!)
+print([p, p])       # [Point(3, '4'), Point(3, '4')]
+</pre>
+                    <div class="Note">
+                        Containers such as lists and dicts always use <code>repr()</code> for their elements, which
+                        is why <code>print(["5"])</code> shows <code>['5']</code> with quotes.
+                    </div>
+                    <div class="Warning">
+                        Debug <code>print()</code> calls are easy to forget and end up in finished programs. Remove
+                        them once the bug is fixed, or, for diagnostics you want to keep, switch to the
+                        <code>logging</code> module described next.
+                    </div>
+                </section>
+
+                <section id="Using_Logging">
+                    <h2 class="Section_Title">Using the logging Module instead of print</h2>
+                    <div class="Definitions">
+                        <code>print()</code> is fine for a five-minute investigation, but in a real program you want
+                        diagnostic messages that you can <strong>turn on and off</strong> without editing the code,
+                        that carry a <strong>timestamp and a severity</strong>, and that can go to a file instead of
+                        cluttering the console. The standard <code>logging</code> module provides all of that.
+                        <br><br>
+                        Every message has a <strong>level</strong>. You choose a threshold, and messages below it are
+                        simply ignored:
+                        <table>
+                            <tr>
+                                <th>Level</th>
+                                <th>Use it for</th>
+                            </tr>
+                            <tr>
+                                <td><code>DEBUG</code></td>
+                                <td>Detailed information useful only while diagnosing a problem</td>
+                            </tr>
+                            <tr>
+                                <td><code>INFO</code></td>
+                                <td>Confirmation that things are working as expected</td>
+                            </tr>
+                            <tr>
+                                <td><code>WARNING</code></td>
+                                <td>Something unexpected happened, but the program continues (the default threshold)</td>
+                            </tr>
+                            <tr>
+                                <td><code>ERROR</code></td>
+                                <td>A problem prevented some operation from completing</td>
+                            </tr>
+                            <tr>
+                                <td><code>CRITICAL</code></td>
+                                <td>A serious error; the program may not be able to continue</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <pre class="prettyprint python Code">
+import logging
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger("orders")
+
+
+def apply_discount(price, percent):
+    logger.debug("apply_discount(price=%r, percent=%r)", price, percent)
+    if not 0 &lt;= percent &lt;= 100:
+        logger.error("Invalid discount %s%%; returning original price", percent)
+        return price
+    new_price = round(price * (1 - percent / 100), 2)
+    logger.info("Discounted %.2f to %.2f", price, new_price)
+    return new_price
+
+
+apply_discount(80, 25)
+apply_discount(80, 150)
+</pre>
+                    <pre class="prettyprint Code">
+21:29:13 DEBUG    orders: apply_discount(price=80, percent=25)
+21:29:13 INFO     orders: Discounted 80.00 to 60.00
+21:29:13 DEBUG    orders: apply_discount(price=80, percent=150)
+21:29:13 ERROR    orders: Invalid discount 150%; returning original price
+</pre>
+                    <div class="Definitions">
+                        Once the bug is fixed you do not delete anything: change <code>level=logging.DEBUG</code> to
+                        <code>level=logging.WARNING</code> and only the important messages remain. Add
+                        <code>filename="app.log"</code> to <code>basicConfig()</code> and the messages go to a file
+                        instead of the screen.
+                    </div>
+                    <pre class="prettyprint python Code">
+import logging
+
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
+
+logger.debug("Hidden: below WARNING")
+logger.info("Hidden: below WARNING")
+logger.warning("Disk space is low")      # WARNING:__main__:Disk space is low
+logger.error("Could not save file")      # ERROR:__main__:Could not save file
+</pre>
+                    <h3 class="Subsection_Title">Good habits</h3>
+                    <div class="Definitions">
+                        <ul>
+                            <li>In each module, create a logger with <code>logger = logging.getLogger(__name__)</code>.
+                                The logger is named after the module, so you can see where every message came from
+                                and silence noisy modules individually.</li>
+                            <li>Call <code>logging.basicConfig()</code> <strong>once</strong>, at the start of the
+                                program (not inside library modules). Later calls do nothing if logging has already
+                                been configured, which surprises many people.</li>
+                            <li>Pass values as arguments, <code>logger.debug("x=%s", x)</code>, rather than formatting
+                                them yourself with an f-string. The message is then only built if it will actually be
+                                shown, which saves work for disabled DEBUG messages.</li>
+                            <li>Inside an <code>except</code> block, use <code>logger.exception()</code>: it logs at
+                                ERROR level and appends the full traceback automatically.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
+
+try:
+    1 / 0
+except ZeroDivisionError:
+    logger.exception("Calculation failed")
+</pre>
+                    <pre class="prettyprint Code">
+ERROR: Calculation failed
+Traceback (most recent call last):
+  File "log_exc.py", line 7, in &lt;module&gt;
+    1 / 0
+    ~~^~~
+ZeroDivisionError: division by zero
+</pre>
+                    <div class="Warning">
+                        Calling <code>logging.debug(...)</code> directly on the module (instead of on a logger
+                        object) before <code>basicConfig()</code> silently configures logging with default settings.
+                        Your own <code>basicConfig()</code> call afterwards is then ignored. Configure logging first,
+                        then log.
+                    </div>
+                </section>
+
+                <section id="Interactive_Debugging">
+                    <h2 class="Section_Title">Interactive Debugging with breakpoint() and pdb</h2>
+                    <div class="Definitions">
+                        Printing requires you to guess in advance which values matter, then re-run the program each
+                        time you guess wrong. An <strong>interactive debugger</strong> lets you pause the program at a
+                        chosen line and explore: inspect any variable, evaluate expressions, and step through the
+                        code one line at a time while watching what changes. Python's built-in debugger is
+                        <code>pdb</code>, and the easiest way to start it is to put a call to the built-in
+                        <code>breakpoint()</code> function where you want the program to stop.
+                        <br><br>
+                        The following program has a bug: a score of 70 should earn a "C", but it gets an "F".
+                    </div>
+                    <pre class="prettyprint python Code">
+# grades.py
+def letter_grade(score):
+    if score &gt;= 90:
+        return "A"
+    elif score &gt;= 80:
+        return "B"
+    elif score &gt; 70:
+        return "C"
+    return "F"
+
+
+def report(scores):
+    results = []
+    for score in scores:
+        breakpoint()              # execution pauses here on every loop
+        results.append(letter_grade(score))
+    return results
+
+
+print(report([95, 70]))
+</pre>
+                    <div class="Definitions">
+                        Running <code>python grades.py</code> stops at the line after <code>breakpoint()</code> and
+                        shows the <code>(Pdb)</code> prompt. The arrow <code>-&gt;</code> marks the line that is
+                        <em>about to</em> run. Below is a real session (the text after each <code>(Pdb)</code> prompt
+                        was typed by the user; paths are shortened):
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; grades.py(15)report()
+-&gt; results.append(letter_grade(score))
+(Pdb) p score
+95
+(Pdb) c
+&gt; grades.py(15)report()
+-&gt; results.append(letter_grade(score))
+(Pdb) p score, results
+(70, ['A'])
+(Pdb) l
+ 10
+ 11     def report(scores):
+ 12         results = []
+ 13         for score in scores:
+ 14             breakpoint()              # execution pauses here on every loop
+ 15  -&gt;         results.append(letter_grade(score))
+ 16         return results
+ 17
+ 18
+ 19     print(report([95, 70]))
+[EOF]
+(Pdb) s
+--Call--
+&gt; grades.py(1)letter_grade()
+-&gt; def letter_grade(score):
+(Pdb) n
+&gt; grades.py(2)letter_grade()
+-&gt; if score &gt;= 90:
+(Pdb) n
+&gt; grades.py(4)letter_grade()
+-&gt; elif score &gt;= 80:
+(Pdb) n
+&gt; grades.py(6)letter_grade()
+-&gt; elif score &gt; 70:
+(Pdb) w
+  grades.py(19)&lt;module&gt;()
+-&gt; print(report([95, 70]))
+  grades.py(15)report()
+-&gt; results.append(letter_grade(score))
+&gt; grades.py(6)letter_grade()
+-&gt; elif score &gt; 70:
+(Pdb) p score &gt; 70
+False
+(Pdb) q
+</pre>
+                    <div class="Definitions">
+                        Step by step: <code>c</code> continued to the second loop iteration, <code>s</code> stepped
+                        <em>into</em> <code>letter_grade()</code>, <code>n</code> moved line by line, <code>w</code>
+                        showed how we got here, and evaluating <code>score &gt; 70</code> revealed the bug: the
+                        condition should be <code>score &gt;= 70</code>.
+                        <br><br>
+                        <strong>Essential pdb commands</strong>
+                        <table>
+                            <tr>
+                                <th>Command</th>
+                                <th>Name</th>
+                                <th>What it does</th>
+                            </tr>
+                            <tr>
+                                <td><code>n</code></td>
+                                <td>next</td>
+                                <td>Run the current line and stop at the next line in the <em>same</em> function
+                                    (function calls on the line run without stopping inside them)</td>
+                            </tr>
+                            <tr>
+                                <td><code>s</code></td>
+                                <td>step</td>
+                                <td>Run the current line, but stop <em>inside</em> any function it calls</td>
+                            </tr>
+                            <tr>
+                                <td><code>c</code></td>
+                                <td>continue</td>
+                                <td>Resume normal execution until the next breakpoint (or the end)</td>
+                            </tr>
+                            <tr>
+                                <td><code>l</code></td>
+                                <td>list</td>
+                                <td>Show the source code around the current line (<code>ll</code> shows the whole
+                                    function)</td>
+                            </tr>
+                            <tr>
+                                <td><code>p expr</code></td>
+                                <td>print</td>
+                                <td>Evaluate an expression and print its value (<code>pp</code> pretty-prints)</td>
+                            </tr>
+                            <tr>
+                                <td><code>w</code></td>
+                                <td>where</td>
+                                <td>Show the call stack; the newest frame is at the bottom</td>
+                            </tr>
+                            <tr>
+                                <td><code>q</code></td>
+                                <td>quit</td>
+                                <td>Abort the program and leave the debugger</td>
+                            </tr>
+                        </table>
+                        Other handy commands: <code>r</code> (return: run until the current function returns),
+                        <code>u</code> / <code>d</code> (move up / down the call stack to inspect the caller's
+                        variables), <code>b 12</code> (set a breakpoint at line 12), <code>a</code> (print the current
+                        function's arguments) and <code>h</code> (help). Pressing Enter on an empty line repeats the
+                        last command, which is convenient when stepping with <code>n</code>.
+                    </div>
+                    <h3 class="Subsection_Title">Controlling breakpoint()</h3>
+                    <div class="Definitions">
+                        <code>breakpoint()</code> is better than the older <code>import pdb; pdb.set_trace()</code>
+                        because it can be controlled from outside the code with the <code>PYTHONBREAKPOINT</code>
+                        environment variable. Setting it to <code>0</code> turns every <code>breakpoint()</code> call into
+                        a no-op, which is a useful safety net if one slips into code you run in production:
+                    </div>
+                    <pre class="prettyprint Code">
+&gt; $env:PYTHONBREAKPOINT = "0"     # PowerShell
+&gt; python grades.py                # runs straight through without stopping
+['A', 'F']
+</pre>
+                    <div class="Warning">
+                        A variable whose name matches a pdb command, such as <code>n</code>, <code>c</code> or
+                        <code>p</code>, cannot be inspected by just typing its name: pdb runs the command instead. Use
+                        <code>p n</code> or prefix the line with <code>!</code> (for example <code>!c = 3</code>) to
+                        make pdb treat it as Python code.
+                    </div>
+                    <div class="Note">
+                        Leaving the debugger with <code>q</code> raises a <code>bdb.BdbQuit</code> exception to stop the
+                        program, so a traceback mentioning <code>BdbQuit</code> after quitting is normal. Remember to
+                        delete your <code>breakpoint()</code> calls once the bug is fixed. Editors such as VS Code and
+                        PyCharm offer the same features graphically: click in the margin to set a breakpoint and use
+                        the step buttons.
+                    </div>
                 </section>
             </div>
         </div>

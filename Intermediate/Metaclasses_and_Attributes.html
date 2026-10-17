@@ -4,11 +4,707 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
     <title>Metaclasses and Attributes</title>
 </head>
 
 <body>
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Metaclasses and Attributes</h1>
+            <div class="Sections_Area">
+                <section id="Plain_Attributes">
+                    <h2 class="Section_Title">Use Plain Attributes Instead of Getters and Setters</h2>
+                    <div class="Definitions">
+                        Programmers coming from Java or C++ often write explicit <code>get_x()</code> and
+                        <code>set_x()</code> methods for every attribute "just in case" they need extra logic later.
+                        In Python this is unnecessary and makes code noisy, especially for in-place operations:
+                    </div>
+                    <pre class="prettyprint python Code">
+class OldResistor:
+    def __init__(self, ohms):
+        self._ohms = ohms
+
+    def get_ohms(self):
+        return self._ohms
+
+    def set_ohms(self, ohms):
+        self._ohms = ohms
+
+
+r = OldResistor(50)
+r.set_ohms(r.get_ohms() + 5)   # clumsy
+print(r.get_ohms())            # 55
+</pre>
+                    <div class="Definitions">
+                        The Pythonic approach is to start with <strong>plain public attributes</strong>:
+                    </div>
+                    <pre class="prettyprint python Code">
+class Resistor:
+    def __init__(self, ohms):
+        self.ohms = ohms
+        self.voltage = 0
+        self.current = 0
+
+
+r = Resistor(50)
+r.ohms += 5      # natural and readable
+print(r.ohms)    # 55
+</pre>
+                    <div class="Definitions">
+                        Why is this safe? Because if you later need validation or computed values, you can turn the
+                        attribute into a <code>@property</code> (next section) <strong>without changing a single
+                            caller</strong>: <code>r.ohms</code> keeps working exactly the same way. Python lets you
+                        start simple and add behaviour later, so you never pay the cost of getters and setters up
+                        front.
+                    </div>
+                </section>
+                <section id="Property">
+                    <h2 class="Section_Title">@property</h2>
+                    <div class="Definitions">
+                        The <code>@property</code> decorator turns a method into something that looks like an
+                        attribute. Reading the attribute calls the <strong>getter</strong>; adding
+                        <code>@name.setter</code> lets you intercept assignments. Typical uses:
+                        <ul>
+                            <li><strong>Validation</strong>: reject bad values the moment they are assigned.</li>
+                            <li><strong>Read-only attributes</strong>: define a getter without a setter.</li>
+                            <li><strong>Computed attributes</strong>: values derived from other attributes, always
+                                up to date.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+class Temperature:
+    def __init__(self, celsius):
+        self.celsius = celsius   # goes through the setter, so it is validated too
+
+    @property
+    def celsius(self):
+        return self._celsius
+
+    @celsius.setter
+    def celsius(self, value):
+        if value &lt; -273.15:
+            raise ValueError("below absolute zero")
+        self._celsius = value
+
+    @property
+    def fahrenheit(self):        # computed, read-only
+        return self._celsius * 9 / 5 + 32
+
+
+t = Temperature(25)
+print(t.fahrenheit)   # 77.0
+t.celsius = 100
+print(t.fahrenheit)   # 212.0
+try:
+    t.celsius = -300
+except ValueError as e:
+    print(e)          # below absolute zero
+try:
+    t.fahrenheit = 50
+except AttributeError as e:
+    print(e)          # property 'fahrenheit' of 'Temperature' object has no setter
+</pre>
+                    <div class="Definitions">
+                        Notice that the value is stored under a <strong>different name</strong>,
+                        <code>_celsius</code>. If the setter assigned <code>self.celsius = value</code>, it would
+                        call itself again and again until Python raised a <code>RecursionError</code>.
+                    </div>
+                    <h3 class="Subsection_Title">Caching an Expensive Computed Value</h3>
+                    <div class="Definitions">
+                        If a computed property is expensive and its inputs never change,
+                        <code>functools.cached_property</code> computes it once on first access and then stores the
+                        result in the instance.
+                    </div>
+                    <pre class="prettyprint python Code">
+from functools import cached_property
+
+
+class Dataset:
+    def __init__(self, values):
+        self.values = values
+
+    @cached_property
+    def total(self):
+        print("computing...")
+        return sum(self.values)
+
+
+d = Dataset([1, 2, 3])
+print(d.total)  # computing...  then 6
+print(d.total)  # 6  (no recomputation)
+</pre>
+                    <div class="Warning">Follow the "rule of least surprise": property getters should be fast and
+                        free of side effects. Callers expect <code>obj.x</code> to behave like a cheap attribute
+                        lookup. If an operation is slow (database queries, network I/O) or changes other state,
+                        make it a normal method so its cost is visible at the call site.</div>
+                </section>
+                <section id="Descriptors">
+                    <h2 class="Section_Title">Descriptors for Reusable @property Logic</h2>
+                    <div class="Definitions">
+                        A property's logic is tied to a single attribute. If an <code>Exam</code> class needs the
+                        same 0&ndash;100 validation for <code>math</code>, <code>physics</code> and
+                        <code>writing</code>, you would have to copy the property three times. A
+                        <strong>descriptor</strong> packages that logic in a reusable class. <br>
+                        A descriptor is any object, stored as a <em>class</em> attribute, that defines
+                        <code>__get__</code>, <code>__set__</code> or <code>__delete__</code>. When you access the
+                        attribute through an instance, Python calls those methods instead of reading the instance
+                        dictionary. (<code>property</code>, <code>classmethod</code> and even ordinary methods are
+                        all implemented with descriptors.) <br>
+                        The special method <code>__set_name__(self, owner, name)</code> is called automatically when
+                        the class is created, telling the descriptor which attribute name it was assigned to.
+                    </div>
+                    <pre class="prettyprint python Code">
+class Grade:
+    def __set_name__(self, owner, name):
+        self.public_name = name
+        self.private_name = "_" + name   # where each instance stores its value
+
+    def __get__(self, instance, owner):
+        if instance is None:             # accessed on the class: Exam.math
+            return self
+        return getattr(instance, self.private_name)
+
+    def __set__(self, instance, value):
+        if not 0 &lt;= value &lt;= 100:
+            raise ValueError(f"{self.public_name} must be between 0 and 100")
+        setattr(instance, self.private_name, value)
+
+
+class Exam:
+    math = Grade()
+    physics = Grade()
+    writing = Grade()
+
+    def __init__(self, math, physics, writing):
+        self.math = math
+        self.physics = physics
+        self.writing = writing
+
+
+first = Exam(90, 75, 60)
+second = Exam(40, 85, 99)
+print(first.math, second.math)  # 90 40   each instance keeps its own value
+print(vars(first))              # {'_math': 90, '_physics': 75, '_writing': 60}
+try:
+    first.physics = 120
+except ValueError as e:
+    print(e)                    # physics must be between 0 and 100
+</pre>
+                    <h3 class="Subsection_Title">Pitfall: Storing Values on the Descriptor</h3>
+                    <div class="Definitions">
+                        There is only <strong>one</strong> descriptor object per class attribute, shared by every
+                        instance. If you store the value on the descriptor itself (<code>self.value = value</code>),
+                        all instances overwrite each other:
+                    </div>
+                    <pre class="prettyprint python Code">
+class BrokenGrade:
+    def __get__(self, instance, owner):
+        return self.value
+
+    def __set__(self, instance, value):
+        self.value = value  # stored on the shared descriptor!
+
+
+class Exam:
+    math = BrokenGrade()
+
+
+first = Exam()
+first.math = 90
+second = Exam()
+second.math = 40
+print(first.math)  # 40 -- first's grade was overwritten
+</pre>
+                    <div class="Note">Storing the data in the instance (as in <code>Grade</code> above, under a
+                        name derived in <code>__set_name__</code>) solves this. An alternative is a
+                        <code>weakref.WeakKeyDictionary</code> keyed by instance, but per-instance storage is
+                        simpler and does not require the instances to be hashable.</div>
+                </section>
+                <section id="Dynamic_Attributes">
+                    <h2 class="Section_Title">__getattr__, __getattribute__ and __setattr__</h2>
+                    <div class="Definitions">
+                        Python lets a class hook into attribute access itself, which is how proxies, lazy loaders
+                        and ORMs are built. There are three hooks, and the difference between them is crucial:
+                        <ul>
+                            <li><code>__getattr__(self, name)</code> is called <strong>only when normal lookup
+                                    fails</strong> (the attribute is not in the instance, its class or its
+                                parents).</li>
+                            <li><code>__getattribute__(self, name)</code> is called on <strong>every</strong>
+                                attribute access, even for attributes that exist.</li>
+                            <li><code>__setattr__(self, name, value)</code> is called on <strong>every</strong>
+                                attribute assignment.</li>
+                        </ul>
+                    </div>
+                    <h3 class="Subsection_Title">Lazy Attributes with __getattr__</h3>
+                    <div class="Definitions">
+                        Because <code>__getattr__</code> only runs for missing attributes, it is perfect for
+                        computing or loading a value on demand. If you store the result with
+                        <code>setattr</code>, the next lookup finds it normally and <code>__getattr__</code> is not
+                        called again.
+                    </div>
+                    <pre class="prettyprint python Code">
+class LazyRecord:
+    def __init__(self):
+        self.exists = 5
+
+    def __getattr__(self, name):
+        print(f"* __getattr__({name!r}) computing value")
+        value = f"Value for {name}"
+        setattr(self, name, value)   # cache it in the instance dict
+        return value
+
+
+data = LazyRecord()
+print(data.exists)  # 5   (normal lookup, no hook)
+print(data.foo)
+# * __getattr__('foo') computing value
+# Value for foo
+print(data.foo)     # Value for foo   (found normally this time)
+</pre>
+                    <h3 class="Subsection_Title">Intercepting Every Access with __getattribute__</h3>
+                    <div class="Definitions">
+                        <code>__getattribute__</code> runs every time, which makes it useful for checks that must
+                        always happen (logging, checking whether a database transaction is still open). The catch:
+                        inside it, any <code>self.something</code> calls <code>__getattribute__</code>
+                        <em>again</em>. To reach the real attribute, delegate to
+                        <code>super().__getattribute__(name)</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+class LoggingRecord:
+    def __init__(self):
+        self.exists = 5
+
+    def __getattribute__(self, name):
+        print(f"* __getattribute__({name!r})")
+        return super().__getattribute__(name)   # the safe way to read
+
+
+data = LoggingRecord()
+print(data.exists)
+# * __getattribute__('exists')
+# 5
+print(data.exists)
+# * __getattribute__('exists')
+# 5
+</pre>
+                    <div class="Warning">Accessing <code>self._data</code> inside <code>__getattribute__</code> or
+                        assigning <code>self.x = ...</code> inside <code>__setattr__</code> calls the same hook
+                        recursively and ends in a <code>RecursionError</code>. Always go through
+                        <code>super().__getattribute__()</code> / <code>super().__setattr__()</code> (or
+                        <code>object.__getattribute__(self, ...)</code>) inside these methods.</div>
+                    <pre class="prettyprint python Code">
+class BrokenRecord:
+    def __init__(self, data):
+        self._data = data
+
+    def __getattribute__(self, name):
+        return self._data[name]   # self._data calls __getattribute__ again!
+
+
+BrokenRecord({"foo": 3}).foo
+# RecursionError: maximum recursion depth exceeded
+</pre>
+                    <h3 class="Subsection_Title">Watching Assignments with __setattr__</h3>
+                    <pre class="prettyprint python Code">
+class SavingRecord:
+    def __setattr__(self, name, value):
+        print(f"* saving {name} = {value!r}")   # e.g. write to a database here
+        super().__setattr__(name, value)        # actually store it
+
+
+r = SavingRecord()
+r.score = 10       # * saving score = 10
+r.score += 5       # * saving score = 15
+print(r.score)     # 15
+</pre>
+                    <div class="Note"><code>hasattr()</code> and <code>getattr(obj, name, default)</code> also
+                        trigger these hooks. If your <code>__getattr__</code> should signal "not found", it must
+                        raise <code>AttributeError</code> (not <code>KeyError</code>), otherwise
+                        <code>hasattr()</code> and default values stop working.</div>
+                </section>
+                <section id="Slots">
+                    <h2 class="Section_Title">__slots__</h2>
+                    <div class="Definitions">
+                        Normally every instance stores its attributes in its own dictionary,
+                        <code>__dict__</code>. Dictionaries are flexible but use a fair amount of memory. Declaring
+                        <code>__slots__</code> tells Python the fixed list of attributes an instance may have; it
+                        then stores them in a compact array and creates no <code>__dict__</code>. Benefits:
+                        <ul>
+                            <li>Noticeably less memory per instance, which matters when you create millions of
+                                small objects.</li>
+                            <li>Slightly faster attribute access.</li>
+                            <li>Typos in attribute names raise an error instead of silently creating a new
+                                attribute.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+class Point:
+    __slots__ = ("x", "y")
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+
+p = Point(1, 2)
+p.x = 10                       # fine: 'x' is a declared slot
+print(hasattr(p, "__dict__"))  # False
+try:
+    p.z = 3                    # not declared
+except AttributeError as e:
+    print(e)                   # 'Point' object has no attribute 'z'
+</pre>
+                    <h3 class="Subsection_Title">Pitfalls</h3>
+                    <div class="Definitions">
+                        <ul>
+                            <li><strong>Inheritance</strong>: a subclass that does not define its own
+                                <code>__slots__</code> gets a <code>__dict__</code> again, losing the memory
+                                savings. Each class in the hierarchy should declare only its <em>new</em> slots.</li>
+                            <li>A slot cannot also have a class-level default value with the same name
+                                (<code>x = 0</code> next to <code>__slots__ = ("x",)</code> raises a
+                                <code>ValueError</code>). Set defaults in <code>__init__</code> instead.</li>
+                            <li>Instances without <code>__dict__</code> can't be given arbitrary attributes, which
+                                breaks some tools (e.g. <code>functools.cached_property</code>). Add
+                                <code>"__weakref__"</code> to the slots if you need weak references.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+class Point:
+    __slots__ = ("x", "y")
+
+
+class Point3D(Point):
+    __slots__ = ("z",)        # only the new attribute
+
+
+class LoosePoint(Point):
+    pass                      # no __slots__: gets a __dict__ again
+
+
+print(hasattr(Point3D(), "__dict__"))     # False
+print(hasattr(LoosePoint(), "__dict__"))  # True
+</pre>
+                    <div class="Note">With a dataclass, simply write <code>@dataclass(slots=True)</code> and the
+                        slots are generated from the fields.</div>
+                </section>
+                <section id="Validate_Subclasses">
+                    <h2 class="Section_Title">Validate Subclasses with __init_subclass__</h2>
+                    <div class="Definitions">
+                        Sometimes a base class needs to check that every subclass is defined correctly: a required
+                        class attribute is present, a value is in range, and so on. Checking in
+                        <code>__init__</code> would only catch mistakes when an object is created, possibly long
+                        after the program started. <br>
+                        The <code>__init_subclass__</code> class method is called <strong>automatically every time a
+                            subclass is defined</strong>, receiving the new subclass as <code>cls</code>. Errors are
+                        raised as soon as the module containing the bad class is imported.
+                    </div>
+                    <pre class="prettyprint python Code">
+class Polygon:
+    sides = None  # every subclass must override this
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if cls.sides is None or cls.sides &lt; 3:
+            raise ValueError(f"{cls.__name__}: polygons need 3 or more sides")
+
+    @classmethod
+    def interior_angles(cls):
+        return (cls.sides - 2) * 180
+
+
+class Triangle(Polygon):
+    sides = 3
+
+
+class Hexagon(Polygon):
+    sides = 6
+
+
+print(Triangle.interior_angles())  # 180
+print(Hexagon.interior_angles())   # 720
+
+try:
+    class Line(Polygon):           # fails at class definition time
+        sides = 2
+except ValueError as e:
+    print(e)                       # Line: polygons need 3 or more sides
+</pre>
+                    <h3 class="Subsection_Title">Class Keyword Arguments</h3>
+                    <div class="Definitions">
+                        Extra keyword arguments in the class statement are passed to
+                        <code>__init_subclass__</code>, which makes configuring subclasses very readable:
+                    </div>
+                    <pre class="prettyprint python Code">
+class Filled:
+    def __init_subclass__(cls, color="black", **kwargs):
+        super().__init_subclass__(**kwargs)
+        if color not in {"red", "green", "blue", "black"}:
+            raise ValueError(f"unsupported color: {color}")
+        cls.color = color
+
+
+class RedSquare(Filled, color="red"):
+    pass
+
+
+print(RedSquare.color)  # red
+</pre>
+                    <div class="Warning">Always call <code>super().__init_subclass__(**kwargs)</code>. If several
+                        base classes (for example two mix-ins) each define <code>__init_subclass__</code>, this call
+                        is what lets all of them run, just like cooperative <code>__init__</code> with
+                        <code>super()</code>.</div>
+                </section>
+                <section id="Register_Classes">
+                    <h2 class="Section_Title">Register Classes with __init_subclass__</h2>
+                    <div class="Definitions">
+                        Another common need is a <strong>registry</strong>: a mapping from names to classes, used
+                        by plugin systems, serializers, command dispatchers and so on. The danger with manual
+                        registration (<code>register(MyClass)</code> after each class) is forgetting it; the
+                        program then fails much later, far from the cause. Doing the registration in
+                        <code>__init_subclass__</code> makes it impossible to forget: simply inheriting from the
+                        base class registers the subclass.
+                    </div>
+                    <pre class="prettyprint python Code">
+import json
+
+REGISTRY = {}
+
+
+class Serializable:
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        REGISTRY[cls.__name__] = cls
+
+    def __init__(self, *args):
+        self.args = args
+
+    def serialize(self):
+        return json.dumps({"class": type(self).__name__, "args": self.args})
+
+    def __repr__(self):
+        return f"{type(self).__name__}{self.args}"
+
+
+def deserialize(data):
+    params = json.loads(data)
+    cls = REGISTRY[params["class"]]   # look up the right class by name
+    return cls(*params["args"])
+
+
+class Point2D(Serializable):
+    pass
+
+
+class Vector3D(Serializable):
+    pass
+
+
+print(sorted(REGISTRY))  # ['Point2D', 'Vector3D']
+text = Vector3D(1, 2, 3).serialize()
+print(text)              # {"class": "Vector3D", "args": [1, 2, 3]}
+print(deserialize(text)) # Vector3D(1, 2, 3)
+</pre>
+                    <div class="Note">The registry could also live on the base class itself (e.g.
+                        <code>Serializable.registry</code>), which keeps related plugins grouped and avoids a global
+                        variable. Use a key other than <code>__name__</code> (a class keyword such as
+                        <code>name="point"</code>) if two modules might define classes with the same name.</div>
+                </section>
+                <section id="Class_Decorators">
+                    <h2 class="Section_Title">Class Decorators</h2>
+                    <div class="Definitions">
+                        A <strong>class decorator</strong> is a function that receives a class object right after
+                        the class statement finishes, and returns a class (usually the same one, modified). The
+                        syntax <code>@decorator</code> above <code>class C:</code> is just shorthand for
+                        <code>C = decorator(C)</code>. You already know one: <code>@dataclass</code>. <br>
+                        Class decorators are ideal when you want to apply the same change to every method of a
+                        class, or to opt specific classes into a behaviour without forcing an inheritance
+                        relationship. Here is a decorator that adds logging to every method:
+                    </div>
+                    <pre class="prettyprint python Code">
+import functools
+import types
+
+
+def trace_func(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        print(f"{func.__name__}{args[1:]} -&gt; {result!r}")
+        return result
+    return wrapper
+
+
+def trace_methods(cls):
+    for name, value in list(vars(cls).items()):
+        if isinstance(value, types.FunctionType) and not name.startswith("__"):
+            setattr(cls, name, trace_func(value))
+    return cls
+
+
+@trace_methods
+class Calculator:
+    def add(self, a, b):
+        return a + b
+
+    def scale(self, a, factor=2):
+        return a * factor
+
+
+calc = Calculator()
+calc.add(2, 3)     # add(2, 3) -&gt; 5
+calc.scale(4)      # scale(4,) -&gt; 8
+</pre>
+                    <div class="Definitions">
+                        Class decorators also make registration explicit and opt-in, without a shared base class:
+                    </div>
+                    <pre class="prettyprint python Code">
+COMMANDS = {}
+
+
+def command(name):
+    def decorator(cls):
+        COMMANDS[name] = cls
+        return cls        # always return the class!
+    return decorator
+
+
+@command("greet")
+class Greet:
+    def run(self):
+        return "Hello!"
+
+
+print(COMMANDS["greet"]().run())  # Hello!
+</pre>
+                    <div class="Warning">A class decorator that forgets <code>return cls</code> returns
+                        <code>None</code>, and the class name in your module silently becomes <code>None</code>.
+                        Also remember that a decorator only affects the class it decorates; unlike
+                        <code>__init_subclass__</code> or a metaclass, it is not inherited by subclasses.</div>
+                </section>
+                <section id="Metaclasses">
+                    <h2 class="Section_Title">Metaclasses</h2>
+                    <div class="Definitions">
+                        In Python, classes are objects too, and every object has a type. The type of a class is its
+                        <strong>metaclass</strong>. By default that is <code>type</code>:
+                    </div>
+                    <pre class="prettyprint python Code">
+class Dog:
+    sound = "woof"
+
+
+print(type(Dog()))   # &lt;class '__main__.Dog'&gt;
+print(type(Dog))     # &lt;class 'type'&gt;
+print(type(type))    # &lt;class 'type'&gt;
+
+# A class statement is roughly equivalent to calling type(name, bases, namespace)
+Cat = type("Cat", (), {"sound": "meow", "speak": lambda self: self.sound})
+print(Cat().speak())  # meow
+</pre>
+                    <div class="Definitions">
+                        When Python executes a <code>class</code> statement, it runs the body to build a namespace
+                        dictionary and then calls the metaclass with <code>(name, bases, namespace)</code> to create
+                        the class object. A custom metaclass is a subclass of <code>type</code> that overrides
+                        <code>__new__</code> (or <code>__init__</code>) to inspect or modify classes as they are
+                        created. Because the metaclass is inherited, it applies to every subclass too.
+                    </div>
+                    <h3 class="Subsection_Title">A Simple Metaclass</h3>
+                    <div class="Definitions">
+                        This metaclass enforces a naming rule on every class that uses it and records the creation
+                        of each one:
+                    </div>
+                    <pre class="prettyprint python Code">
+class LowercaseMethodsMeta(type):
+    def __new__(meta, name, bases, namespace, **kwargs):
+        for attr, value in namespace.items():
+            if callable(value) and not attr.startswith("__") and attr != attr.lower():
+                raise TypeError(f"{name}.{attr}: method names must be lowercase")
+        cls = super().__new__(meta, name, bases, namespace, **kwargs)
+        print(f"created class {name}")
+        return cls
+
+
+class Model(metaclass=LowercaseMethodsMeta):
+    def save(self):
+        return "saved"
+
+
+class User(Model):           # the metaclass is inherited
+    def get_name(self):
+        return "alice"
+# Output:
+# created class Model
+# created class User
+
+try:
+    class Bad(Model):
+        def GetName(self):
+            return "oops"
+except TypeError as e:
+    print(e)                 # Bad.GetName: method names must be lowercase
+</pre>
+                    <h3 class="Subsection_Title">Prefer Simpler Tools When You Can</h3>
+                    <div class="Definitions">
+                        The same check could be written with <code>__init_subclass__</code> in fewer lines, and it
+                        would be easier for readers to follow. Metaclasses have real drawbacks:
+                        <ul>
+                            <li>They are harder to understand and debug than ordinary methods.</li>
+                            <li>A class can have only one metaclass. Combining two base classes with unrelated
+                                metaclasses raises a <code>TypeError</code> ("metaclass conflict"), which often bites
+                                when mixing frameworks or combining with <code>abc.ABC</code> (whose metaclass is
+                                <code>ABCMeta</code>).</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+class MetaA(type):
+    pass
+
+
+class MetaB(type):
+    pass
+
+
+class A(metaclass=MetaA):
+    pass
+
+
+class B(metaclass=MetaB):
+    pass
+
+
+class C(A, B):
+    pass
+# TypeError: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
+</pre>
+                    <div class="Definitions">
+                        A practical decision guide:
+                        <ul>
+                            <li>Need to <strong>validate or register subclasses</strong>? Use
+                                <code>__init_subclass__</code>.</li>
+                            <li>Need to <strong>modify one specific class</strong> (wrap its methods, add
+                                generated methods)? Use a <strong>class decorator</strong>.</li>
+                            <li>Need <strong>per-attribute behaviour</strong>? Use <code>@property</code> or a
+                                descriptor with <code>__set_name__</code>.</li>
+                            <li>Reach for a <strong>metaclass</strong> only when you must control class creation
+                                itself, e.g. customising the namespace with <code>__prepare__</code>, changing how
+                                the class object behaves (<code>len(MyEnum)</code>, <code>MyEnum["RED"]</code> in the
+                                <code>enum</code> module), or building a framework like an ORM.</li>
+                        </ul>
+                    </div>
+                    <div class="Note">"Metaclasses are deeper magic than 99% of users should ever worry about." If
+                        you are not sure you need one, you almost certainly don't.</div>
+                </section>
+            </div>
+        </div>
+    </main>
 
 </body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 
 </html>

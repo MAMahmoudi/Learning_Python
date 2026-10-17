@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
+    <title>Files Exercises: Solution</title>
+</head>
+
+<body>
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Files Exercises Solution</h1>
+            <div class="Sections_Area">
+                <section id="Exercises">
+                    <input type="checkbox" id="Files_Solutions" class="Exercises_Done">
+                    <label for="Files_Solutions" class="Subsection_Title collapsible-label">Files</label>
+                    <ul class="Exercises">
+                        <li><input type="checkbox" id="Files_Exercise_1" class="Exercises_Done">
+                            <label for="Files_Exercise_1" class="Subsection_Title collapsible-label">Reading
+                                Files</label>
+                            <ul class="Questions Definitions">
+                                <li>Read a text file and print its contents line by line.
+                                    <pre class="prettyprint python Code">
+filename = 'sample.txt'
+
+try:
+    with open(filename, encoding='utf-8') as file:
+        for line in file:
+            print(line.rstrip())   # rstrip() removes the newline so lines aren't double spaced
+except FileNotFoundError:
+    print(f"The file {filename} was not found.")
+</pre>
+                                </li>
+                                <li>Count how many lines, words, and characters are in a file.
+                                    <pre class="prettyprint python Code">
+filename = 'sample.txt'
+
+line_count = 0
+word_count = 0
+char_count = 0
+
+with open(filename, encoding='utf-8') as file:
+    for line in file:
+        line_count += 1
+        word_count += len(line.split())
+        char_count += len(line)    # includes spaces and newline characters
+
+print("Lines:", line_count)
+print("Words:", word_count)
+print("Characters:", char_count)
+</pre>
+                                </li>
+                                <li>Read a file and display only lines that contain a specific word.
+                                    <pre class="prettyprint python Code">
+filename = 'sample.txt'
+word = input("Enter the word to search for: ").lower()
+
+found = False
+with open(filename, encoding='utf-8') as file:
+    for number, line in enumerate(file, start=1):
+        if word in line.lower():   # case-insensitive search
+            print(f"{number}: {line.rstrip()}")
+            found = True
+
+if not found:
+    print(f"No line contains '{word}'.")
+</pre>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><input type="checkbox" id="Files_Exercise_2" class="Exercises_Done">
+                            <label for="Files_Exercise_2" class="Subsection_Title collapsible-label">Writing
+                                Files</label>
+                            <ul class="Questions Definitions">
+                                <li>Write user input to a new text file.
+                                    <pre class="prettyprint python Code">
+filename = 'user_notes.txt'
+
+print("Type your notes. Press Enter on an empty line to finish.")
+with open(filename, 'w', encoding='utf-8') as file:   # 'w' creates (or overwrites) the file
+    while True:
+        text = input("&gt; ")
+        if text == "":
+            break
+        file.write(text + "\n")    # write() does not add a newline by itself
+
+print(f"Your notes were saved to {filename}.")
+</pre>
+                                </li>
+                                <li>Append new lines to an existing file.
+                                    <pre class="prettyprint python Code">
+filename = 'user_notes.txt'
+
+new_lines = []
+while True:
+    text = input("Line to append (or 'done'): ")
+    if text.lower() == 'done':
+        break
+    new_lines.append(text)
+
+with open(filename, 'a', encoding='utf-8') as file:   # 'a' keeps the old content
+    for line in new_lines:
+        file.write(line + "\n")
+
+print(f"{len(new_lines)} line(s) appended to {filename}.")
+</pre>
+                                </li>
+                                <li>Write a list of strings to a file, one per line.
+                                    <pre class="prettyprint python Code">
+fruits = ["apple", "banana", "cherry", "mango"]
+
+with open('fruits.txt', 'w', encoding='utf-8') as file:
+    for fruit in fruits:
+        file.write(fruit + "\n")
+
+# Alternative in one line:
+# file.write("\n".join(fruits) + "\n")
+
+with open('fruits.txt', encoding='utf-8') as file:
+    print(file.read().splitlines())   # ['apple', 'banana', 'cherry', 'mango']
+</pre>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><input type="checkbox" id="Files_Exercise_3" class="Exercises_Done">
+                            <label for="Files_Exercise_3" class="Subsection_Title collapsible-label">Working With
+                                Files</label>
+                            <ul class="Questions Definitions">
+                                <li>Copy the contents of one file into another.
+                                    <pre class="prettyprint python Code">
+source_name = 'sample.txt'
+destination_name = 'sample_copy.txt'
+
+# Copying line by line works even for very large files
+with (
+    open(source_name, encoding='utf-8') as source,
+    open(destination_name, 'w', encoding='utf-8') as destination,
+):
+    for line in source:
+        destination.write(line)
+
+print(f"{source_name} was copied to {destination_name}.")
+
+# The standard library can also do it for you (works for any file type):
+# import shutil
+# shutil.copyfile(source_name, destination_name)
+</pre>
+                                </li>
+                                <li>Merge two text files into a third file.
+                                    <pre class="prettyprint python Code">
+first_name = 'part1.txt'
+second_name = 'part2.txt'
+merged_name = 'merged.txt'
+
+with open(merged_name, 'w', encoding='utf-8') as merged:
+    for name in (first_name, second_name):
+        with open(name, encoding='utf-8') as source:
+            contents = source.read()
+        merged.write(contents)
+        if contents and not contents.endswith("\n"):
+            merged.write("\n")    # make sure the next file starts on a new line
+
+with open(merged_name, encoding='utf-8') as merged:
+    print(merged.read())
+</pre>
+                                </li>
+                                <li>Remove blank lines from a file and save the cleaned version.
+                                    <pre class="prettyprint python Code">
+input_name = 'messy.txt'
+output_name = 'cleaned.txt'
+
+with open(input_name, encoding='utf-8') as file:
+    lines = file.readlines()
+
+# A line is "blank" if it contains only whitespace
+non_blank = [line for line in lines if line.strip()]
+
+with open(output_name, 'w', encoding='utf-8') as file:
+    file.writelines(non_blank)
+
+print(f"Removed {len(lines) - len(non_blank)} blank line(s).")
+print(f"Cleaned text saved to {output_name}.")
+</pre>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><input type="checkbox" id="Files_Exercise_4" class="Exercises_Done">
+                            <label for="Files_Exercise_4" class="Subsection_Title collapsible-label">Practical
+                                Mini-Projects</label>
+                            <ul class="Questions Definitions">
+                                <li>Create a simple log system that records timestamps for user actions.
+                                    <pre class="prettyprint python Code">
+from datetime import datetime
+
+LOG_FILE = 'actions.log'
+
+def log_action(action):
+    """Append one action with the current date and time to the log file."""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(LOG_FILE, 'a', encoding='utf-8') as log:
+        log.write(f"[{timestamp}] {action}\n")
+
+def show_log():
+    try:
+        with open(LOG_FILE, encoding='utf-8') as log:
+            print(log.read().rstrip())
+    except FileNotFoundError:
+        print("The log is empty.")
+
+log_action("Program started")
+while True:
+    action = input("What did you do? (type 'quit' to stop, 'show' to see the log): ")
+    if action == 'quit':
+        break
+    elif action == 'show':
+        show_log()
+    elif action.strip():
+        log_action(action)
+log_action("Program closed")
+</pre>
+                                </li>
+                                <li>Build a student-grade file manager (add, search, delete entries).
+                                    <pre class="prettyprint python Code">
+import json
+from pathlib import Path
+
+DATA_FILE = Path('grades.json')
+
+def load_grades():
+    """Return the saved grades as a dictionary (empty if no file yet)."""
+    if not DATA_FILE.exists():
+        return {}
+    try:
+        return json.loads(DATA_FILE.read_text(encoding='utf-8'))
+    except json.JSONDecodeError:
+        print("Warning: grades file is corrupted, starting with an empty list.")
+        return {}
+
+def save_grades(grades):
+    DATA_FILE.write_text(json.dumps(grades, indent=4), encoding='utf-8')
+
+grades = load_grades()
+
+while True:
+    print("\n--- GRADE MANAGER ---")
+    print("1. Add / update a student")
+    print("2. Search for a student")
+    print("3. Delete a student")
+    print("4. Show all students")
+    print("5. Exit")
+    choice = input("Choose an option: ")
+
+    if choice == "1":
+        name = input("Student name: ").strip()
+        try:
+            grade = float(input("Grade: "))
+        except ValueError:
+            print("The grade must be a number.")
+            continue
+        grades[name] = grade
+        save_grades(grades)          # save after every change
+        print(f"{name} saved.")
+
+    elif choice == "2":
+        name = input("Student name: ").strip()
+        if name in grades:
+            print(f"{name}: {grades[name]}")
+        else:
+            print("Student not found.")
+
+    elif choice == "3":
+        name = input("Student name: ").strip()
+        if grades.pop(name, None) is not None:
+            save_grades(grades)
+            print(f"{name} deleted.")
+        else:
+            print("Student not found.")
+
+    elif choice == "4":
+        if not grades:
+            print("No students yet.")
+        for name, grade in sorted(grades.items()):
+            print(f"{name:15} {grade}")
+
+    elif choice == "5":
+        print("Goodbye!")
+        break
+
+    else:
+        print("Invalid option. Try again.")
+</pre>
+                                </li>
+                                <li>Analyze a text file and produce a frequency dictionary of all words.
+                                    <pre class="prettyprint python Code">
+import string
+
+filename = 'sample.txt'
+
+with open(filename, encoding='utf-8') as file:
+    text = file.read().lower()
+
+# Replace punctuation with spaces so "files," and "files" count as the same word
+table = str.maketrans(string.punctuation, " " * len(string.punctuation))
+words = text.translate(table).split()
+
+frequency = {}
+for word in words:
+    frequency[word] = frequency.get(word, 0) + 1
+
+# Show the 10 most common words
+most_common = sorted(frequency.items(), key=lambda item: item[1], reverse=True)
+for word, count in most_common[:10]:
+    print(f"{word:15} {count}")
+
+# The same result with the standard library:
+# from collections import Counter
+# print(Counter(words).most_common(10))
+</pre>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </main>
+</body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
+
+</html>

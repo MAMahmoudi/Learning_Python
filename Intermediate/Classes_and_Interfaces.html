@@ -16,11 +16,852 @@
         <div class="Content_Area">
             <h1 class="Chapter_Title">Classes and Interfaces</h1>
             <div class="Sections_Area">
-                <section id="Adding_Forms">
-                    <h2 class="Section_Title"></h2>
+                <section id="Compose_Classes">
+                    <h2 class="Section_Title">Compose Classes Instead of Deeply Nesting Built-in Types</h2>
                     <div class="Definitions">
+                        Dictionaries, lists and tuples are so convenient that it is tempting to keep adding layers
+                        to them: a dictionary of students, whose values are dictionaries of subjects, whose values
+                        are lists of <code>(score, weight)</code> tuples. Each layer seems harmless on its own, but
+                        after two or three levels the code becomes hard to read and fragile to change: every caller
+                        has to remember what <code>data[name][subject][i][1]</code> means. <br>
+                        Here is a gradebook that has started to grow out of control:
                     </div>
-                    <pre class="prettyprint python Code"></pre>
+                    <pre class="prettyprint python Code">
+grades = {}
+
+def add_grade(student, subject, score, weight):
+    grades.setdefault(student, {}).setdefault(subject, []).append((score, weight))
+
+def average_grade(student):
+    total, total_weight = 0, 0
+    for subject_grades in grades[student].values():
+        for score, weight in subject_grades:
+            total += score * weight
+            total_weight += weight
+    return total / total_weight
+
+add_grade("Alice", "Math", 90, 0.6)
+add_grade("Alice", "Math", 80, 0.4)
+add_grade("Alice", "Physics", 70, 1.0)
+print(round(average_grade("Alice"), 2))  # 78.0
+</pre>
+                    <div class="Definitions">
+                        It works, but nothing in the data structure tells you what each level means. A good rule of
+                        thumb: <strong>as soon as you nest a dictionary inside a dictionary, or a tuple has more than
+                            two items, consider introducing small classes</strong>. Each class gets one clear
+                        responsibility and a name that documents it:
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import defaultdict
+from dataclasses import dataclass
+
+
+@dataclass
+class Grade:
+    score: float
+    weight: float
+
+
+class Subject:
+    def __init__(self):
+        self._grades = []
+
+    def report_grade(self, score, weight):
+        self._grades.append(Grade(score, weight))
+
+    def weighted_totals(self):
+        total = sum(g.score * g.weight for g in self._grades)
+        weight = sum(g.weight for g in self._grades)
+        return total, weight
+
+
+class Student:
+    def __init__(self):
+        self._subjects = defaultdict(Subject)
+
+    def get_subject(self, name):
+        return self._subjects[name]
+
+    def average_grade(self):
+        total, weight = 0, 0
+        for subject in self._subjects.values():
+            t, w = subject.weighted_totals()
+            total += t
+            weight += w
+        return total / weight
+
+
+class Gradebook:
+    def __init__(self):
+        self._students = defaultdict(Student)
+
+    def get_student(self, name):
+        return self._students[name]
+
+
+book = Gradebook()
+alice = book.get_student("Alice")
+math = alice.get_subject("Math")
+math.report_grade(90, 0.6)
+math.report_grade(80, 0.4)
+alice.get_subject("Physics").report_grade(70, 1.0)
+print(round(alice.average_grade(), 2))  # 78.0
+</pre>
+                    <div class="Definitions">
+                        The refactored version is longer, but each piece is small, testable and easy to extend. If
+                        you later need to drop the lowest grade of each subject, the change lives inside
+                        <code>Subject</code> and no caller has to know about it.
+                    </div>
+                    <div class="Note">Notice how <code>defaultdict(Subject)</code> passes the class itself as the
+                        factory: classes are callables, so calling <code>Subject()</code> creates the missing
+                        value on demand.</div>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>Avoid dictionaries whose values are dictionaries, long tuples, or other deeply nested
+                                built-in types.</li>
+                            <li>Use lightweight classes (often dataclasses) for small immutable or mutable records
+                                before you need a full class hierarchy.</li>
+                            <li>When internal bookkeeping becomes complicated, split it into several classes that
+                                each own one level of the data.</li>
+                        </ul>
+                    </div>
+                </section>
+                <section id="Dataclasses">
+                    <h2 class="Section_Title">Dataclasses</h2>
+                    <div class="Definitions">
+                        Many classes exist mainly to hold data. Writing their <code>__init__</code>,
+                        <code>__repr__</code> and <code>__eq__</code> by hand is repetitive and error prone. The
+                        <code>@dataclass</code> decorator from the <code>dataclasses</code> module reads the
+                        <strong>type-annotated class attributes</strong> and generates those methods for you.
+                    </div>
+                    <pre class="prettyprint python Code">
+from dataclasses import dataclass
+
+
+@dataclass
+class Point:
+    x: float
+    y: float = 0.0  # fields with defaults must come after fields without
+
+
+p = Point(3, 4)
+print(p)                 # Point(x=3, y=4)
+print(p == Point(3, 4))  # True  (generated __eq__ compares fields)
+print(Point(1))          # Point(x=1, y=0.0)
+p.x = 10                 # regular dataclasses are mutable
+print(p.x)               # 10
+</pre>
+                    <div class="Definitions">
+                        The annotations are only used to discover the fields; Python does <strong>not</strong>
+                        check the types at runtime. <code>Point("a", "b")</code> works without complaint. Use a type
+                        checker such as mypy if you want those annotations enforced.
+                    </div>
+                    <h3 class="Subsection_Title">Mutable Defaults and field(default_factory=...)</h3>
+                    <div class="Definitions">
+                        A default value is shared by every instance, which is a classic bug with lists and
+                        dictionaries. Dataclasses protect you: a plain <code>list</code>, <code>dict</code> or
+                        <code>set</code> default raises a <code>ValueError</code> when the class is defined. Use
+                        <code>field(default_factory=list)</code> so a fresh object is created for each instance.
+                        <code>field()</code> also lets you exclude a field from the repr or from comparisons.
+                    </div>
+                    <pre class="prettyprint python Code">
+from dataclasses import dataclass, field
+
+
+@dataclass
+class ShoppingCart:
+    owner: str
+    items: list[str] = field(default_factory=list)
+    session_id: str = field(default="", repr=False, compare=False)
+
+
+a = ShoppingCart("Alice")
+b = ShoppingCart("Bob")
+a.items.append("apple")
+print(a)        # ShoppingCart(owner='Alice', items=['apple'])
+print(b.items)  # []  each cart got its own list
+</pre>
+                    <pre class="prettyprint python Code">
+from dataclasses import dataclass
+
+
+@dataclass
+class Broken:
+    items: list = []
+# ValueError: mutable default &lt;class 'list'&gt; for field items is not allowed: use default_factory
+</pre>
+                    <h3 class="Subsection_Title">__post_init__ for Validation and Derived Fields</h3>
+                    <div class="Definitions">
+                        The generated <code>__init__</code> calls <code>__post_init__</code> (if you define it) after
+                        assigning the fields. It is the right place to validate input or compute derived values.
+                        Mark a computed attribute with <code>field(init=False)</code> so it is not a constructor
+                        argument.
+                    </div>
+                    <pre class="prettyprint python Code">
+from dataclasses import dataclass, field
+
+
+@dataclass
+class Rectangle:
+    width: float
+    height: float
+    area: float = field(init=False)
+
+    def __post_init__(self):
+        if self.width &lt;= 0 or self.height &lt;= 0:
+            raise ValueError("sides must be positive")
+        self.area = self.width * self.height
+
+
+print(Rectangle(2, 3))  # Rectangle(width=2, height=3, area=6)
+</pre>
+                    <h3 class="Subsection_Title">frozen=True and order=True</h3>
+                    <div class="Definitions">
+                        <ul>
+                            <li><code>frozen=True</code> makes instances immutable: assigning to a field raises
+                                <code>FrozenInstanceError</code>. Frozen dataclasses also get a
+                                <code>__hash__</code>, so they can be dictionary keys or set members. To "change"
+                                one, build a modified copy with <code>dataclasses.replace()</code>.</li>
+                            <li><code>order=True</code> generates <code>&lt;</code>, <code>&lt;=</code>,
+                                <code>&gt;</code> and <code>&gt;=</code>. Instances are compared like tuples of their
+                                fields, <strong>in the order the fields are declared</strong>, so declare the most
+                                important sort key first.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+from dataclasses import dataclass, replace, FrozenInstanceError
+
+
+@dataclass(frozen=True, order=True)
+class Version:
+    major: int
+    minor: int
+    patch: int = 0
+
+
+v1 = Version(1, 4)
+v2 = Version(1, 10, 2)
+print(v1 &lt; v2)                  # True  compares (1, 4, 0) with (1, 10, 2)
+print(sorted([v2, v1])[0])      # Version(major=1, minor=4, patch=0)
+print({v1: "stable"}[Version(1, 4)])  # stable  (frozen instances are hashable)
+
+try:
+    v1.major = 2
+except FrozenInstanceError as e:
+    print(e)                    # cannot assign to field 'major'
+
+v3 = replace(v1, patch=1)       # a new object; v1 is untouched
+print(v3)                       # Version(major=1, minor=4, patch=1)
+</pre>
+                    <div class="Note">Other useful options: <code>@dataclass(slots=True)</code> (Python 3.10+)
+                        generates <code>__slots__</code> for lower memory use, and <code>kw_only=True</code> forces
+                        callers to pass fields by keyword. <code>dataclasses.asdict()</code> converts an instance
+                        (recursively) into a dictionary.</div>
+                    <div class="Warning"><code>frozen=True</code> is shallow. A frozen dataclass holding a list
+                        still lets you append to that list. Use tuples or other immutable types inside frozen
+                        classes if you need true immutability.</div>
+                </section>
+                <section id="Namedtuple_vs_Dataclass">
+                    <h2 class="Section_Title">namedtuple vs dataclass</h2>
+                    <div class="Definitions">
+                        Before dataclasses existed, <code>collections.namedtuple</code> (and its typed sibling
+                        <code>typing.NamedTuple</code>) was the usual way to create small record types. Both give
+                        you named fields, a readable repr and equality, but they are built on very different
+                        foundations.
+                    </div>
+                    <pre class="prettyprint python Code">
+from typing import NamedTuple
+from dataclasses import dataclass
+
+
+class PointNT(NamedTuple):
+    x: int
+    y: int
+
+
+@dataclass
+class PointDC:
+    x: int
+    y: int
+
+
+nt = PointNT(1, 2)
+dc = PointDC(1, 2)
+
+# A namedtuple IS a tuple: indexing, unpacking and len() all work
+print(nt[0], len(nt))   # 1 2
+x, y = nt
+print(nt == (1, 2))     # True  -- equal to any tuple with the same values!
+
+# A dataclass is a normal object
+print(dc == PointDC(1, 2))  # True
+print(dc == (1, 2))         # False
+dc.x = 5                    # mutable by default
+print(nt._replace(x=5))     # PointNT(x=5, y=2)  namedtuples are immutable
+</pre>
+                    <div class="Definitions">
+                        How to choose:
+                        <ul>
+                            <li>Use a <strong>namedtuple</strong> when the data really is a tuple: you want
+                                positional unpacking, you are replacing an existing tuple return value without
+                                breaking callers, or you need the very small memory footprint of a tuple.</li>
+                            <li>Use a <strong>dataclass</strong> for almost everything else. It can be mutable or
+                                frozen, supports <code>default_factory</code>, <code>__post_init__</code>, ordering
+                                control, inheritance and methods naturally, and it will not accidentally compare
+                                equal to unrelated tuples.</li>
+                        </ul>
+                    </div>
+                    <div class="Warning">Because a namedtuple is a sequence, callers can start relying on
+                        positional access like <code>record[3]</code>. Once they do, you can never reorder or
+                        insert fields without breaking them. That is a strong reason to prefer a dataclass for
+                        public APIs.</div>
+                </section>
+                <section id="Functions_As_Interfaces">
+                    <h2 class="Section_Title">Accept Functions Instead of Classes for Simple Interfaces</h2>
+                    <div class="Definitions">
+                        In some languages, customising behaviour means implementing an interface class. Python is
+                        simpler: functions are first-class objects, so many APIs just accept a
+                        <strong>callable</strong> (a "hook"). You have already used hooks: the <code>key</code>
+                        argument of <code>sorted()</code> and the factory of <code>defaultdict</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import defaultdict
+
+
+def log_missing():
+    print("Key added")
+    return 0
+
+
+counts = defaultdict(log_missing, {"green": 12})
+counts["blue"] += 3   # prints: Key added
+print(dict(counts))   # {'green': 12, 'blue': 3}
+</pre>
+                    <div class="Definitions">
+                        Hooks keep APIs decoupled: <code>defaultdict</code> knows nothing about logging, and
+                        <code>log_missing</code> knows nothing about dictionaries. <br>
+                        Sometimes the hook needs to remember state, such as how many keys were missing. You
+                        could use a closure with <code>nonlocal</code>, but a small class is often clearer. If you
+                        define the special method <code>__call__</code>, instances of the class can be called like
+                        functions, so they can be passed anywhere a function is expected.
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections import defaultdict
+
+
+class CountMissing:
+    def __init__(self):
+        self.added = 0
+
+    def __call__(self):
+        self.added += 1
+        return 0
+
+
+counter = CountMissing()
+current = {"green": 12, "blue": 3}
+increments = [("red", 5), ("blue", 17), ("orange", 9)]
+
+result = defaultdict(counter, current)  # counter is used like a function
+for key, amount in increments:
+    result[key] += amount
+
+print(counter.added)       # 2  ('red' and 'orange' were missing)
+print(callable(counter))   # True
+</pre>
+                    <div class="Definitions">
+                        The <code>__call__</code> method signals clearly that the object's main purpose is to be used
+                        as a stateful function, and the state is easy to inspect afterwards (<code>counter.added</code>).
+                    </div>
+                    <div class="Note">Write your own APIs this way too: accept a plain function for small hooks
+                        (<code>on_error=print</code>, <code>key=len</code>) rather than demanding that callers
+                        subclass something.</div>
+                </section>
+                <section id="Classmethod_Constructors">
+                    <h2 class="Section_Title">@classmethod as Alternative Constructors</h2>
+                    <div class="Definitions">
+                        Python only allows one <code>__init__</code> per class, so how do you offer several ways to
+                        build an object (from a string, from a dict, from a file)? The idiomatic answer is a
+                        <code>@classmethod</code>. A class method receives the class itself as its first argument,
+                        conventionally named <code>cls</code>, instead of an instance.
+                    </div>
+                    <pre class="prettyprint python Code">
+class Person:
+    def __init__(self, name, birth_year):
+        self.name = name
+        self.birth_year = birth_year
+
+    @classmethod
+    def from_string(cls, text):
+        name, year = text.split(",")
+        return cls(name.strip(), int(year))
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(data["name"], data["birth_year"])
+
+    def age_in(self, year):
+        return year - self.birth_year
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.name!r}, {self.birth_year})"
+
+
+print(Person.from_string("Alice, 1990"))                    # Person('Alice', 1990)
+print(Person.from_dict({"name": "Bob", "birth_year": 1985}))  # Person('Bob', 1985)
+</pre>
+                    <h3 class="Subsection_Title">Why cls Matters: Subclasses Get the Constructors for Free</h3>
+                    <div class="Definitions">
+                        Because the method calls <code>cls(...)</code> rather than <code>Person(...)</code>, it
+                        builds an instance of whichever class it was called on. Subclasses inherit working
+                        alternative constructors without rewriting them. The standard library uses this pattern
+                        everywhere: <code>dict.fromkeys()</code>, <code>datetime.fromisoformat()</code>,
+                        <code>int.from_bytes()</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+class Person:
+    def __init__(self, name, birth_year):
+        self.name = name
+        self.birth_year = birth_year
+
+    @classmethod
+    def from_string(cls, text):
+        name, year = text.split(",")
+        return cls(name.strip(), int(year))
+
+
+class Employee(Person):
+    pass
+
+
+e = Employee.from_string("Carol, 1992")
+print(type(e).__name__)  # Employee
+</pre>
+                    <div class="Definitions">
+                        Class methods also enable <strong>generic construction</strong>: code that receives a class
+                        object can create instances of it without knowing the concrete type, for example a function
+                        that takes <code>reader_class</code> and calls <code>reader_class.from_config(config)</code>.
+                    </div>
+                    <div class="Note">Use <code>@staticmethod</code> only for helpers that need neither the
+                        instance nor the class. If a method builds objects, make it a <code>@classmethod</code> so
+                        it cooperates with inheritance.</div>
+                </section>
+                <section id="Super_And_MRO">
+                    <h2 class="Section_Title">Initialize Parent Classes with super()</h2>
+                    <div class="Definitions">
+                        The old way to initialize a parent was to call it directly:
+                        <code>Parent.__init__(self, ...)</code>. That works for simple single inheritance, but it
+                        breaks down with multiple inheritance. Consider a "diamond", where two classes inherit from
+                        the same base and a fourth class inherits from both:
+                    </div>
+                    <pre class="prettyprint python Code">
+class Base:
+    def __init__(self, value):
+        print("Base.__init__")
+        self.value = value
+
+
+class TimesTwo(Base):
+    def __init__(self, value):
+        Base.__init__(self, value)
+        self.value *= 2
+
+
+class PlusFive(Base):
+    def __init__(self, value):
+        Base.__init__(self, value)
+        self.value += 5
+
+
+class Diamond(TimesTwo, PlusFive):
+    def __init__(self, value):
+        TimesTwo.__init__(self, value)
+        PlusFive.__init__(self, value)
+
+
+d = Diamond(5)
+# Base.__init__
+# Base.__init__
+print(d.value)  # 10 -- expected (5 * 2) + 5 = 15!
+</pre>
+                    <div class="Definitions">
+                        <code>Base.__init__</code> ran twice, and the second call reset <code>value</code> to 5,
+                        silently throwing away the doubling. <br>
+                        <code>super()</code> fixes this. It does not simply mean "my parent"; it means
+                        <strong>"the next class in the Method Resolution Order (MRO)"</strong>. The MRO is a single,
+                        linear ordering of all the ancestors, computed with the C3 linearization algorithm, in
+                        which every class appears exactly once and each class comes before its parents. You can
+                        inspect it with <code>ClassName.__mro__</code> or <code>ClassName.mro()</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+class Base:
+    def __init__(self, value):
+        print("Base.__init__")
+        self.value = value
+
+
+class TimesTwo(Base):
+    def __init__(self, value):
+        super().__init__(value)
+        self.value *= 2
+
+
+class PlusFive(Base):
+    def __init__(self, value):
+        super().__init__(value)
+        self.value += 5
+
+
+class Diamond(TimesTwo, PlusFive):
+    def __init__(self, value):
+        super().__init__(value)
+
+
+print([cls.__name__ for cls in Diamond.mro()])
+# ['Diamond', 'TimesTwo', 'PlusFive', 'Base', 'object']
+
+d = Diamond(5)  # Base.__init__ is printed only once
+print(d.value)  # 20
+</pre>
+                    <div class="Definitions">
+                        Why 20 and not 15? Follow the MRO: <code>Diamond</code> calls <code>super()</code>, which is
+                        <code>TimesTwo</code>; <code>TimesTwo</code> calls <code>super()</code>, which (for a
+                        <code>Diamond</code> instance) is <code>PlusFive</code>, not <code>Base</code>!
+                        <code>PlusFive</code> then calls <code>Base</code>. The calls go <em>down</em> the MRO and
+                        the assignments run in reverse on the way back <em>up</em>: <code>Base</code> sets 5,
+                        <code>PlusFive</code> adds 5 (10), <code>TimesTwo</code> doubles it (20). The result
+                        depends on the order you list the base classes, which is exactly what the MRO documents.
+                    </div>
+                    <div class="Note">Always call <code>super().__init__(...)</code> with no arguments to
+                        <code>super</code> itself. The zero-argument form (Python 3) automatically uses the current
+                        class and <code>self</code>, so renaming the class or changing the hierarchy never requires
+                        editing these calls.</div>
+                    <div class="Warning">For cooperative multiple inheritance, every class in the chain must call
+                        <code>super()</code>, and their <code>__init__</code> signatures must be compatible (a
+                        common trick is to accept <code>**kwargs</code> and pass the rest along). A single class
+                        that calls its parent directly breaks the chain for everybody.</div>
+                </section>
+                <section id="Mixin_Classes">
+                    <h2 class="Section_Title">Mix-in Classes</h2>
+                    <div class="Definitions">
+                        A <strong>mix-in</strong> is a small class that provides a few extra methods for other
+                        classes to inherit, but which is not meant to be used on its own. A mix-in defines no
+                        <code>__init__</code> and stores no instance attributes of its own; it relies only on
+                        what the host class already has. This avoids most of the complexity of multiple
+                        inheritance while letting you plug the same behaviour into unrelated classes. <br>
+                        The following mix-in converts any object into a dictionary by inspecting its
+                        <code>__dict__</code> at runtime:
+                    </div>
+                    <pre class="prettyprint python Code">
+import json
+
+
+class ToDictMixin:
+    def to_dict(self):
+        return {key: self._convert(value) for key, value in self.__dict__.items()}
+
+    def _convert(self, value):
+        if isinstance(value, ToDictMixin):
+            return value.to_dict()
+        if isinstance(value, list):
+            return [self._convert(v) for v in value]
+        return value
+
+
+class JsonMixin:
+    def to_json(self):
+        return json.dumps(self.to_dict())  # relies on to_dict() from the host
+
+
+class Address(ToDictMixin):
+    def __init__(self, city, zip_code):
+        self.city = city
+        self.zip_code = zip_code
+
+
+class Customer(ToDictMixin, JsonMixin):
+    def __init__(self, name, addresses):
+        self.name = name
+        self.addresses = addresses
+
+
+c = Customer("Alice", [Address("Paris", "75001"), Address("Lyon", "69001")])
+print(c.to_dict())
+# {'name': 'Alice', 'addresses': [{'city': 'Paris', 'zip_code': '75001'}, {'city': 'Lyon', 'zip_code': '69001'}]}
+print(c.to_json())
+# {"name": "Alice", "addresses": [{"city": "Paris", "zip_code": "75001"}, {"city": "Lyon", "zip_code": "69001"}]}
+</pre>
+                    <div class="Definitions">
+                        Mix-ins compose: <code>Customer</code> gets both behaviours by listing both mix-ins.
+                        Because <code>_convert</code> is a normal method, a subclass can override it to customise
+                        how particular values are converted, which makes mix-ins easy to extend.
+                    </div>
+                    <div class="Note">By convention, mix-in names end with <code>Mixin</code>, and mix-ins are
+                        listed <em>before</em> the main base class (e.g. <code>class View(LoginRequiredMixin,
+                            BaseView)</code>) so their methods take priority in the MRO.</div>
+                    <div class="Warning">If a mix-in starts needing its own <code>__init__</code> and instance
+                        state, it is no longer a mix-in. Consider composition (holding a helper object as an
+                        attribute) instead.</div>
+                </section>
+                <section id="Public_vs_Private">
+                    <h2 class="Section_Title">Public vs Private Attributes</h2>
+                    <div class="Definitions">
+                        Python has no truly private attributes. Instead it relies on naming conventions:
+                        <ul>
+                            <li><code>name</code>: <strong>public</strong>. Part of the class's interface.</li>
+                            <li><code>_name</code>: <strong>protected by convention</strong>. "Internal; use at
+                                your own risk." Nothing stops access, but tools and readers treat it as an
+                                implementation detail. <code>from module import *</code> also skips names that start
+                                with an underscore.</li>
+                            <li><code>__name</code> (two leading underscores, at most one trailing):
+                                <strong>name mangled</strong>. Inside a class body, Python rewrites it to
+                                <code>_ClassName__name</code>.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+class Account:
+    def __init__(self, balance):
+        self.owner = "Alice"     # public
+        self._history = []       # internal by convention
+        self.__pin = 1234        # name-mangled
+
+
+acct = Account(100)
+print(acct._history)          # []  works, but you are touching internals
+print(acct._Account__pin)     # 1234  the "private" name is just renamed
+try:
+    print(acct.__pin)
+except AttributeError as e:
+    print(e)                  # 'Account' object has no attribute '__pin'
+</pre>
+                    <h3 class="Subsection_Title">What Name Mangling Is Really For</h3>
+                    <div class="Definitions">
+                        Name mangling is not a security feature. Its real purpose is to <strong>avoid accidental
+                            name clashes in subclasses</strong>. If a base class and a subclass both use an attribute
+                        called <code>_value</code>, the subclass silently overwrites the parent's data. With
+                        <code>__value</code> each class gets its own mangled name.
+                    </div>
+                    <pre class="prettyprint python Code">
+class Parent:
+    def __init__(self):
+        self.__value = "parent's"
+
+    def parent_value(self):
+        return self.__value          # really self._Parent__value
+
+
+class Child(Parent):
+    def __init__(self):
+        super().__init__()
+        self.__value = "child's"     # really self._Child__value
+
+
+c = Child()
+print(c.parent_value())  # parent's  (no clash)
+print(sorted(k for k in vars(c)))  # ['_Child__value', '_Parent__value']
+</pre>
+                    <div class="Definitions">
+                        In everyday code, prefer a single underscore. Double underscores make subclassing and
+                        debugging more awkward (subclasses cannot easily reach the attribute, and the mangled names
+                        are surprising). Reserve them for classes designed to be subclassed by people you don't
+                        control, where a clash is a real risk. Document protected attributes rather than trying to
+                        hide them: "we are all consenting adults here".
+                    </div>
+                    <div class="Note">Names with two leading <em>and</em> two trailing underscores, such as
+                        <code>__init__</code>, are "dunder" special methods and are never mangled. Don't invent new
+                        dunder names of your own; they are reserved for Python.</div>
+                </section>
+                <section id="ABC_And_Protocols">
+                    <h2 class="Section_Title">Abstract Base Classes and Protocols</h2>
+                    <div class="Definitions">
+                        Sometimes you want to declare an interface: "anything that plays this role must provide
+                        these methods". Python offers two complementary tools: <strong>abstract base classes</strong>
+                        (nominal typing: you must inherit) and <strong>protocols</strong> (structural typing: you
+                        just need the right methods).
+                    </div>
+                    <h3 class="Subsection_Title">Abstract Base Classes with abc</h3>
+                    <div class="Definitions">
+                        Inherit from <code>abc.ABC</code> and decorate the required methods with
+                        <code>@abstractmethod</code>. Python then refuses to instantiate any class that has not
+                        implemented all of them, so mistakes surface at construction time rather than later when
+                        a missing method is first called. An ABC can also provide concrete helper methods that are
+                        built on top of the abstract ones.
+                    </div>
+                    <pre class="prettyprint python Code">
+from abc import ABC, abstractmethod
+import math
+
+
+class Shape(ABC):
+    @abstractmethod
+    def area(self):
+        """Return the area of the shape."""
+
+    def describe(self):  # a concrete method shared by all shapes
+        return f"{type(self).__name__} with area {self.area():.2f}"
+
+
+class Circle(Shape):
+    def __init__(self, r):
+        self.r = r
+
+    def area(self):
+        return math.pi * self.r ** 2
+
+
+class Square(Shape):
+    def __init__(self, side):
+        self.side = side
+    # forgot to implement area()
+
+
+print(Circle(1).describe())  # Circle with area 3.14
+try:
+    Square(2)
+except TypeError as e:
+    print(e)
+# Can't instantiate abstract class Square without an implementation for abstract method 'area'
+try:
+    Shape()
+except TypeError as e:
+    print(e)
+# Can't instantiate abstract class Shape without an implementation for abstract method 'area'
+</pre>
+                    <h3 class="Subsection_Title">Protocols with typing.Protocol</h3>
+                    <div class="Definitions">
+                        Python culture favours <strong>duck typing</strong>: "if it has a <code>read()</code>
+                        method, treat it as a file". Requiring inheritance from your ABC can be too strict,
+                        especially for classes from third-party libraries you cannot modify. A
+                        <code>typing.Protocol</code> describes the required methods and <em>any</em> class that has
+                        them matches, without inheriting from anything. Protocols are mainly checked by static type
+                        checkers like mypy; adding <code>@runtime_checkable</code> also allows
+                        <code>isinstance()</code> checks.
+                    </div>
+                    <pre class="prettyprint python Code">
+from typing import Protocol, runtime_checkable
+
+
+@runtime_checkable
+class SupportsClose(Protocol):
+    def close(self) -&gt; None: ...
+
+
+class Connection:          # note: does NOT inherit from SupportsClose
+    def close(self) -&gt; None:
+        print("connection closed")
+
+
+class Logger:
+    def close(self) -&gt; None:
+        print("logger closed")
+
+
+def close_all(resources: list[SupportsClose]) -&gt; None:
+    for resource in resources:
+        resource.close()
+
+
+close_all([Connection(), Logger()])
+# connection closed
+# logger closed
+print(isinstance(Connection(), SupportsClose))  # True
+print(isinstance(42, SupportsClose))            # False
+</pre>
+                    <div class="Warning">A runtime <code>isinstance()</code> check against a protocol only
+                        verifies that the methods <em>exist</em>; it does not check their signatures or return
+                        types. Rely on a static type checker for those guarantees.</div>
+                    <div class="Definitions">
+                        <strong>Which one?</strong> Use an ABC when you own the hierarchy and want to share code and
+                        enforce implementation at instantiation time. Use a Protocol when you want to accept any
+                        object with the right shape, including classes you don't control.
+                    </div>
+                </section>
+                <section id="Inherit_Collections_ABC">
+                    <h2 class="Section_Title">Inheriting from collections.abc for Custom Containers</h2>
+                    <div class="Definitions">
+                        To make your own container, you could subclass <code>list</code> or <code>dict</code>
+                        directly. That works for simple additions, but the built-in types are implemented in C and
+                        their methods do not call each other: overriding <code>__setitem__</code> in a
+                        <code>dict</code> subclass is ignored by <code>update()</code> and the constructor. <br>
+                        If you want a container whose behaviour is entirely yours, build it on the abstract base
+                        classes in <code>collections.abc</code>. Each ABC tells you which few methods you must
+                        implement and gives you the rest for free. For example, <code>Sequence</code> needs only
+                        <code>__getitem__</code> and <code>__len__</code>, and then provides
+                        <code>__contains__</code>, <code>__iter__</code>, <code>__reversed__</code>,
+                        <code>index()</code> and <code>count()</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections.abc import Sequence
+
+
+class BinaryNode:
+    def __init__(self, value, left=None, right=None):
+        self.value = value
+        self.left = left
+        self.right = right
+
+
+class SequenceTree(Sequence):
+    """Exposes a binary tree as an in-order sequence."""
+
+    def __init__(self, root):
+        self._values = list(self._walk(root))
+
+    def _walk(self, node):
+        if node is not None:
+            yield from self._walk(node.left)
+            yield node.value
+            yield from self._walk(node.right)
+
+    def __getitem__(self, index):
+        return self._values[index]
+
+    def __len__(self):
+        return len(self._values)
+
+
+tree = SequenceTree(BinaryNode(10, BinaryNode(5, BinaryNode(2)), BinaryNode(15)))
+print(len(tree))          # 4
+print(tree[1])            # 5
+print(list(tree))         # [2, 5, 10, 15]   __iter__ comes from Sequence
+print(15 in tree)         # True             __contains__ comes from Sequence
+print(tree.index(10))     # 2                index() comes from Sequence
+print(list(reversed(tree)))  # [15, 10, 5, 2]
+</pre>
+                    <div class="Definitions">
+                        The ABC also acts as a safety net: if you forget a required method, instantiation fails with
+                        a clear <code>TypeError</code>, just like with your own ABCs.
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections.abc import Sequence
+
+
+class BadSequence(Sequence):
+    def __getitem__(self, index):
+        return index
+
+
+BadSequence()
+# TypeError: Can't instantiate abstract class BadSequence without an implementation for abstract method '__len__'
+</pre>
+                    <div class="Note">Other useful bases include <code>Mapping</code> / <code>MutableMapping</code>
+                        (implement <code>__getitem__</code>, <code>__setitem__</code>, <code>__delitem__</code>,
+                        <code>__iter__</code>, <code>__len__</code> and get <code>get()</code>,
+                        <code>keys()</code>, <code>update()</code>... for free), <code>Set</code>, and
+                        <code>Iterable</code>. For a simple tweak to a dict, <code>collections.UserDict</code> is
+                        another option whose methods do call your overrides.</div>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>Subclass built-in containers only for small additions that don't depend on
+                                overriding core methods.</li>
+                            <li>Inherit from <code>collections.abc</code> to get a complete, consistent container
+                                interface from a handful of methods.</li>
+                            <li>Your class also becomes recognisable to code that checks
+                                <code>isinstance(obj, Sequence)</code>.</li>
+                        </ul>
+                    </div>
                 </section>
             </div>
         </div>

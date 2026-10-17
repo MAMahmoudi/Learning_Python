@@ -4,11 +4,652 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
     <title>Comprehensions and Generators</title>
 </head>
 
 <body>
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Comprehensions and Generators</h1>
+            <div class="Sections_Area">
+                <section id="Comprehensions_vs_Map_Filter">
+                    <h2 class="Section_Title">Comprehensions vs map and filter</h2>
+                    <div class="Definitions">
+                        Python offers two ways to transform and filter a sequence in one expression: the built-in
+                        functions <code>map()</code> and <code>filter()</code>, and <strong>comprehensions</strong>.
+                        Both produce the same results, but comprehensions are usually clearer because they don't need a
+                        <code>lambda</code> and they can transform and filter in a single, readable expression.
+                    </div>
+                    <pre class="prettyprint python Code">
+numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# Square every number
+squares_map = list(map(lambda x: x ** 2, numbers))
+squares_comp = [x ** 2 for x in numbers]
+print(squares_comp)  # [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+
+# Square only the even numbers
+even_squares_map = list(map(lambda x: x ** 2, filter(lambda x: x % 2 == 0, numbers)))
+even_squares_comp = [x ** 2 for x in numbers if x % 2 == 0]
+print(even_squares_comp)                       # [4, 16, 36, 64, 100]
+print(even_squares_map == even_squares_comp)   # True
+</pre>
+                    <div class="Definitions">
+                        Compare the two "even squares" lines. The <code>map</code>/<code>filter</code> version must be
+                        read inside-out and needs two lambdas. The comprehension reads left to right like a sentence:
+                        "x squared, for each x in numbers, if x is even". <br>
+                        <code>map()</code> is still a fine choice when you already have a named function, because then
+                        no lambda is needed:
+                    </div>
+                    <pre class="prettyprint python Code">
+words = ["10", "20", "30"]
+print(list(map(int, words)))      # [10, 20, 30]
+print([int(w) for w in words])    # [10, 20, 30]  (equally fine)
+</pre>
+                    <div class="Note">In Python 3, <code>map()</code> and <code>filter()</code> return lazy
+                        iterators, not lists. That's why you need <code>list(...)</code> to see the values. A list
+                        comprehension builds the full list immediately.</div>
+                </section>
+                <section id="Dict_and_Set_Comprehensions">
+                    <h2 class="Section_Title">Dictionary and Set Comprehensions</h2>
+                    <div class="Definitions">
+                        The same syntax works for dictionaries and sets. Use curly braces: <code>{key: value for
+                            ...}</code> builds a dictionary, and <code>{value for ...}</code> builds a set.
+                    </div>
+                    <pre class="prettyprint python Code">
+numbers = [1, 2, 3, 4, 5, 6]
+
+even_squares = {x: x ** 2 for x in numbers if x % 2 == 0}
+print(even_squares)       # {2: 4, 4: 16, 6: 36}
+
+cubes_div_by_3 = {x ** 3 for x in numbers if x % 3 == 0}
+print(cubes_div_by_3)     # {216, 27}
+</pre>
+                    <div class="Definitions">
+                        Dictionary comprehensions shine when building lookup tables, inverting mappings or cleaning
+                        data. Set comprehensions are handy for collecting unique values:
+                    </div>
+                    <pre class="prettyprint python Code">
+# Invert a mapping (values must be unique and hashable)
+country_codes = {"France": "FR", "Japan": "JP", "Brazil": "BR"}
+by_code = {code: name for name, code in country_codes.items()}
+print(by_code)  # {'FR': 'France', 'JP': 'Japan', 'BR': 'Brazil'}
+
+# Build a dict from two parallel lists
+names = ["Ada", "Alan", "Grace"]
+ages = [36, 41, 85]
+people = {name: age for name, age in zip(names, ages)}
+print(people)   # {'Ada': 36, 'Alan': 41, 'Grace': 85}
+
+# Unique, normalized email domains
+emails = ["ana@Mail.com", "bob@mail.com", "cy@site.org"]
+domains = {e.split("@")[1].lower() for e in emails}
+print(sorted(domains))  # ['mail.com', 'site.org']
+</pre>
+                    <div class="Warning">When a dictionary comprehension produces the same key twice, the later value
+                        silently overwrites the earlier one. If you invert a mapping that has duplicate values, you
+                        will lose data without any error.</div>
+                    <div class="Note">There is no "tuple comprehension". Writing <code>(x for x in data)</code> with
+                        parentheses creates a <strong>generator expression</strong>, covered later in this chapter.
+                        Use <code>tuple(x for x in data)</code> if you need a tuple.</div>
+                </section>
+                <section id="Avoid_Complex_Comprehensions">
+                    <h2 class="Section_Title">Avoid More Than Two Control Subexpressions</h2>
+                    <div class="Definitions">
+                        Comprehensions support multiple <code>for</code> loops and multiple <code>if</code>
+                        conditions. The loops run in the same order as they would if you wrote nested
+                        <code>for</code> statements, from left to right.
+                    </div>
+                    <pre class="prettyprint python Code">
+matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+# Flatten: two loops, read left to right like nested for statements
+flat = [x for row in matrix for x in row]
+print(flat)  # [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+# Two conditions on the same loop (implicitly joined with "and")
+picked = [x for x in flat if x &gt; 4 if x % 2 == 0]
+print(picked)  # [6, 8]
+
+# Keeping the shape: a comprehension inside a comprehension
+squared = [[x ** 2 for x in row] for row in matrix]
+print(squared)  # [[1, 4, 9], [16, 25, 36], [49, 64, 81]]
+</pre>
+                    <div class="Definitions">
+                        Two "control subexpressions" (two loops, two conditions, or one loop and one condition) are
+                        usually fine. Beyond that, comprehensions become very hard to read. Consider this one, which
+                        keeps rows whose sum is at least 10 and, within those, cells divisible by 3:
+                    </div>
+                    <pre class="prettyprint python Code">
+matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+# Hard to read: three loops/conditions crammed together
+filtered = [[x for x in row if x % 3 == 0]
+            for row in matrix if sum(row) &gt;= 10]
+print(filtered)  # [[6], [9]]
+</pre>
+                    <div class="Definitions">
+                        When logic grows past two subexpressions, switch to regular <code>for</code> loops or a helper
+                        function. The few extra lines make the intent obvious and are easier to debug:
+                    </div>
+                    <pre class="prettyprint python Code">
+matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+def multiples_of_three(row):
+    return [x for x in row if x % 3 == 0]
+
+filtered = []
+for row in matrix:
+    if sum(row) &gt;= 10:
+        filtered.append(multiples_of_three(row))
+print(filtered)  # [[6], [9]]
+</pre>
+                </section>
+                <section id="Walrus_in_Comprehensions">
+                    <h2 class="Section_Title">The Walrus Operator in Comprehensions</h2>
+                    <div class="Definitions">
+                        The <strong>assignment expression</strong> operator <code>:=</code> (nicknamed the "walrus"
+                        because it looks like one) assigns a value to a name <em>and</em> evaluates to that value. In
+                        comprehensions, it lets you compute something once in the condition and reuse it in the
+                        output, avoiding duplicate work.
+                    </div>
+                    <pre class="prettyprint python Code">
+stock = {"nails": 125, "screws": 35, "wingnuts": 8, "washers": 24}
+order = ["screws", "wingnuts", "clips"]
+
+def get_batches(count, size):
+    return count // size
+
+# Without walrus: get_batches is called twice for every item
+found = {name: get_batches(stock.get(name, 0), 8)
+         for name in order
+         if get_batches(stock.get(name, 0), 8)}
+print(found)  # {'screws': 4, 'wingnuts': 1}
+
+# With walrus: computed once, reused in the value expression
+found = {name: batches for name in order
+         if (batches := get_batches(stock.get(name, 0), 8))}
+print(found)  # {'screws': 4, 'wingnuts': 1}
+</pre>
+                    <div class="Definitions">
+                        Calling a function twice is not only slower; it is also a source of bugs. If you later change
+                        the first call (for example, the batch size) and forget the second one, the condition and the
+                        value silently disagree. <br>
+                        Another common use is transforming and filtering at the same time, keeping only results that
+                        pass a test:
+                    </div>
+                    <pre class="prettyprint python Code">
+import re
+
+lines = ["id=42", "no id here", "id=7", "id=abc"]
+ids = [int(m.group(1)) for line in lines if (m := re.search(r"id=(\d+)", line))]
+print(ids)  # [42, 7]
+</pre>
+                    <div class="Warning">A walrus variable used in a comprehension's condition <strong>leaks</strong>
+                        into the surrounding scope, unlike the normal loop variable. After the comprehension above,
+                        <code>m</code> still exists and holds the last match result. Only use <code>:=</code> in the
+                        condition part, where its value is clearly needed, and avoid relying on the leaked
+                        value.</div>
+                    <pre class="prettyprint python Code">
+values = [3, 8, 12]
+big = [y for x in values if (y := x * 10) &gt; 50]
+print(big)  # [80, 120]
+print(y)    # 120  (the walrus variable leaked out)
+</pre>
+                </section>
+                <section id="Generators_Instead_of_Lists">
+                    <h2 class="Section_Title">Generators Instead of Returning Lists</h2>
+                    <div class="Definitions">
+                        A function that builds up a list and returns it at the end has two weaknesses: the code is
+                        cluttered with <code>append</code> calls, and the <strong>whole result must fit in
+                            memory</strong> before the caller sees anything. <br>
+                        A <strong>generator function</strong> uses <code>yield</code> instead of <code>return</code>.
+                        Calling it doesn't run the body; it returns a <em>generator</em> object. Each time the caller
+                        asks for the next value (for example, with a <code>for</code> loop or <code>next()</code>), the
+                        function runs until the next <code>yield</code>, hands back that value, and pauses, keeping its
+                        local variables intact.
+                    </div>
+                    <pre class="prettyprint python Code">
+# List version: noisy and memory-hungry
+def index_words(text):
+    result = []
+    if text:
+        result.append(0)
+    for index, letter in enumerate(text):
+        if letter == " ":
+            result.append(index + 1)
+    return result
+
+# Generator version: shorter and lazy
+def index_words_iter(text):
+    if text:
+        yield 0
+    for index, letter in enumerate(text):
+        if letter == " ":
+            yield index + 1
+
+address = "Four score and seven years ago"
+print(index_words(address))          # [0, 5, 11, 15, 21, 27]
+it = index_words_iter(address)
+print(it)                            # &lt;generator object index_words_iter at 0x...&gt;
+print(next(it))                      # 0
+print(next(it))                      # 5
+print(list(it))                      # [11, 15, 21, 27]  (the remaining values)
+</pre>
+                    <div class="Definitions">
+                        Because generators produce one value at a time, they work for inputs of any size, such as a
+                        file with millions of lines. Memory use stays constant: only the current line is held.
+                    </div>
+                    <pre class="prettyprint python Code">
+import io
+
+def word_offsets(handle):
+    offset = 0
+    for line in handle:
+        if line:
+            yield offset
+        for letter in line:
+            offset += 1
+            if letter == " ":
+                yield offset
+
+# io.StringIO behaves like an open text file
+fake_file = io.StringIO("hello big\nworld of code\n")
+print(list(word_offsets(fake_file)))  # [0, 6, 10, 16, 19]
+</pre>
+                    <div class="Definitions">
+                        When a generator runs out of values, it raises <code>StopIteration</code>. <code>for</code>
+                        loops handle this for you; with <code>next()</code> you can pass a default value instead:
+                    </div>
+                    <pre class="prettyprint python Code">
+def countdown(n):
+    while n &gt; 0:
+        yield n
+        n -= 1
+
+gen = countdown(2)
+print(next(gen))          # 2
+print(next(gen))          # 1
+print(next(gen, "done"))  # done
+next(gen)
+# StopIteration
+</pre>
+                </section>
+                <section id="Iterate_Arguments_Defensively">
+                    <h2 class="Section_Title">Iterating Over Arguments Defensively</h2>
+                    <div class="Definitions">
+                        Iterators and generators can only be consumed <strong>once</strong>. After you have iterated
+                        through all of their values, they are <strong>exhausted</strong>, and iterating again quietly
+                        produces nothing, with no error. This leads to subtle bugs when a function loops over its
+                        argument more than once.
+                    </div>
+                    <pre class="prettyprint python Code">
+def normalize(numbers):
+    total = sum(numbers)           # first pass consumes the iterator
+    result = []
+    for value in numbers:          # second pass sees nothing!
+        result.append(100 * value / total)
+    return result
+
+visits = [15, 35, 80]
+print(normalize(visits))           # [11.538461538461538, 26.923076923076923, 61.53846153846154]
+
+def read_visits():
+    yield from [15, 35, 80]
+
+print(normalize(read_visits()))    # []  (silently wrong!)
+</pre>
+                    <div class="Definitions">
+                        One fix is to copy the iterator into a list first with <code>list(numbers)</code>, but that
+                        defeats the purpose of using a generator for large inputs. A better approach is to accept a
+                        <strong>container</strong>: an object whose <code>__iter__</code> method returns a
+                        <em>new</em> iterator every time it's called. The easiest way is to make
+                        <code>__iter__</code> a generator:
+                    </div>
+                    <pre class="prettyprint python Code">
+class ReadVisits:
+    def __init__(self, data):
+        self.data = data
+
+    def __iter__(self):            # a fresh generator on every call
+        for value in self.data:
+            yield value
+
+def normalize(numbers):
+    total = sum(numbers)
+    return [100 * value / total for value in numbers]
+
+visits = ReadVisits([15, 35, 80])
+percentages = normalize(visits)
+print(percentages)  # [11.538461538461538, 26.923076923076923, 61.53846153846154]
+print(sum(percentages))  # 100.0
+</pre>
+                    <div class="Definitions">
+                        This works because <code>sum()</code> and the comprehension each call <code>iter(visits)</code>,
+                        and each call gets its own generator. <br>
+                        Finally, the function can <strong>protect itself</strong> by refusing plain iterators. The rule
+                        is simple: calling <code>iter()</code> on an iterator returns the very same object, while
+                        calling it on a container returns a new one. The cleanest check uses
+                        <code>collections.abc.Iterator</code>:
+                    </div>
+                    <pre class="prettyprint python Code">
+from collections.abc import Iterator
+
+def normalize_defensive(numbers):
+    if isinstance(numbers, Iterator):
+        raise TypeError("Must supply a container, not an iterator")
+    total = sum(numbers)
+    return [100 * value / total for value in numbers]
+
+print(normalize_defensive([15, 35, 80]))  # [11.538461538461538, 26.923076923076923, 61.53846153846154]
+
+it = iter([15, 35, 80])
+print(iter(it) is it)                     # True  (an iterator is its own iterator)
+normalize_defensive(it)
+# TypeError: Must supply a container, not an iterator
+</pre>
+                    <div class="Note">Lists, tuples, sets, dicts, <code>range</code> objects and your own classes
+                        with a generator <code>__iter__</code> are all containers that can be iterated many times.
+                        Generators, <code>map</code>/<code>filter</code>/<code>zip</code> results and open files are
+                        one-shot iterators.</div>
+                </section>
+                <section id="Generator_Expressions">
+                    <h2 class="Section_Title">Generator Expressions for Large Inputs</h2>
+                    <div class="Definitions">
+                        A list comprehension creates the entire list at once. For big inputs that can consume a lot of
+                        memory. A <strong>generator expression</strong> has the same syntax but uses parentheses, and
+                        it produces values lazily, one at a time, only when asked.
+                    </div>
+                    <pre class="prettyprint python Code">
+import sys
+
+squares_list = [x * x for x in range(1_000_000)]
+squares_gen = (x * x for x in range(1_000_000))
+
+print(sys.getsizeof(squares_list) &gt; 8_000_000)  # True  (megabytes of memory)
+print(sys.getsizeof(squares_gen) &lt; 500)         # True  (a small, constant size)
+print(next(squares_gen), next(squares_gen))     # 0 1
+</pre>
+                    <div class="Definitions">
+                        When a generator expression is the only argument to a function, you can drop the extra
+                        parentheses. Functions such as <code>sum</code>, <code>min</code>, <code>max</code>,
+                        <code>any</code>, <code>all</code> and <code>"".join</code> are natural partners:
+                    </div>
+                    <pre class="prettyprint python Code">
+print(sum(x * x for x in range(10)))               # 285
+print(any(n &gt; 100 for n in [5, 50, 500]))          # True  (stops early at 500)
+print(", ".join(str(n) for n in range(5)))         # 0, 1, 2, 3, 4
+</pre>
+                    <div class="Definitions">
+                        Generator expressions can also be <strong>chained</strong>: feed the output of one into
+                        another. Each value flows through the whole pipeline before the next one is read, so even a
+                        very long input is processed with almost no memory:
+                    </div>
+                    <pre class="prettyprint python Code">
+import io
+
+log_file = io.StringIO("INFO start\nERROR disk full\nINFO ok\nERROR timeout\n")
+
+lines = (line.rstrip("\n") for line in log_file)
+errors = (line for line in lines if line.startswith("ERROR"))
+messages = (line.split(" ", 1)[1] for line in errors)
+
+for message in messages:
+    print(message)
+# Output:
+# disk full
+# timeout
+</pre>
+                    <div class="Warning">A generator expression is an iterator, so it can only be consumed once (see
+                        the previous section). Calling <code>sum(gen)</code> twice gives the real total the first
+                        time and <code>0</code> the second time.</div>
+                </section>
+                <section id="Yield_From">
+                    <h2 class="Section_Title">Composing Generators with yield from</h2>
+                    <div class="Definitions">
+                        Sometimes a generator needs to produce all the values of another generator (or any iterable).
+                        You could write a loop that re-yields each item, but <code>yield from</code> does it in a
+                        single, clearer statement. It also handles the details of passing values and exceptions
+                        between the generators correctly.
+                    </div>
+                    <pre class="prettyprint python Code">
+def move(period, speed):
+    for _ in range(period):
+        yield speed
+
+def pause(delay):
+    for _ in range(delay):
+        yield 0
+
+# Manual re-yielding: repetitive
+def animate_manual():
+    for delta in move(2, 5.0):
+        yield delta
+    for delta in pause(1):
+        yield delta
+    for delta in move(1, 3.0):
+        yield delta
+
+# With yield from: the structure is obvious
+def animate():
+    yield from move(2, 5.0)
+    yield from pause(1)
+    yield from move(1, 3.0)
+
+print(list(animate()))                        # [5.0, 5.0, 0, 3.0]
+print(list(animate()) == list(animate_manual()))  # True
+</pre>
+                    <div class="Definitions">
+                        <code>yield from</code> is especially elegant for <strong>recursive</strong> data, such as
+                        nested lists or trees:
+                    </div>
+                    <pre class="prettyprint python Code">
+def flatten(items):
+    for item in items:
+        if isinstance(item, list):
+            yield from flatten(item)    # delegate to a recursive generator
+        else:
+            yield item
+
+nested = [1, [2, [3, 4], 5], [[6]], 7]
+print(list(flatten(nested)))  # [1, 2, 3, 4, 5, 6, 7]
+</pre>
+                    <div class="Note">The value of a <code>yield from</code> expression is whatever the inner
+                        generator <code>return</code>s. This lets a sub-generator report a final result to its parent,
+                        e.g. <code>count = yield from read_chunk()</code>.</div>
+                    <pre class="prettyprint python Code">
+def read_chunk(data):
+    for value in data:
+        yield value
+    return len(data)               # becomes the value of "yield from"
+
+def read_all(chunks):
+    total = 0
+    for chunk in chunks:
+        total += yield from read_chunk(chunk)
+    print(f"read {total} values")
+
+print(list(read_all([[1, 2], [3]])))
+# Output:
+# read 3 values
+# [1, 2, 3]
+</pre>
+                </section>
+                <section id="Itertools_Module">
+                    <h2 class="Section_Title">The itertools Module</h2>
+                    <div class="Definitions">
+                        The standard library module <code>itertools</code> contains fast, memory-efficient building
+                        blocks for working with iterators. Whenever you find yourself writing tricky iteration code,
+                        check <code>itertools</code> first: there is a good chance the tool already exists. All of
+                        these functions return lazy iterators, so we wrap them in <code>list()</code> to display the
+                        results.
+                    </div>
+                    <h3 class="Subsection_Title">Linking iterators together</h3>
+                    <div class="Definitions">
+                        <ul>
+                            <li><code>chain(*iterables)</code>: iterate over several iterables one after the other.
+                                <code>chain.from_iterable()</code> does the same for an iterable of iterables.</li>
+                            <li><code>repeat(value, n)</code>: yield the same value <code>n</code> times (forever if
+                                <code>n</code> is omitted).</li>
+                            <li><code>cycle(iterable)</code>: repeat the items of an iterable forever.</li>
+                            <li><code>tee(iterator, n)</code>: split one iterator into <code>n</code> independent
+                                ones.</li>
+                            <li><code>zip_longest(*iterables, fillvalue=None)</code>: like <code>zip</code> but runs
+                                until the <em>longest</em> input is exhausted.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+import itertools
+
+print(list(itertools.chain([1, 2], (3, 4), "ab")))      # [1, 2, 3, 4, 'a', 'b']
+print(list(itertools.chain.from_iterable([[1], [2, 3]])))  # [1, 2, 3]
+print(list(itertools.repeat("hi", 3)))                  # ['hi', 'hi', 'hi']
+
+colors = itertools.cycle(["red", "green"])
+print([next(colors) for _ in range(5)])  # ['red', 'green', 'red', 'green', 'red']
+
+it1, it2 = itertools.tee(iter([1, 2, 3]), 2)
+print(list(it1), list(it2))              # [1, 2, 3] [1, 2, 3]
+
+print(list(itertools.zip_longest([1, 2, 3], ["a"], fillvalue="-")))
+# [(1, 'a'), (2, '-'), (3, '-')]
+</pre>
+                    <h3 class="Subsection_Title">Filtering items from an iterator</h3>
+                    <div class="Definitions">
+                        <ul>
+                            <li><code>islice(iterable, stop)</code> or <code>islice(iterable, start, stop,
+                                    step)</code>: slicing for any iterator, without copying it into a list. Works even
+                                on infinite generators.</li>
+                            <li><code>takewhile(predicate, iterable)</code>: yield items while the predicate is true,
+                                then stop for good.</li>
+                            <li><code>dropwhile(predicate, iterable)</code>: skip items while the predicate is true,
+                                then yield everything that remains.</li>
+                            <li><code>filterfalse(predicate, iterable)</code>: the opposite of
+                                <code>filter</code>: keep items for which the predicate is false.</li>
+                            <li><code>compress(data, selectors)</code>: keep items whose matching selector is
+                                truthy.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+import itertools
+
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+print(list(itertools.islice(values, 5)))         # [1, 2, 3, 4, 5]
+print(list(itertools.islice(values, 2, 8, 2)))   # [3, 5, 7]
+
+# islice on an infinite iterator: count() never ends on its own
+print(list(itertools.islice(itertools.count(100, 10), 3)))  # [100, 110, 120]
+
+less_than_four = lambda x: x &lt; 4
+print(list(itertools.takewhile(less_than_four, [1, 3, 5, 2])))  # [1, 3]
+print(list(itertools.dropwhile(less_than_four, [1, 3, 5, 2])))  # [5, 2]
+
+is_even = lambda x: x % 2 == 0
+print(list(itertools.filterfalse(is_even, values)))  # [1, 3, 5, 7, 9]
+
+print(list(itertools.compress("ABCDE", [1, 0, 1, 0, 1])))  # ['A', 'C', 'E']
+</pre>
+                    <div class="Note">Notice the difference between <code>takewhile</code> and <code>filter</code>:
+                        <code>takewhile</code> stops at the first failing item (the <code>2</code> at the end is never
+                        reached), while <code>filter</code> checks every item.</div>
+                    <h3 class="Subsection_Title">Grouping items</h3>
+                    <div class="Definitions">
+                        <code>groupby(iterable, key=None)</code> groups <strong>consecutive</strong> items that share
+                        the same key. It yields pairs of <code>(key, group_iterator)</code>.
+                    </div>
+                    <pre class="prettyprint python Code">
+import itertools
+
+words = ["apple", "avocado", "banana", "blueberry", "cherry", "apricot"]
+
+# Sort by the same key first, otherwise equal keys that are not adjacent form separate groups
+words.sort(key=lambda w: w[0])
+for letter, group in itertools.groupby(words, key=lambda w: w[0]):
+    print(letter, list(group))
+# Output:
+# a ['apple', 'avocado', 'apricot']
+# b ['banana', 'blueberry']
+# c ['cherry']
+
+# Run-length encoding: count consecutive repeats
+print([(ch, len(list(g))) for ch, g in itertools.groupby("aaabccdd")])
+# [('a', 3), ('b', 1), ('c', 2), ('d', 2)]
+</pre>
+                    <div class="Warning">Each group iterator shares the underlying input with <code>groupby</code>.
+                        As soon as you advance to the next group, the previous group becomes empty. Convert a group
+                        to a list immediately if you need to keep it.</div>
+                    <h3 class="Subsection_Title">Producing combinations of items</h3>
+                    <div class="Definitions">
+                        <ul>
+                            <li><code>accumulate(iterable, func=operator.add, initial=None)</code>: running totals,
+                                or a running result of any two-argument function.</li>
+                            <li><code>product(*iterables, repeat=1)</code>: the Cartesian product, equivalent to nested
+                                <code>for</code> loops.</li>
+                            <li><code>permutations(iterable, r)</code>: all ordered arrangements of length
+                                <code>r</code>.</li>
+                            <li><code>combinations(iterable, r)</code>: all unordered selections of length
+                                <code>r</code> without repetition.</li>
+                            <li><code>combinations_with_replacement(iterable, r)</code>: like combinations, but items
+                                may repeat.</li>
+                            <li><code>pairwise(iterable)</code>: overlapping pairs of consecutive items (Python
+                                3.10+).</li>
+                            <li><code>batched(iterable, n)</code>: split into tuples of length <code>n</code>; the
+                                last may be shorter (Python 3.12+).</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+import itertools
+import operator
+
+sales = [3, 5, 2, 8]
+print(list(itertools.accumulate(sales)))                 # [3, 8, 10, 18]
+print(list(itertools.accumulate(sales, max)))            # [3, 5, 5, 8]  (running maximum)
+print(list(itertools.accumulate(sales, operator.mul)))   # [3, 15, 30, 240]
+
+print(list(itertools.product([1, 2], "ab")))
+# [(1, 'a'), (1, 'b'), (2, 'a'), (2, 'b')]
+print(list(itertools.product([0, 1], repeat=2)))
+# [(0, 0), (0, 1), (1, 0), (1, 1)]
+
+print(list(itertools.permutations([1, 2, 3], 2)))
+# [(1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2)]
+print(list(itertools.combinations([1, 2, 3], 2)))
+# [(1, 2), (1, 3), (2, 3)]
+print(list(itertools.combinations_with_replacement([1, 2], 2)))
+# [(1, 1), (1, 2), (2, 2)]
+
+print(list(itertools.pairwise([1, 4, 9, 16])))   # [(1, 4), (4, 9), (9, 16)]
+print(list(itertools.batched("ABCDEFG", 3)))     # [('A', 'B', 'C'), ('D', 'E', 'F'), ('G',)]
+</pre>
+                    <div class="Definitions">
+                        Combining these tools with generator expressions gives powerful, memory-friendly pipelines.
+                        For example, the differences between consecutive readings, stopping at the first big jump:
+                    </div>
+                    <pre class="prettyprint python Code">
+import itertools
+
+readings = [10, 12, 13, 15, 40, 41, 43]
+diffs = (b - a for a, b in itertools.pairwise(readings))
+steady = list(itertools.takewhile(lambda d: d &lt; 10, diffs))
+print(steady)  # [2, 1, 2]
+</pre>
+                    <div class="Warning">Infinite iterators such as <code>count()</code>, <code>cycle()</code> and
+                        <code>repeat()</code> without a count never stop by themselves. Never pass them directly to
+                        <code>list()</code>; always limit them with <code>islice</code>, <code>takewhile</code>,
+                        <code>zip</code> or a <code>break</code>.</div>
+                </section>
+            </div>
+        </div>
+    </main>
 
 </body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 
 </html>

@@ -4,11 +4,745 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/CSS/Nav_Bar.css">
+    <link rel="stylesheet" href="../assets/CSS/Learning_Styles.css">
     <title>Concurrency and Parallelism</title>
 </head>
 
 <body>
+    <img src="../assets/images/bg1.jpg" alt="Cover_Image" class="Cover_Image">
+    <main>
+        <aside class="Sections_Tab"></aside>
+        <div class="Content_Area">
+            <h1 class="Chapter_Title">Concurrency and Parallelism</h1>
+            <div class="Sections_Area">
+                <section id="Concurrency_Vs_Parallelism">
+                    <h2 class="Section_Title">Concurrency vs Parallelism</h2>
+                    <div class="Definitions">
+                        These two words are often used as if they meant the same thing, but they describe different
+                        ideas:
+                        <ul>
+                            <li><strong>Concurrency</strong> means a program is <em>dealing with</em> many tasks at
+                                once. The tasks take turns making progress, so they appear to run at the same time,
+                                even on a single CPU core. A chef who puts water on to boil, then chops vegetables while
+                                waiting, is working concurrently.</li>
+                            <li><strong>Parallelism</strong> means a program is <em>doing</em> many tasks at literally
+                                the same instant, on several CPU cores. Two chefs chopping vegetables side by side are
+                                working in parallel.</li>
+                        </ul>
+                        The key question to ask about any slow program is <strong>what is it waiting for?</strong>
+                        <ul>
+                            <li>If it spends most of its time <strong>waiting on the outside world</strong> (network
+                                requests, disk reads, databases, sleeping, user input) it is <strong>I/O-bound</strong>.
+                                Concurrency helps: while one task waits, another can run.</li>
+                            <li>If it spends most of its time <strong>calculating</strong> (number crunching, image
+                                processing, compression) it is <strong>CPU-bound</strong>. Only true parallelism (more
+                                cores working) makes it faster.</li>
+                        </ul>
+                    </div>
+                    <h3 class="Subsection_Title">The Global Interpreter Lock (GIL)</h3>
+                    <div class="Definitions">
+                        The standard Python interpreter (CPython) has a <strong>Global Interpreter Lock</strong>: a
+                        single lock that a thread must hold to execute Python bytecode. It exists because CPython's
+                        memory management (reference counting) is not thread-safe on its own, and a single lock is a
+                        simple and fast way to protect it. <br>
+                        The consequence is important:
+                        <ul>
+                            <li>Several threads in one process <strong>cannot run Python code in parallel</strong>. Only
+                                one thread executes Python bytecode at any given moment.</li>
+                            <li>A thread <strong>releases the GIL while it waits for I/O</strong> (and while some C
+                                extensions such as NumPy or hashlib do heavy work). That is why threads still speed up
+                                I/O-bound programs.</li>
+                            <li>To use several cores for pure-Python CPU work, you need several <strong>processes</strong>,
+                                each with its own interpreter and its own GIL.</li>
+                        </ul>
+                        You can see the effect yourself: running a CPU-heavy function in two threads takes about as long
+                        as running it twice in a row.
+                    </div>
+                    <pre class="prettyprint python Code">
+import threading
+import time
+
+def count_down(n):
+    while n &gt; 0:
+        n -= 1
+
+N = 5_000_000
+
+start = time.perf_counter()
+count_down(N)
+count_down(N)
+print(f"Sequential: {time.perf_counter() - start:.2f}s")
+
+start = time.perf_counter()
+t1 = threading.Thread(target=count_down, args=(N,))
+t2 = threading.Thread(target=count_down, args=(N,))
+t1.start(); t2.start()
+t1.join(); t2.join()
+print(f"Two threads: {time.perf_counter() - start:.2f}s")
+
+# Typical output (numbers vary by machine):
+# Sequential: 0.40s
+# Two threads: 0.41s   &lt;- no speed-up because of the GIL
+</pre>
+                    <div class="Note">
+                        Python 3.13 introduced an optional <strong>free-threaded build</strong> (PEP 703, often called
+                        "no-GIL" and installed as <code>python3.13t</code>) in which threads can truly run in parallel.
+                        It is still <strong>experimental</strong>: many third-party packages are not yet compatible, and
+                        single-threaded code may run somewhat slower. For everyday work, assume the GIL is present. You
+                        can check with <code>sys._is_gil_enabled()</code> on 3.13+.
+                    </div>
+                </section>
+
+                <section id="Subprocess">
+                    <h2 class="Section_Title">Managing Child Processes with subprocess</h2>
+                    <div class="Definitions">
+                        The simplest form of parallelism is to launch another program. The <code>subprocess</code>
+                        module starts child processes, lets you pass them input, and collects their output and exit
+                        code. Child processes run <strong>truly in parallel</strong> with your Python program because
+                        they are completely separate operating-system processes, unaffected by the GIL. <br>
+                        For most cases, use <code>subprocess.run()</code>. It starts the command, waits for it to
+                        finish and returns a <code>CompletedProcess</code> object.
+                    </div>
+                    <pre class="prettyprint python Code">
+import subprocess
+import sys
+
+# sys.executable is the path of the Python interpreter running this script,
+# so this example works on Windows, macOS and Linux alike.
+result = subprocess.run(
+    [sys.executable, "-c", "print('Hello from a child process')"],
+    capture_output=True,   # collect stdout and stderr
+    text=True,             # decode bytes to str
+    check=True,            # raise CalledProcessError if the exit code is not 0
+)
+print(result.returncode)        # 0
+print(result.stdout.strip())    # Hello from a child process
+</pre>
+                    <div class="Definitions">
+                        Pass the command as a <strong>list of arguments</strong> rather than a single string. Each
+                        argument is then delivered to the program exactly as written, so file names containing spaces
+                        or special characters cannot be misinterpreted.
+                    </div>
+                    <div class="Warning">
+                        Avoid <code>shell=True</code> with any text that comes from users. The shell would interpret
+                        characters such as <code>;</code>, <code>&amp;</code> or <code>|</code>, which allows
+                        <strong>command injection</strong>. Also, without <code>check=True</code> a failing command
+                        is silently ignored unless you inspect <code>returncode</code> yourself.
+                    </div>
+                    <h3 class="Subsection_Title">Running children in parallel with Popen</h3>
+                    <div class="Definitions">
+                        <code>subprocess.Popen</code> starts a process and returns immediately, so you can start several
+                        children, let them run side by side, and then wait for all of them. Use
+                        <code>communicate()</code> to send input and read output; it also accepts a
+                        <code>timeout</code> so a stuck child cannot hang your program forever.
+                    </div>
+                    <pre class="prettyprint python Code">
+import subprocess
+import sys
+import time
+
+code = "import time; time.sleep(0.5); print('done')"
+
+start = time.perf_counter()
+procs = [subprocess.Popen([sys.executable, "-c", code], stdout=subprocess.PIPE, text=True)
+         for _ in range(4)]
+
+for proc in procs:
+    try:
+        out, _ = proc.communicate(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()          # never leave a runaway child behind
+        out, _ = proc.communicate()
+    print(out.strip())
+
+elapsed = time.perf_counter() - start
+print(f"4 children took {elapsed:.1f}s")   # about 0.5-1s, not 2s: they ran in parallel
+</pre>
+                </section>
+
+                <section id="Threads_For_IO">
+                    <h2 class="Section_Title">Threads for Blocking I/O</h2>
+                    <div class="Definitions">
+                        A <strong>thread</strong> is an independent flow of execution inside the same process. All
+                        threads share the same memory, so they can easily read the same variables. Because the GIL is
+                        released while a thread waits on I/O, threads are a good fit when your program spends its time
+                        <strong>blocked</strong>: downloading files, calling web APIs, querying databases or talking to
+                        hardware. <br>
+                        The <code>threading.Thread</code> class takes a <code>target</code> function and its
+                        <code>args</code>. Call <code>start()</code> to launch it and <code>join()</code> to wait until
+                        it finishes.
+                    </div>
+                    <pre class="prettyprint python Code">
+import threading
+import time
+
+def fake_download(name):
+    time.sleep(0.3)  # stands in for a slow network call; the GIL is released here
+    print(f"{name} finished")
+
+start = time.perf_counter()
+threads = []
+for i in range(5):
+    t = threading.Thread(target=fake_download, args=(f"file{i}",))
+    t.start()
+    threads.append(t)
+
+for t in threads:
+    t.join()   # wait for every thread before continuing
+
+print(f"Total: {time.perf_counter() - start:.1f}s")  # about 0.3s instead of 1.5s
+</pre>
+                    <div class="Definitions">
+                        The five "downloads" overlap, so the total time is close to that of a single one. The order in
+                        which the threads print is <strong>not guaranteed</strong>; the operating system decides when
+                        each thread runs.
+                    </div>
+                    <div class="Warning">
+                        <ul>
+                            <li>Forgetting <code>join()</code> means your main code may continue (and read results)
+                                before the threads are done.</li>
+                            <li>An exception raised inside a thread does <strong>not</strong> propagate to the code
+                                that started it; it is only printed. Collect results and errors explicitly, or use
+                                <code>concurrent.futures</code> (below), which does this for you.</li>
+                            <li>Threads are not free: each one reserves memory for its stack. Starting thousands of
+                                threads is wasteful; use a thread pool or <code>asyncio</code> instead.</li>
+                        </ul>
+                    </div>
+                    <div class="Note">
+                        A thread created with <code>daemon=True</code> is killed abruptly when the main program exits.
+                        That is handy for background helpers, but never use daemon threads for work that must finish
+                        cleanly, such as writing a file.
+                    </div>
+                </section>
+
+                <section id="Lock_Data_Races">
+                    <h2 class="Section_Title">Preventing Data Races with Lock</h2>
+                    <div class="Definitions">
+                        A common misconception is that the GIL makes your code thread-safe. It does not. The GIL
+                        protects the interpreter's internals, but the interpreter can switch threads
+                        <strong>between any two bytecode instructions</strong>. An innocent-looking statement such as
+                        <code>counter += 1</code> is really three steps: read the value, add one, store the result. If
+                        two threads interleave those steps, one of the updates is lost. This is called a
+                        <strong>data race</strong>.
+                    </div>
+                    <div class="Definitions">
+                        In real programs a race may strike only once in millions of runs, which is exactly what makes
+                        it so hard to find. In the demonstration below, <code>time.sleep(0)</code> asks the
+                        interpreter to switch threads between the read and the write, so the bug shows up every time.
+                    </div>
+                    <pre class="prettyprint python Code">
+import threading
+import time
+
+class Counter:
+    def __init__(self):
+        self.count = 0
+
+    def increment(self):
+        value = self.count      # 1. read
+        time.sleep(0)           #    let another thread run here (widens the race window)
+        self.count = value + 1  # 2. modify and write, possibly using a stale value!
+
+def worker(counter, times):
+    for _ in range(times):
+        counter.increment()
+
+counter = Counter()
+threads = [threading.Thread(target=worker, args=(counter, 10_000)) for _ in range(5)]
+for t in threads: t.start()
+for t in threads: t.join()
+print(counter.count)  # Expected 50000, but far less, e.g. 10127 (varies run to run)
+</pre>
+                    <div class="Definitions">
+                        The fix is a <code>threading.Lock</code> (a <strong>mutex</strong>, short for mutual
+                        exclusion). Only one thread at a time can hold the lock; others that try to acquire it wait
+                        until it is released. Use it as a context manager with <code>with</code>, so the lock is always
+                        released, even if an exception occurs.
+                    </div>
+                    <pre class="prettyprint python Code">
+import threading
+import time
+
+class SafeCounter:
+    def __init__(self):
+        self.count = 0
+        self.lock = threading.Lock()
+
+    def increment(self):
+        with self.lock:            # acquire ... release automatically
+            value = self.count
+            time.sleep(0)          # other threads may run, but cannot enter this block
+            self.count = value + 1
+
+def worker(counter, times):
+    for _ in range(times):
+        counter.increment()
+
+counter = SafeCounter()
+threads = [threading.Thread(target=worker, args=(counter, 10_000)) for _ in range(5)]
+for t in threads: t.start()
+for t in threads: t.join()
+print(counter.count)  # 50000, every time
+</pre>
+                    <div class="Definitions">
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>Protect every piece of shared, <strong>mutable</strong> state that more than one thread
+                                writes to.</li>
+                            <li>Keep the code inside <code>with lock:</code> short. Holding a lock while doing slow I/O
+                                makes the other threads wait and destroys the benefit of threading.</li>
+                            <li>If a function holding a lock calls another function that tries to take the same
+                                <code>Lock</code>, the thread blocks forever (a <strong>deadlock</strong>). Use
+                                <code>threading.RLock</code> (re-entrant lock) when the same thread may acquire it
+                                again.</li>
+                            <li>When several locks are needed, always acquire them in the same order in every thread
+                                to avoid deadlocks.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="Queue_Producer_Consumer">
+                    <h2 class="Section_Title">Coordinating Work with Queue</h2>
+                    <div class="Definitions">
+                        Many concurrent programs form a <strong>pipeline</strong>: one stage produces items (for
+                        example, URLs to download), another stage consumes them. Passing data between threads through
+                        a shared list plus your own locks is error-prone. The <code>queue.Queue</code> class is a
+                        thread-safe FIFO queue that already does all the locking for you:
+                        <ul>
+                            <li><code>put(item)</code> adds an item. With <code>maxsize</code> set, it
+                                <strong>blocks</strong> when the queue is full, which stops a fast producer from using
+                                unlimited memory (this is called <strong>back-pressure</strong>).</li>
+                            <li><code>get()</code> removes an item and <strong>blocks</strong> while the queue is
+                                empty, so consumers don't need to busy-wait.</li>
+                            <li><code>task_done()</code> and <code>join()</code> let you wait until every item has been
+                                processed.</li>
+                        </ul>
+                        A common way to tell consumers to stop is to send a special <strong>sentinel</strong> value
+                        (often <code>None</code>), one per consumer.
+                    </div>
+                    <pre class="prettyprint python Code">
+import queue
+import threading
+import time
+
+SENTINEL = None
+work = queue.Queue(maxsize=3)     # bounded: producer waits if consumers fall behind
+results = queue.Queue()
+
+def producer(n_items, n_consumers):
+    for i in range(n_items):
+        work.put(i)               # blocks while the queue is full
+    for _ in range(n_consumers):
+        work.put(SENTINEL)        # one "stop" signal per consumer
+
+def consumer():
+    while True:
+        item = work.get()         # blocks while the queue is empty
+        if item is SENTINEL:
+            break
+        time.sleep(0.05)          # simulate slow work
+        results.put(item * item)
+
+N_CONSUMERS = 3
+consumers = [threading.Thread(target=consumer) for _ in range(N_CONSUMERS)]
+for c in consumers: c.start()
+producer(10, N_CONSUMERS)
+for c in consumers: c.join()
+
+squares = sorted(results.get() for _ in range(results.qsize()))
+print(squares)  # [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+</pre>
+                    <div class="Note">
+                        <code>queue.Queue</code> is for threads. Use <code>asyncio.Queue</code> inside coroutines and
+                        <code>multiprocessing.Queue</code> between processes. For a simple single-threaded queue,
+                        <code>collections.deque</code> is faster.
+                    </div>
+                </section>
+
+                <section id="Thread_Pool_Executor">
+                    <h2 class="Section_Title">ThreadPoolExecutor and concurrent.futures</h2>
+                    <div class="Definitions">
+                        Creating threads by hand, collecting their results and handling their errors takes a lot of
+                        boilerplate. The <code>concurrent.futures</code> module provides a higher-level interface:
+                        an <strong>executor</strong> owns a fixed <strong>pool</strong> of worker threads and reuses
+                        them for many tasks. <br>
+                        <code>executor.submit(fn, *args)</code> schedules a call and immediately returns a
+                        <strong>Future</strong>, an object representing a result that will be available later. Calling
+                        <code>future.result()</code> waits for the value, and, unlike raw threads,
+                        <strong>re-raises any exception</strong> that happened in the worker.
+                    </div>
+                    <pre class="prettyprint python Code">
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+
+def fetch(url):
+    time.sleep(0.2)                  # pretend this is a network request
+    if "bad" in url:
+        raise ValueError(f"cannot fetch {url}")
+    return f"&lt;html of {url}&gt;"
+
+urls = ["a.com", "b.com", "bad.com", "c.com"]
+
+with ThreadPoolExecutor(max_workers=4) as executor:      # pool shuts down at the end of with
+    futures = {executor.submit(fetch, url): url for url in urls}
+    for future in as_completed(futures):                # yields futures as they finish
+        url = futures[future]
+        try:
+            print(url, "-&gt;", future.result())
+        except ValueError as exc:
+            print(url, "failed:", exc)
+
+# Output order varies, e.g.:
+# b.com -&gt; &lt;html of b.com&gt;
+# bad.com failed: cannot fetch bad.com
+# a.com -&gt; &lt;html of a.com&gt;
+# c.com -&gt; &lt;html of c.com&gt;
+</pre>
+                    <div class="Definitions">
+                        When you simply want to apply one function to many inputs and keep the original order, use
+                        <code>executor.map()</code>. It works like the built-in <code>map</code> but runs the calls
+                        concurrently.
+                    </div>
+                    <pre class="prettyprint python Code">
+from concurrent.futures import ThreadPoolExecutor
+import time
+
+def slow_square(x):
+    time.sleep(0.1)
+    return x * x
+
+start = time.perf_counter()
+with ThreadPoolExecutor(max_workers=5) as executor:
+    results = list(executor.map(slow_square, range(10)))
+print(results)  # [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]  (always in input order)
+print(f"{time.perf_counter() - start:.1f}s")  # about 0.2s instead of 1.0s
+</pre>
+                    <div class="Warning">
+                        With <code>executor.map()</code>, an exception from any call is raised when you reach that
+                        result while iterating, and the remaining results are lost. Use <code>submit()</code> with
+                        <code>as_completed()</code> when you need to handle failures one by one.
+                    </div>
+                </section>
+
+                <section id="Asyncio_Coroutines">
+                    <h2 class="Section_Title">Coroutines with async/await and asyncio</h2>
+                    <div class="Definitions">
+                        Threads are scheduled by the operating system, which can interrupt them at any point. That is
+                        exactly why they need locks. <strong>Coroutines</strong> take a different approach: they are
+                        functions that <strong>voluntarily pause</strong> at every <code>await</code>, handing control
+                        back to an <strong>event loop</strong>, which then runs another coroutine that is ready. All of
+                        this happens in a single thread. <br>
+                        Advantages over threads:
+                        <ul>
+                            <li>Very cheap: you can have tens of thousands of coroutines (for example, one per network
+                                connection), where the same number of threads would exhaust memory.</li>
+                            <li>Switches only happen at <code>await</code>, so the code between two awaits runs without
+                                interruption, which makes many races impossible.</li>
+                        </ul>
+                        The vocabulary:
+                        <ul>
+                            <li><code>async def</code> defines a <strong>coroutine function</strong>. Calling it does
+                                <strong>not</strong> run it; it returns a coroutine object.</li>
+                            <li><code>await</code> runs a coroutine (or other awaitable) and pauses the current one
+                                until the result is ready.</li>
+                            <li><code>asyncio.run(main())</code> creates the event loop, runs <code>main</code> to
+                                completion and closes the loop. It is the usual entry point of an async program.</li>
+                        </ul>
+                    </div>
+                    <pre class="prettyprint python Code">
+import asyncio
+
+async def greet(name, delay):
+    await asyncio.sleep(delay)   # non-blocking sleep: lets other coroutines run
+    print(f"Hello, {name}")
+    return name.upper()
+
+async def main():
+    result = await greet("Ada", 0.1)   # awaiting one coroutine runs it to completion
+    print(result)
+
+asyncio.run(main())
+# Hello, Ada
+# ADA
+</pre>
+                    <h3 class="Subsection_Title">Running coroutines concurrently: gather and create_task</h3>
+                    <div class="Definitions">
+                        Awaiting coroutines one after another runs them sequentially. To run them concurrently, wrap
+                        them in <strong>tasks</strong>. <code>asyncio.gather()</code> runs several awaitables at once
+                        and returns their results in the same order you passed them.
+                        <code>asyncio.create_task()</code> schedules a single coroutine to start running in the
+                        background, so you can do other things before awaiting it.
+                    </div>
+                    <pre class="prettyprint python Code">
+import asyncio
+import time
+
+async def fetch(name, delay):
+    await asyncio.sleep(delay)
+    return f"{name} ({delay}s)"
+
+async def main():
+    start = time.perf_counter()
+
+    # gather: results come back in argument order
+    results = await asyncio.gather(fetch("a", 0.3), fetch("b", 0.1), fetch("c", 0.2))
+    print(results)  # ['a (0.3s)', 'b (0.1s)', 'c (0.2s)']
+
+    # create_task: start now, await later
+    task = asyncio.create_task(fetch("background", 0.2))
+    print("doing other work while the task runs...")
+    print(await task)  # background (0.2s)
+
+    print(f"elapsed {time.perf_counter() - start:.1f}s")  # about 0.5s, not 0.8s
+
+asyncio.run(main())
+</pre>
+                    <h3 class="Subsection_Title">Structured concurrency with TaskGroup (Python 3.11+)</h3>
+                    <div class="Definitions">
+                        <code>asyncio.TaskGroup</code> is the modern, safer way to run a group of tasks. The
+                        <code>async with</code> block does not exit until every task in the group has finished. If one
+                        task fails, the group <strong>cancels the others</strong> and raises the errors together as an
+                        <code>ExceptionGroup</code>, which you catch with <code>except*</code>. With plain
+                        <code>gather()</code>, the remaining tasks keep running after a failure, which can leak work.
+                    </div>
+                    <pre class="prettyprint python Code">
+import asyncio
+
+async def job(n):
+    await asyncio.sleep(0.1 * n)
+    if n == 2:
+        raise ValueError("job 2 failed")
+    return n * 10
+
+async def main():
+    async with asyncio.TaskGroup() as tg:
+        t1 = tg.create_task(job(1))
+        t3 = tg.create_task(job(3))
+    print(t1.result(), t3.result())  # 10 30
+
+    try:
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(job(1))
+            tg.create_task(job(2))
+            tg.create_task(job(5))   # cancelled when job 2 fails
+    except* ValueError as group:
+        for exc in group.exceptions:
+            print("caught:", exc)    # caught: job 2 failed
+
+asyncio.run(main())
+</pre>
+                    <div class="Warning">
+                        <ul>
+                            <li><strong>Never call blocking functions inside a coroutine.</strong>
+                                <code>time.sleep()</code>, <code>requests.get()</code> or a long CPU loop freeze the
+                                entire event loop, and every other coroutine stops with it. Use async libraries
+                                (<code>asyncio.sleep</code>, <code>aiohttp</code>, <code>httpx</code>) or move the
+                                blocking call to a thread (next section).</li>
+                            <li>Forgetting <code>await</code> is a classic bug: the coroutine never runs and Python
+                                warns <code>RuntimeWarning: coroutine '...' was never awaited</code>.</li>
+                            <li>Keep a reference to tasks made with <code>create_task()</code> (or use a
+                                <code>TaskGroup</code>); the event loop only keeps a weak reference, so an
+                                unreferenced task can be garbage-collected before it finishes.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="Mixing_Threads_Coroutines">
+                    <h2 class="Section_Title">Mixing Threads and Coroutines</h2>
+                    <div class="Definitions">
+                        Real programs rarely start fresh. You may want to use asyncio, but depend on a library that
+                        only offers blocking functions (a database driver, a file API, an older HTTP client). Calling
+                        it directly would block the event loop. <code>asyncio.to_thread(func, *args)</code> (Python
+                        3.9+) runs the blocking function in a background thread and gives you an awaitable, so the
+                        event loop keeps serving other coroutines in the meantime.
+                    </div>
+                    <pre class="prettyprint python Code">
+import asyncio
+import time
+
+def blocking_read(name):
+    time.sleep(0.3)          # a legacy, blocking call we cannot change
+    return f"data from {name}"
+
+async def heartbeat():
+    for _ in range(3):
+        print("event loop is still responsive")
+        await asyncio.sleep(0.1)
+
+async def main():
+    start = time.perf_counter()
+    results = await asyncio.gather(
+        asyncio.to_thread(blocking_read, "disk"),
+        asyncio.to_thread(blocking_read, "legacy-db"),
+        heartbeat(),
+    )
+    print(results[:2])  # ['data from disk', 'data from legacy-db']
+    print(f"{time.perf_counter() - start:.1f}s")  # about 0.3s
+
+asyncio.run(main())
+</pre>
+                    <div class="Definitions">
+                        The opposite direction also comes up: ordinary (synchronous) code in another thread needs to
+                        run a coroutine on an event loop that is already running. Use
+                        <code>asyncio.run_coroutine_threadsafe(coro, loop)</code>, which returns a
+                        <code>concurrent.futures.Future</code> you can wait on from that thread. <br>
+                        A good migration strategy for a large program is <strong>top-down or bottom-up, one layer at a
+                        time</strong>: convert a function to <code>async def</code>, and use <code>to_thread</code> at
+                        the boundary for the parts you have not converted yet.
+                    </div>
+                    <div class="Note">
+                        <code>to_thread</code> is meant for <strong>I/O-bound</strong> blocking calls. Because of the
+                        GIL, putting CPU-heavy code in a thread will not make it faster; use
+                        <code>loop.run_in_executor()</code> with a <code>ProcessPoolExecutor</code> for that.
+                    </div>
+                </section>
+
+                <section id="Process_Pool_Executor">
+                    <h2 class="Section_Title">True Parallelism with ProcessPoolExecutor and multiprocessing</h2>
+                    <div class="Definitions">
+                        For CPU-bound pure-Python work, the way around the GIL is to use several
+                        <strong>processes</strong>. Each worker process has its own interpreter, its own memory and its
+                        own GIL, so they can keep every CPU core busy. <br>
+                        <code>ProcessPoolExecutor</code> has exactly the same interface as
+                        <code>ThreadPoolExecutor</code>, so switching between them is often a one-word change.
+                    </div>
+                    <pre class="prettyprint python Code">
+from concurrent.futures import ProcessPoolExecutor
+import time
+
+def count_primes(limit):
+    """Deliberately slow, CPU-bound work."""
+    count = 0
+    for n in range(2, limit):
+        if all(n % d for d in range(2, int(n ** 0.5) + 1)):
+            count += 1
+    return count
+
+if __name__ == "__main__":          # REQUIRED on Windows and macOS (see below)
+    limits = [60_000] * 4
+
+    start = time.perf_counter()
+    serial = [count_primes(x) for x in limits]
+    print(f"serial:   {time.perf_counter() - start:.2f}s")
+
+    start = time.perf_counter()
+    with ProcessPoolExecutor() as executor:     # defaults to one worker per CPU core
+        parallel = list(executor.map(count_primes, limits))
+    print(f"parallel: {time.perf_counter() - start:.2f}s")
+
+    print(serial == parallel, parallel[0])  # True 6057
+# Typical output on a 4+ core machine:
+# serial:   0.60s
+# parallel: 0.25s
+</pre>
+                    <h3 class="Subsection_Title">Why the <code>if __name__ == "__main__":</code> guard is required</h3>
+                    <div class="Definitions">
+                        On Windows (and on macOS by default) new processes are created with the <strong>spawn</strong>
+                        method: each worker starts a fresh Python interpreter and <strong>imports your main
+                        module</strong> to find the function it must run. Without the guard, that import would execute
+                        your top-level code again, which would create another pool, which would spawn more workers...
+                        Python detects this and raises a <code>RuntimeError</code>. With the guard, the setup code only
+                        runs in the parent process. <br>
+                        For the same reason, the function you send to a worker must be defined at the
+                        <strong>top level</strong> of a module (lambdas and nested functions cannot be pickled), and it
+                        will not work from an interactive prompt or some notebooks.
+                    </div>
+                    <h3 class="Subsection_Title">The multiprocessing module</h3>
+                    <div class="Definitions">
+                        <code>concurrent.futures</code> is built on top of <code>multiprocessing</code>, which also
+                        offers lower-level tools: <code>Process</code> (like <code>Thread</code>), <code>Pool</code>,
+                        <code>Queue</code> and shared-memory objects.
+                    </div>
+                    <pre class="prettyprint python Code">
+import multiprocessing as mp
+
+def square(x):
+    return x * x
+
+def report(q, name):
+    q.put(f"hello from {name} (pid {mp.current_process().pid})")
+
+if __name__ == "__main__":
+    with mp.Pool(processes=4) as pool:
+        print(pool.map(square, range(8)))   # [0, 1, 4, 9, 16, 25, 36, 49]
+
+    q = mp.Queue()
+    p = mp.Process(target=report, args=(q, "worker-1"))
+    p.start()
+    print(q.get())   # hello from worker-1 (pid 12345)
+    p.join()
+</pre>
+                    <div class="Warning">
+                        Processes do not share memory. Arguments and return values are <strong>pickled</strong> and
+                        copied between processes, which has a real cost. Parallelism pays off when each task does a lot
+                        of computation compared to the data it sends and receives. Sending a huge list to compute a
+                        tiny result can make the "parallel" version slower than the serial one.
+                    </div>
+                </section>
+
+                <section id="Choosing_A_Tool">
+                    <h2 class="Section_Title">Choosing the Right Tool</h2>
+                    <div class="Definitions">
+                        Start by measuring where your program spends its time, then pick the simplest tool that fits:
+                        <table>
+                            <tr>
+                                <th>Tool</th>
+                                <th>Best for</th>
+                                <th>Runs in parallel?</th>
+                                <th>Main pitfalls</th>
+                            </tr>
+                            <tr>
+                                <td><code>subprocess</code></td>
+                                <td>Running external programs and command-line tools</td>
+                                <td>Yes (separate processes)</td>
+                                <td>Shell injection, forgetting timeouts and exit codes</td>
+                            </tr>
+                            <tr>
+                                <td><code>threading</code> / <code>ThreadPoolExecutor</code></td>
+                                <td>A moderate number of blocking I/O tasks; using blocking libraries</td>
+                                <td>No for Python code (GIL); yes while waiting on I/O</td>
+                                <td>Data races, need for locks, memory cost per thread</td>
+                            </tr>
+                            <tr>
+                                <td><code>asyncio</code></td>
+                                <td>Thousands of concurrent network connections; high-concurrency I/O</td>
+                                <td>No (one thread, cooperative switching)</td>
+                                <td>Any blocking call freezes everything; needs async-aware libraries</td>
+                            </tr>
+                            <tr>
+                                <td><code>asyncio.to_thread</code></td>
+                                <td>Calling blocking code from async code</td>
+                                <td>Only during I/O waits</td>
+                                <td>No help for CPU-bound work</td>
+                            </tr>
+                            <tr>
+                                <td><code>ProcessPoolExecutor</code> / <code>multiprocessing</code></td>
+                                <td>CPU-bound pure-Python work</td>
+                                <td>Yes (one interpreter per core)</td>
+                                <td>Pickling overhead, <code>__main__</code> guard, no shared memory</td>
+                            </tr>
+                        </table>
+                        <br>
+                        <strong>Things to Remember</strong>
+                        <ul>
+                            <li>I/O-bound: threads or asyncio. CPU-bound: processes (or a C extension such as NumPy
+                                that releases the GIL).</li>
+                            <li>Prefer the high-level tools (<code>concurrent.futures</code>, <code>TaskGroup</code>,
+                                <code>Queue</code>) over manual threads and locks.</li>
+                            <li>Concurrency adds complexity. If the program is fast enough sequentially, keep it
+                                sequential.</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
 
 </body>
+<script src="../assets/JS/Nav_Bar.js" type="module"></script>
+<script src="../assets/JS/Side_Bar.js" defer></script>
+<script
+    src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=c&amp;skin=sunburst"></script>
 
 </html>

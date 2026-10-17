@@ -21,13 +21,27 @@
 .Nav_Bar_Logo {
   color: #fff;
   font-size: 2rem;
+  font-weight: bold;
+  text-decoration: none;
   cursor: pointer;
   margin-right: 10px;
+  white-space: nowrap;
 }
 
 .Menu_Icon {
   display: none;
-  margin-top: 10px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.Nav_Bar_Menu_Item.Active,
+.Sub_Menu_Item.Active {
+  text-decoration: underline;
+  text-underline-offset: 6px;
 }
 
 .Nav_Bar_Menu {
@@ -80,12 +94,13 @@
   transform: translateX(-50%);
   list-style: none;
   border-radius: 8px;
-  box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0, 0.5);
+  box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.5);
 }
 
-#Nav_Bar_Item_Sub_Menus_ID:hover .Sub_Menu {
+.Nav_Bar_Item_Sub_Menus:hover .Sub_Menu,
+.Nav_Bar_Item_Sub_Menus:focus-within .Sub_Menu {
   display: grid;
-  grid-template-columns: 3fr 3fr 3fr 3fr 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
 .Sub_Menu_Item {
@@ -144,18 +159,24 @@
     color: white;
     transition: none;
     border-radius: 4px;
-    background-color: #01959a;
+    background-color: #3d8a22;
   }
   .Nav_Bar_Items {
     z-index: 9999;
   }
   .Menu_Icon {
     display: block;
-    cursor: pointer;
   }
 
-  .Menu_Icon i {
-    font-size: 1.2rem;
-    color: #222;
+  .Nav_Bar_Logo {
+    font-size: 1.5rem;
+  }
+
+  .Nav_Bar_Items {
+    padding: 0 20px;
+  }
+
+  .Nav_Bar_Menu_Active .Sub_Menu {
+    display: none !important;
   }
 }
